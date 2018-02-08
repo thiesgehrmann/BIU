@@ -3,6 +3,7 @@ from collections import namedtuple
 import tabix
 
 from . import fileManager as fm
+from .. import utils as utils
 
 ###############################################################################
 versions = { "GRCh37" : {
@@ -23,8 +24,8 @@ class CADD(fm.FileManager):
 
   version = None
 
-  def __init__(self, version=list(versions.keys())[0], where='./'):
-    fm.FileManager.__init__(self, where + '/%s' % version)
+  def __init__(self, version=list(versions.keys())[0], where='./', **kwargs):
+    fm.FileManager.__init__(self, where + '/%s' % version, **kwargs)
     self.version = version
     self.fileIndex = self.__urlFileIndex()
     self.str_functions.append(lambda s: "Version: %s" % self.version)
@@ -56,7 +57,7 @@ class CADD(fm.FileManager):
 
   def _requireSource(self):
     if self._source is None:
-      if not(self.satisfyRequiredFiles(["tsv"])):
+      if not(self.satisfyRequiredFiles(["tsv", "tsv_tbi"])):
         return False
       #fi
       self._source = tabix.open(self.getFileName("tsv"))

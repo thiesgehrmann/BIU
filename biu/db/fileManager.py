@@ -1,5 +1,6 @@
 import os
 import imp
+from pathlib import Path
 
 from .. import utils as utils
 
@@ -11,10 +12,12 @@ class FileManager:
   #fileIndex = None
   str_functions = []
   downloadOnDemand = None
+  localCopy = None
 
-  def __init__(self, where='./', downloadOnDemand=True, **kwargs):
+  def __init__(self, where='./', downloadOnDemand=True, localCopy=None, **kwargs):
     self.where = os.path.abspath(where)
     self.fileIndex = {}
+    self.localCopy = localCopy
     #self.fileIndex = self.__urlFileIndex()
     self.str_functions = []
     self.downloadOnDemand = downloadOnDemand
@@ -28,7 +31,7 @@ class FileManager:
     files = {}
     for item in what:
       if item in self.fileIndex:
-        url, loc, options = self.fileIndex[item]
+        url, loc, options = self.__fileIndex()[item]
         if url is None:
           continue
         #fi
@@ -73,7 +76,34 @@ class FileManager:
   #edef
 
   def getFileName(self, what):
-    return self.fileIndex[what][1] if what in self.fileIndex else None
+    return self.fileIndex[what][1] if what in self.__fileIndex() else None
+  #edef
+
+  def __fileIndex(self):
+    if self.localCopy is not None:
+      for item in [ i for i in self.localCopy if (i in self.fileIndex)]:
+        loc = self.localCopy[item]
+        (url, currLoc, options) = self.fileIndex[item]
+        if os.path.exists(loc):
+          if os.path.exists(currLoc) and os.path.islink(currLoc) and (str(Path(currLoc).resolve()) != loc):
+            utils.runCommand("unlink '%s'" % currLoc)
+            p = utils.runCommand("ln -s '%s' '%s'" % (loc, currLoc))
+            print(( "Made symbolic link for '%s'" if p == 0 else "Error using local copy of '%s'") % item)
+          elif os.path.exists(currLoc) and os.path.islink(currLoc) and (str(Path(currLoc).resolve()) == loc):
+            print("Same symbolic link already exists for '%s'" %item)
+          elif not(os.path.exists(currLoc)):
+            p = utils.runCommand("ln -s '%s' '%s'" % (loc, currLoc))
+            print(( "Made symbolic link for '%s'" if p == 0 else "Error using local copy of '%s'") % item)
+          else:
+            print("Could not use local copy of '%s' as file already exists at '%s'" % (item, currLoc))
+          #fi
+        else:
+          print("Error: Local copy of '%s' does not exist" % item)
+        #fi
+      #efor
+      self.localCopy = None
+    #fi
+    return self.fileIndex
   #edef
 
   def __urlFileIndex(self):
@@ -97,8 +127,12 @@ class FileManager:
 
     dstr += " Files:\n"
     for item in self.fileIndex:
-      url, loc, options = self.fileIndex[item]
-      dstr += "  * [%s] %s : %s\n" % ('X' if os.path.exists(loc) else ' ', item, loc)
+      url, loc, options = self.__fileIndex()[item]
+      if os.path.islink(loc):
+        dstr += "  * [%s] %s : %s -> %s\n" % ('S' if os.path.exists(loc) else ' ', item, loc, Path(loc).resolve())
+      else:
+        dstr += "  * [%s] %s : %s\n" % ('X' if os.path.exists(loc) else ' ', item, loc)
+      #fi
     #efor
     return dstr
   #edef
