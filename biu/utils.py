@@ -3,6 +3,8 @@ import pathlib
 import urllib
 import os
 import shlex, subprocess, os;
+import csv
+from collections import namedtuple
 
 ###############################################################################
 
@@ -12,7 +14,15 @@ def mkdirp(directory):
 
 ###############################################################################
 
-def download(url, fileName, urlIsGzipped=None, fileIsGzipped=None, bgzip=None, inject=None, **kwargs):
+def download(url, fileName, urlIsGzipped=None, fileIsGzipped=None, bgzip=None, inject=None, curlCommand=None, **kwargs):
+  """
+    Available options
+      *urlIsGzipped: Boolean, is the URL gZipped? (Detected from url if not provided)
+      *fileIsGzipped: Boolean, should the file be gZipped? (detected from filename if not provided)
+      *bgzip: Boolean, should the output file be bgzipped, for use with tabix?
+      *inject: String, command to perform after curl, possible unzipping, but before possible gzipping/bgzipping
+      *curlCommand: String, command to perform in place of curl, if there is a strange URL.
+  """
   urlIsGzipped  = (url[-2:] == "gz") if urlIsGzipped is None else urlIsGzipped
   fileIsGzipped = (fileName[-2:] == "gz") if fileIsGzipped is None else fileIsGzipped
 
@@ -33,7 +43,12 @@ def download(url, fileName, urlIsGzipped=None, fileIsGzipped=None, bgzip=None, i
   else: # The URL is not gzipped, but the output IS
     post = "gzip"
   #fi
-  fullCommand = "curl -L '%s'%s%s%s > '%s'" % (url, 
+
+  if curlCommand is None:
+    curlCommand = "curl -L '%s'" % url
+  #fi
+
+  fullCommand = "%s%s%s%s > '%s'" % (curlCommand, 
     (' | %s' % pre) if not(pre is None) else '',
     (' | %s' % inject) if not(inject is None) else '',
     (' | %s' % post) if not(post is None) else '',
@@ -130,3 +145,38 @@ def runCommand(cmd, bg=False, stdin=None, stdout=None, stderr=None, shell=False,
     return r;
   #fi
 #edef
+
+###############################################################################
+
+def readNamedColumnTsvFile(fileName,
+                           columnNames, 
+                           namedTupleName="NamedColumnFile", 
+                           delimiter='\t', 
+                           quotechar=None, 
+                           skip=0, 
+                           maxLines=None, 
+                           columnTypes=None, 
+                           **kwargs):
+
+  rowType = namedtuple(namedTupleName, columnNames)
+  nFields = len(columnNames)
+  D = []
+  i = 0
+  with open(fileName, "r") as ifd:
+    reader = csv.reader(ifd, delimiter=delimiter, quotechar=quotechar)
+    for row in reader:
+      i += 1
+      if (i < skip):
+        continue
+      elif (maxLines is not None) and (i > maxLines):
+        break
+      elif len(row) != nFields:
+        print("Error: line %d does not have %d fields!" % (i, nFields))
+      else:
+        D.append( rowType(*row) )
+      #fi
+    #efor
+  #ewith
+  return D
+#edef
+

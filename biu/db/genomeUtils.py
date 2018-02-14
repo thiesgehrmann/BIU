@@ -13,7 +13,28 @@ genomes = {
     "gffURL" : "ftp://ftp.ensembl.org/pub/grch37/update/gff3/homo_sapiens/Homo_sapiens.GRCh37.87.gff3.gz",
     "chr" : [ "1" ,"2" ,"3" ,"4" ,"5" ,"6" ,"7" ,"8" ,"9" ,"10" ,"11" ,"12" ,"13" ,"14" ,"15" ,"16" ,"17" ,"18" ,"19" ,"20" ,"21" ,"22", "X", "Y" ],
     "cdsURL" : "ftp://ftp.ensembl.org/pub/grch37/update/fasta/homo_sapiens/cds/Homo_sapiens.GRCh37.cds.all.fa.gz"
-  }
+  },
+
+  "Ensembl_GRCh37" : {
+    "genomeURLs" : { "all" : "ftp://ftp.ensembl.org/pub/grch37/update/fasta/homo_sapiens/dna/Homo_sapiens.GRCh37.dna.primary_assembly.fa.gz" },
+    "gffURL" : "ftp://ftp.ensembl.org/pub/grch37/update/gff3/homo_sapiens/Homo_sapiens.GRCh37.87.gff3.gz",
+    "chr" : [ "1" ,"2" ,"3" ,"4" ,"5" ,"6" ,"7" ,"8" ,"9" ,"10" ,"11" ,"12" ,"13" ,"14" ,"15" ,"16" ,"17" ,"18" ,"19" ,"20" ,"21" ,"22", "X", "Y" ],
+    "cdsURL" : "ftp://ftp.ensembl.org/pub/grch37/update/fasta/homo_sapiens/cds/Homo_sapiens.GRCh37.cds.all.fa.gz" },
+
+  "RefSeq_GRCh37" : {
+    "genomeURLs" : { "all" : "ftp://ftp.ncbi.nlm.nih.gov/refseq/H_sapiens/annotation/GRCh37_latest/refseq_identifiers/GRCh37_latest_genomic.fna.gz" },
+    "gffURL" : "ftp://ftp.ncbi.nlm.nih.gov/refseq/H_sapiens/annotation/GRCh37_latest/refseq_identifiers/GRCh37_latest_genomic.gff.gz",
+    "chr" : [ "all" ],
+    "cdsURL" : "ftp://ftp.ncbi.nlm.nih.gov/refseq/H_sapiens/annotation/GRCh37_latest/refseq_identifiers/GRCh37_latest_rna.fna.gz",
+    "aaURL" : "ftp://ftp.ncbi.nlm.nih.gov/refseq/H_sapiens/annotation/GRCh37_latest/refseq_identifiers/GRCh37_latest_protein.faa.gz" },
+
+  "RefSeq_GRCh38" : {
+    "genomeURLs" : { "all" : "ftp://ftp.ncbi.nlm.nih.gov/refseq/H_sapiens/annotation/GRCh38_latest/refseq_identifiers/GRCh38_latest_genomic.fna.gz" },
+    "gffURL" : "ftp://ftp.ncbi.nlm.nih.gov/refseq/H_sapiens/annotation/GRCh38_latest/refseq_identifiers/GRCh38_latest_genomic.gff.gz",
+    "chr" : [ "all" ],
+    "cdsURL" : "ftp://ftp.ncbi.nlm.nih.gov/refseq/H_sapiens/annotation/GRCh38_latest/refseq_identifiers/GRCh38_latest_rna.fna.gz",
+    "aaURL" : "ftp://ftp.ncbi.nlm.nih.gov/refseq/H_sapiens/annotation/GRCh38_latest/refseq_identifiers/GRCh38_latest_protein.faa.gz" }
+          
 }
 
 def listGenomes():
@@ -36,16 +57,31 @@ class Genome(fm.FileManager):
     self.genomeID = genomeID
     self.fileIndex = self.__urlFileIndex()
 
+    def loadedObjects(s):
+      dstr = 'Objects:\n'
+      dstr += " * [%s] _gffObject\n" % ('X' if s._gffObject is not None else ' ')
+      return dstr
+    #edef
+
+    self.str_functions.append( lambda s: loadedObjects(s))
     self.str_functions.append( lambda s: "Genome : %s" % s.genomeID )
   #edef
 
   def __urlFileIndex(self):
     files = {}
-    files["gff"] = ( genomes[self.genomeID]["gffURL"], self.where + '/genome.gff3', {})
-    files["cds"] = ( genomes[self.genomeID]["cdsURL"], self.where + '/genome.fa', {})
-    for chrID in genomes[self.genomeID]["chr"]:
-      files["chr_%s" % chrID] = (genomes[self.genomeID]["genomeURLs"][chrID], self.where + '/chr%s.fa.gz' % chrID, {})
-    #efor
+    if "gffURL" in genomes[self.genomeID]:
+      files["gff"] = ( genomes[self.genomeID]["gffURL"], self.where + '/genome.gff3', {})
+    #fi
+    if "cdsURL" in genomes[self.genomeID]:
+      files["cds"] = ( genomes[self.genomeID]["cdsURL"], self.where + '/cds.fa', {})
+    #fi
+    if "aaURL" in genomes[self.genomeID]:
+      files["aa"] = ( genomes[self.genomeID]["aaURL"], self.where + '/aa.fa', {})
+    if "genomeURLs" in genomes[self.genomeID]:
+      for chrID in genomes[self.genomeID]["genomeURLs"]:
+        files["chr_%s" % chrID] = (genomes[self.genomeID]["genomeURLs"][chrID], self.where + '/chr%s.fa.gz' % chrID, {})
+      #efor
+    #fi
     return files
   #edef
 
@@ -70,6 +106,10 @@ class Genome(fm.FileManager):
       return self._gffObject
     #fi
   #edef
+
+  ###############################################################################
+
+  
 
 #eclass
 
