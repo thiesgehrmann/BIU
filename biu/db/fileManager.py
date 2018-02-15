@@ -6,60 +6,63 @@ from .. import utils as utils
 
 imp.reload(utils)
 
-class FileManager:
+class FileManager(object):
 
-  where    = None
-  #fileIndex = None
-  str_functions = []
-  downloadOnDemand = None
-  localCopy = None
+  _where    = None
+  _fileIndex = None
+  _str_functions = []
+  _downloadOnDemand = None
+  _localCopy = None
 
-  def __init__(self, where='./', downloadOnDemand=True, localCopy=None, **kwargs):
-    self.where = os.path.abspath(where)
-    self.fileIndex = {}
-    self.localCopy = localCopy
-    #self.fileIndex = self.__urlFileIndex()
-    self.str_functions = []
-    self.downloadOnDemand = downloadOnDemand
+  #############################################################################
+
+  def __init__(self, where, fileIndex, objects=None, downloadOnDemand=True, localCopy=None, **kwargs):
+    self._where = os.path.abspath(where)
+    self._fileIndex = fileIndex
+    self._localCopy = localCopy
+    self._str_functions = []
+    self._downloadOnDemand = downloadOnDemand
+    self._makeSymlinks()
+    self._objects = objects
   #edef
 
-  def download(self, what=None, onlyFileNames=False, overwrite=False, **kwargs):
+  #############################################################################
+
+  def _download(self, what=None, overwrite=False, **kwargs):
     if what is None:
-      what = list(self.fileIndex.keys())
+      what = list(self._fileIndex.keys())
     #fi
 
-    files = {}
     for item in what:
-      if item in self.fileIndex:
-        url, loc, options = self.__fileIndex()[item]
+      if item in self._fileIndex:
+        url, fname, options = self._fileIndex[item]
+        loc = self.getFileName(item)
         if url is None:
           continue
         #fi
-        files[item] = loc
-        if not(onlyFileNames):
-          utils.downloadIfNotExists(url, loc, overwrite=overwrite, **options)
-          if ("tabix" in options) and options["tabix"]:
-            utils.tabix(loc, **options)
-          #fi
+
+        utils.downloadIfNotExists(url, loc, overwrite=overwrite, **options)
+        if ("tabix" in options) and options["tabix"]:
+          utils.tabix(loc, **options)
         #fi
       #fi
     #efor
-    return files
   #edef
 
+  #############################################################################
   
   def satisfyRequiredFiles(self, what=None):
     if what is None:
-      what = list(self.fileIndex.keys())
+      what = list(self._fileIndex.keys())
     #fi
 
     for item in what:
       haveItem = self.haveFile(item)
       if haveItem:
         continue
-      elif self.downloadOnDemand:
+      elif self._downloadOnDemand:
         print("Downloading %s" % item)
-        self.download(what=[item])
+        self._download(what=[item])
         if not(self.haveFile(item)):
           print("Error: Failed to download '%s'" % item)
           return False
@@ -71,20 +74,28 @@ class FileManager:
     return True
   #edef
 
+  #############################################################################
+
   def haveFile(self, what):
     return os.path.exists(self.getFileName(what))
   #edef
 
   def getFileName(self, what):
-    return self.fileIndex[what][1] if what in self.__fileIndex() else None
+    return '%s/%s' % (self._where, self._fileIndex[what][1]) if what in self._fileIndex else None
   #edef
 
-  def __fileIndex(self):
-    if self.localCopy is not None:
-      for item in [ i for i in self.localCopy if (i in self.fileIndex)]:
-        loc = self.localCopy[item]
-        (url, currLoc, options) = self.fileIndex[item]
+  #############################################################################
+
+  def _makeSymlinks(self):
+    if self._localCopy is not None:
+      for item in [ i for i in self._localCopy if (i in self._fileIndex)]:
+        loc = self._localCopy[item]
+        currLoc = self.getFileName(item)
         if os.path.exists(loc):
+          dirname = os.path.dirname(currLoc)
+          if not(os.path.exists(dirname)):
+            utils.mkdirp(dirname)
+          #fi
           if os.path.exists(currLoc) and os.path.islink(currLoc) and (str(Path(currLoc).resolve()) != loc):
             utils.runCommand("unlink '%s'" % currLoc)
             p = utils.runCommand("ln -s '%s' '%s'" % (loc, currLoc))
@@ -101,22 +112,20 @@ class FileManager:
           print("Error: Local copy of '%s' does not exist" % item)
         #fi
       #efor
-      self.localCopy = None
     #fi
-    return self.fileIndex
   #edef
 
-  def __urlFileIndex(self):
-    files = {}
+  #############################################################################
 
-    return files
+  def addStrFunction(self, func):
+    self._str_functions.append(func)
   #edef
 
   def __str__(self):
     dstr  = "%s object\n" % self.__class__.__name__
-    dstr += " Where: %s\n" % self.where
+    dstr += " Where: %s\n" % self._where
 
-    for f in self.str_functions:
+    for f in self._str_functions:
       fstr = f(self)
       if fstr is None:
         continue
@@ -125,9 +134,21 @@ class FileManager:
         dstr += ' ' + line + '\n'
     #efor
 
+    if self._objects is not None:
+      dstr += " Objects:\n"
+      for o in self._objects:
+        if isinstance(o, tuple):
+          oname, idx = o
+          dstr += "  * [%s] %s[%s]\n" % ('X' if getattr(self,oname)[idx].__initialized__() else ' ', oname, str(idx))
+        else:
+          dstr += "  * [%s] %s\n" % ('X' if getattr(self, o).__initialized__() else ' ', o)
+        #fi
+      #efor
+    #fi
+
     dstr += " Files:\n"
-    for item in self.fileIndex:
-      url, loc, options = self.__fileIndex()[item]
+    for item in self._fileIndex:
+      loc = self.getFileName(item)
       if os.path.islink(loc):
         dstr += "  * [%s] %s : %s -> %s\n" % ('S' if os.path.exists(loc) else ' ', item, loc, Path(loc).resolve())
       else:
@@ -136,5 +157,7 @@ class FileManager:
     #efor
     return dstr
   #edef
+
+  #############################################################################
 
 #eclass

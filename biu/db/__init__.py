@@ -13,6 +13,9 @@ from .genomeUtils import listGenomes as listGenomes
 from .gtexUtils import GTeX as GTeX
 from .gtexUtils import listVersions as listGTeXVersions
 
+from .uniprotUtils import UniProt as UniProt
+from .uniprotUtils import listVersions as listUniProtVersions
+
 def list():
   print("CADD:")
   listCADDVersions()
@@ -28,4 +31,8 @@ def list():
 
   print("\nGTeX:")
   listGTeXVersions()
+
+  print("\nUniProt:")
+  listUniProtVersions()
+
 #edef

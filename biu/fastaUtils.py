@@ -2,7 +2,7 @@ import gzip
 
 ###############################################################################
 
-class Fasta:
+class Fasta(object):
 
   entries = None
   fileName = None
@@ -20,6 +20,7 @@ class Fasta:
   #edef
 
   def __str__(self):
+    print ("hello")
     dstr  = "Fasta object\n"
     dstr += " Where: %s\n" % self.fileName
     dstr += " Entries: %d\n" % len(self.entries)
@@ -41,6 +42,19 @@ class Fasta:
   #edef
   
   def set(self, seqID, seq):
+    self.entries[seqID] = seq
+  #edef
+
+  def __getitem__(self, seqID):
+    if seqID in self.entries:
+      return self.entries[seqID]
+    else:
+      print("Error, unknown sequence '%s'" % seqID)
+      return ""
+    #fi
+  #edef
+
+  def __setitem__(self, seqID, seq):
     self.entries[seqID] = seq
   #edef
 

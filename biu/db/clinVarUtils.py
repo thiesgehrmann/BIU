@@ -1,14 +1,6 @@
-import csv
-import os
-import tabix
 from . import fileManager as fm
+from . import resourceManager as rm
 from .. import utils
-import imp
-
-imp.reload(fm)
-imp.reload(utils)
-from collections import namedtuple
-import vcf
 
 ###############################################################################
 
@@ -70,9 +62,24 @@ clinVarSummaryFields = [ "alleleid",
                          "otherids",
                          "submittercategories" ]
 
-CVS = namedtuple("clinVarSummary", clinVarSummaryFields);
 
 ###############################################################################
+
+def urlFileIndex(version):
+  files = {}
+
+  files["vcf"]     = (versions[version]["vcfURL"], 'clinVar.vcf.bgz', {})
+  files["vcf_tbi"] = (versions[version]["vcfTbiURL"], 'clinVar.vcf.bgz.tbi', {})
+  files["sum"]     = (versions[version]["summaryURL"], 'summary.tsv.bgz', {"bgzip":True,
+      "tabix":True,
+      "seqField":19,
+      "beginField":20,
+      "endField":21,
+      "inject":"sort -t $'\\t' -k19,19V -k 20,21n | awk -F $'\\t' 'BEGIN {OFS = FS} { if($19 != \"na\"){ print $0}}'"})
+  files["sum_tbi"] = (None, 'summary.tsv.bgz.tbi', {})
+
+  return files
+#edef
 
 def listVersions():
   print("Available versions:")
@@ -90,122 +97,28 @@ class ClinVar(fm.FileManager):
   fileIndex = None
 
   def __init__(self, version=list(versions.keys())[0], where='./', **kwargs):
-    fm.FileManager.__init__(self, where, **kwargs)
+    fm.FileManager.__init__(self, where, urlFileIndex(version), [ "summary", "vcf" ], **kwargs)
     self.version = version
-    self.fileIndex = self.__urlFileIndex()
-    self.str_functions.append(lambda s: "Version: %s" % self.version)
 
-    def loadedObjects(s):
-      dstr = 'Objects:\n'
-      dstr += " * [%s] _vcfSource\n" % ('X' if s._vcfSource is not None else ' ')
-      dstr += " * [%s] _summarySource\n" % ('X' if s._summarySource is not None else ' ')
-      return dstr
-    #edef
-    self.str_functions.append(lambda s: loadedObjects(self))
-  #edef
+    # Define the objects in the clinVar fields
+    self.summary = rm.TabixTSVResourceManager(self, "sum", "sum_tbi", fieldNames = clinVarSummaryFields)
+    self.vcf     = rm.VCFResourceManager(self, "vcf", "vcf_tbi")
 
-  def __urlFileIndex(self):
-    files = {}
 
-    files["vcf"] = (versions[self.version]["vcfURL"], self.where + '/clinVar.vcf.bgz', {})
-    files["vcf_tbi"] = (versions[self.version]["vcfTbiURL"], self.where + '/clinVar.vcf.bgz.tbi', {})
-    files["sum"] = (versions[self.version]["summaryURL"], self.where + '/summary.tsv.bgz', {"bgzip":True,
-        "tabix":True,
-        "seqField":19,
-        "beginField":20,
-        "endField":21,
-        "inject":"sort -t $'\\t' -k19,19V -k 20,21n | awk -F $'\\t' 'BEGIN {OFS = FS} { if($19 != \"na\"){ print $0}}'"})
-    files["sum_tbi"] = (None, self.where + '/summary.tsv.bgz.tbi', {})
-    
-    return files
+    self.addStrFunction(lambda s: "Version: %s" % self.version)
   #edef
 
   ###############################################################################
 
-  _vcfSource = None
-  _summarySource = None
-
-  def _requireVcfSource(self):
-    if self._vcfSource is None:
-      if not(self.satisfyRequiredFiles(["vcf", "vcf_tbi"])):
-        return False
-      #fi
-      self._vcfSource = vcf.Reader(filename=self.getFileName("vcf"), compressed=True)
-    #fi
-    return True
-  #edef
-  def _requireSummarySource(self):
-    if self._summarySource is None:
-      if not(self.satisfyRequiredFiles(["sum", "sum_tbi"])):
-        return False
-      #fi
-      self._summarySource = tabix.open(self.getFileName("sum"))
-    #fi
-    return True
-  #fi
-
   def queryVCF(self, chromosome, start, end):
-    if not(self._requireVcfSource()):
-      return None
-    #fi
-    return utils.vcfQueryWrapper(self._vcfSource, chromosome, start, end)
+    return self.vcf.query(chromosome, start, end)
   #edef
 
   def querySummary(self, chromosome, start, end):
-    if not(self._requireSummarySource()):
-      return None
-    #fi
-    res = [ CVS(*r) for r in utils.tabixQueryWrapper(self._summarySource, chromosome, start, end) ]
-    return res
+    return self.summary.query(chromosome, start, end, namedtuple=True)
   #edef
 
 #eclass
 
 #eclass
-###############################################################################
-
-def castClinVarSummaryRow(row):
-  return row;
-#edef
-
-###############################################################################
-
-clinVarDelim = '\t'
-
-def readClinVarSummary(fileName, setTypes=False, delimiter=clinVarDelim):
-
-  cvs = []
-
-  with utils.gzopen(fileName, "r") as ifd:
-    for row in csv.reader(ifd, delimiter=delimiter):
-      if (len(row) == 0) or (len(row[0]) == 0):
-        continue
-      elif row[0][0] == "#":
-        continue
-      if len(row) == len(clinVarSummaryFields):
-        if setTypes:
-          row = castClinVarSummaryRow(row)
-        #fi
-        cvs.append(CVS(*row))
-      #fi
-    #efor
-  #ewith
-
-  return cvs
-
-#edef
-
-###############################################################################
-
-def writeClinVarSummary(cvs, fileName, delimiter=clinVarDelim):
-  isGzipped = fileName[-2:] == "gz"
-
-  with utils.gzopen(fileName, "w") as ofd:
-    ofd.write('#' + delimiter.join(clinVarSummaryFields) + '\n')
-    for summary in cvs:
-      ofd.write(delimiter.join([ str(x) for x in summary ]) + '\n')
-    #efor
-  #ewith
-#edef
-
 ###############################################################################

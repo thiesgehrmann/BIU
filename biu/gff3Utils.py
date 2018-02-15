@@ -4,7 +4,6 @@ import csv
 import gzip
 from collections import namedtuple
 
-
 import gzip
 
 ###############################################################################
@@ -31,36 +30,42 @@ def parseGFF3entry(fields):
 
 ###############################################################################
 
+idField     = lambda e: e.attr["ID"] if "ID" in e.attr else None
+parentField = lambda e: e.attr["Parent"] if "Parent" in e.attr else None
+nameField   = lambda e: e.attr["ID"] if "ID" in e.attr else None
+seqIDField  = lambda e: e.seqid
+
 class GFF3(object):
   entries = None
-  fileName = None
   seqids = None
   index = None
   topLevel = None
-  idField = None
-  parentField = None
-  nameField = None
 
-  def __init__(self, entries=None, fileName=None, idField="ID", parentField="Parent", nameField="ID", fileSkipLines=0, fileMaxLines=None):
+  _fileName = None
+  _idField = None
+  _parentField = None
+  _nameField = None
+
+  def __init__(self, entries=None, fileName=None, idField=idField, parentField=parentField, nameField=nameField, **kwargs):
     if (fileName is not None) and entries is None:
-      self.fileName = fileName
-      entries = readGFF3File(fileName, skipLines=fileSkipLines, maxLines = fileMaxLines)
+      self._fileName = fileName
+      entries = readGFF3File(fileName, **kwargs)
     #fi
 
-    self.idField = idField
-    self.parentField = parentField
-    self.nameField = nameField
+    self._idField = idField
+    self._parentField = parentField
+    self._nameField = nameField
 
     if entries is not None:
       self.entries = entries
       self.seqids  = set([ e.seqid for e in self.entries])
-      self.index, self.topLevel = self.__index()
+      self.index, self.topLevel = self._index()
     #fi
   #edef
 
   def __str__(self):
     dstr  = "GFF3 object\n"
-    dstr += " Where: %s\n" % self.fileName
+    dstr += " Where: %s\n" % (self._fileName if self._fileName is not None else hex(id(self)))
     dstr += " Entries: %d\n" % len(self.entries)
     dstr += " Top level statistics:\n"
     for featureType in self.topLevel:
@@ -70,16 +75,16 @@ class GFF3(object):
   #edef
       
 
-  def __index(self):
+  def _index(self):
     idx = {}
     topLevel = {}
     for i, e in enumerate(self.entries):
-      ID = e.attr[self.idField] if self.idField in e.attr else None
+      ID = self._idField(e)
       if ID is None:
         continue
       #fi
 
-      parent = e.attr[self.parentField] if self.parentField in e.attr else None
+      parent = self._parentField(e)
       if ID not in idx:
         idx[ID] = [i, [] ]
       else:
@@ -189,7 +194,7 @@ class GFF3(object):
 
 ###############################################################################
 
-def readGFF3File(filename, skipLines=0, maxLines=None):
+def readGFF3File(filename, skipLines=0, maxLines=None, allowAdditionalColumns=False, **kwargs):
   G = []
   nLines = 0
   with (gzip.open(filename, "rt") if filename[-2:] == "gz" else open(filename, "r")) as gffFile:
@@ -202,10 +207,12 @@ def readGFF3File(filename, skipLines=0, maxLines=None):
         break
       #fi
 
-      if len(row) != 9:
+      # Unless we allow it with allowAdditionalColumns, we require exactly 9 columns.
+      ncolumns = len(row)
+      if (ncolumns < 9) or ((ncolumns > 9) and not(allowAdditionalColumns)):
         continue
       #fi
-      G.append(parseGFF3entry(row))
+      G.append(parseGFF3entry(row[:9]))
     #efor
   #ewith
   return G

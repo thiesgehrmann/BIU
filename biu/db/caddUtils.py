@@ -1,16 +1,23 @@
-import csv
-from collections import namedtuple
-import tabix
 
 from . import fileManager as fm
-from .. import utils as utils
+from . import resourceManager as rm
 
 ###############################################################################
+
 versions = { "GRCh37" : {
   "caddURL"      : "http://krishna.gs.washington.edu/download/CADD/v1.3/whole_genome_SNVs.tsv.gz",
   "caddTabixURL" : "http://krishna.gs.washington.edu/download/CADD/v1.3/whole_genome_SNVs.tsv.gz.tbi"
   }
 }
+
+def urlFileIndex(version):
+  files = {}
+
+  files["tsv"] = (versions[version]["caddURL"], 'cadd.tsv.bgz', {})
+  files["tsv_tbi"] = (versions[version]["caddTabixURL"], 'cadd.tsv.bgz.tbi', {})
+
+  return files
+#edef
 
 def listVersions():
   print("Available versions:")
@@ -25,53 +32,20 @@ class CADD(fm.FileManager):
   version = None
 
   def __init__(self, version=list(versions.keys())[0], where='./', **kwargs):
-    fm.FileManager.__init__(self, where + '/%s' % version, **kwargs)
+    fm.FileManager.__init__(self, where, urlFileIndex(version), ["scores"], **kwargs)
     self.version = version
-    self.fileIndex = self.__urlFileIndex()
-    self.str_functions.append(lambda s: "Version: %s" % self.version)
 
-    def loadedObjects(s):
-      dstr = 'Objects:\n'
-      dstr += " * [%s] _source\n" % ('X' if s._source is not None else ' ')
-      return dstr
-    #edef
+    self.scores = rm.TabixTSVResourceManager(self, "tsv", "tsv_tbi", fieldNames=self._caddFields)
 
-    self.str_functions.append(lambda s: loadedObjects(s))
-  #edef
-
-  def __urlFileIndex(self):
-    files = {}
-
-    files["tsv"] = (versions[self.version]["caddURL"], self.where + '/cadd.tsv.bgz', {})
-    files["tsv_tbi"] = (versions[self.version]["caddTabixURL"], self.where + '/cadd.tsv.bgz.tbi', {})
-
-    return files
+    self.addStrFunction(lambda s: "Version: %s" % self.version)
   #edef
 
   #############################################################################
 
-  caddFields = [ "chrom", "pos", "ref", "alt", "rawscore", "phred" ]
-  caddEntry = namedtuple("CADDEntry", caddFields);
-  
-  _source = None
-
-  def _requireSource(self):
-    if self._source is None:
-      if not(self.satisfyRequiredFiles(["tsv", "tsv_tbi"])):
-        return False
-      #fi
-      self._source = tabix.open(self.getFileName("tsv"))
-    #fi
-    return True
-  #fi
+  _caddFields = [ "chrom", "pos", "ref", "alt", "rawscore", "phred" ]
 
   def query(self, chromosome, start, end=None, alt=None):
-    if not(self._requireSource()):
-      return None
-    #fi
-
-    qres = utils.tabixQueryWrapper(self._source, chromosome, start, (start if (end is None) else end))
-    qres = [ self.caddEntry(*r) for r in qres ]
+    qres = self.scores.query(chromosome, start, (start if (end is None) else end), namedtuple=True)
     if (alt is None) and (end is None):
       resPhred = {}
       for res in qres:
