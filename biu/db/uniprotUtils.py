@@ -1,5 +1,5 @@
-from . import fileManager as fm
-from . import resourceManager as rm
+from ..structures import fileManager as fm
+from ..structures import resourceManager as rm
 
 ###############################################################################
 
@@ -14,7 +14,7 @@ versions = { "human" : {
 def urlFileIndex(version):
   files = {}
   files["gff"] = (versions[version]["gff"], 'uniprot_%s.gff3' % version, {"urlIsGzipped":True})
-  return files
+  return { k : (u, 'uniprot_%s/%s' % (version, l), o) for (k, (u, l, o)) in files.items() }
 #edef
 
 def listVersions():
@@ -29,8 +29,8 @@ class UniProt(fm.FileManager):
 
   version = None
 
-  def __init__(self, version=list(versions.keys())[0], where='./', **kwargs):
-    fm.FileManager.__init__(self, where, urlFileIndex(version), ["annots"], **kwargs)
+  def __init__(self, version=list(versions.keys())[0], **kwargs):
+    fm.FileManager.__init__(self, urlFileIndex(version), objects=["annots"], **kwargs)
     self.version = version
 
     self.annots = rm.GFF3ResourceManager(self, "gff",
@@ -43,6 +43,8 @@ class UniProt(fm.FileManager):
 
   #############################################################################
 
+  def getProteinDomains(self, protein):
+    return self.annots.getChildren(protein, [ "Domain", "domain"])
 
 
 #eclass

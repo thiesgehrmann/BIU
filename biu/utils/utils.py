@@ -4,17 +4,66 @@ import urllib
 import os
 import shlex, subprocess, os;
 import csv
+import sys
 from collections import namedtuple
+
+from ..config import settings as settings
 
 ###############################################################################
 
+def stripkwargs(kwargs):
+  internalKwargs = [ "where", "version", "objects" ]
+
+  return { k : kwargs[k] for k in kwargs if k not in internalKwargs }
+#edef
+
 def mkdirp(directory):
-  pathlib.Path(directory).mkdir(parents=True, exist_ok=True)
+  #pathlib.Path(directory).mkdir(parents=True, exist_ok=True)
+  return runCommand("mkdir -p '%s'" % directory)
 #edef
 
 ###############################################################################
 
-def download(url, fileName, urlIsGzipped=None, fileIsGzipped=None, bgzip=None, inject=None, curlCommand=None, **kwargs):
+def rmFile(fileName):
+  if os.path.exists(fileName):
+    if os.path.isfile(fileName):
+      return runCommand("rm '%s'" % fileName)
+    #fi
+  #fi
+#edef
+
+###############################################################################
+
+def touchFile(fileName):
+  p = runCommand("touch '%s'" % fileName)
+  return p
+#edef
+
+###############################################################################
+
+def dbm(message):
+  if settings.getDebugState():
+    for line in message.split('\n'):
+      if settings.getDebugStream == 'stdout':
+        sys.stdout.write('D: %s\n' % line)
+      else:
+        sys.stderr.write('D: %s\n' % line)
+      #fi
+    #efor
+  #fi
+#edef
+
+###############################################################################
+
+def error(message):
+  for line in message.split('\n'):
+    sys.stderr.write('E: %s\n' % line)
+  #efor
+#edef
+
+###############################################################################
+
+def download(url, fileName, urlIsGzipped=None, fileIsGzipped=None, bgzip=None, zipPath=None, inject=None, curlCommand=None, **kwargs):
   """
     Available options
       *urlIsGzipped: Boolean, is the URL gZipped? (Detected from url if not provided)
@@ -23,8 +72,12 @@ def download(url, fileName, urlIsGzipped=None, fileIsGzipped=None, bgzip=None, i
       *inject: String, command to perform after curl, possible unzipping, but before possible gzipping/bgzipping
       *curlCommand: String, command to perform in place of curl, if there is a strange URL.
   """
-  urlIsGzipped  = (url[-2:] == "gz") if urlIsGzipped is None else urlIsGzipped
+  urlIsGzipped  = (url[-2:] == "gz") if ((urlIsGzipped is None) and (url is not None)) else urlIsGzipped
   fileIsGzipped = (fileName[-2:] == "gz") if fileIsGzipped is None else fileIsGzipped
+
+  #urlIsZipped   = (url[-3:] == 'zip') if urlIsZipped is None else urlIsZipped
+  #fileIzZipped  = (fileName[-3:] == 'zip') if fileIsZipped is None else fileIsZipped 
+
 
     # Make the directory if it doesn't exist yer
   mkdirp(os.path.dirname(fileName))
@@ -64,10 +117,9 @@ def download(url, fileName, urlIsGzipped=None, fileIsGzipped=None, bgzip=None, i
 
 def downloadIfNotExists(url, fileName, urlIsGzipped=None, fileIsGzipped=None, overwrite=False, bgzip=None, **kwargs):
   if not(os.path.isfile(fileName)) or overwrite:
-    download(url, fileName, urlIsGzipped, fileIsGzipped, bgzip=bgzip, **kwargs)
-    return True
+    return download(url, fileName, urlIsGzipped, fileIsGzipped, bgzip=bgzip, **kwargs)
   #fi
-  return False
+  return 0
 #edef
 
 ###############################################################################
@@ -109,18 +161,12 @@ def vcfQueryWrapper(struct, chrom, start, end):
 
 ###############################################################################
 
-def gzopen(fileName, mode):
+def gzopen(fileName, mode="r", **kwargs):
   isGzipped = fileName[-2:] == "gz"
-  readMode  = mode == "r"
-
-  if isGzipped and readMode:
-    return gzip.open(fileName, "rb")
-  elif isGzipped and not(readMode):
-    return gzip.open(fileName, "wb")
-  elif not(isGzipped) and readMode:
-    return open(fileName, "r")
+  if isGzipped:
+    return gzip.open(fileName, mode, **kwargs)
   else:
-    return open(fileName, "w")
+    return open(fileName, mode, **kwargs)
   #fi
 #edef
 
@@ -144,6 +190,22 @@ def runCommand(cmd, bg=False, stdin=None, stdout=None, stderr=None, shell=False,
     (pid, r) = os.waitpid(p.pid, 0);
     return r;
   #fi
+#edef
+
+###############################################################################
+
+def getCommandOutput(cmd, stderr=None, shell=False, verbose=False):
+  if verbose:
+    print(cmd)
+  #fi
+
+  if not shell:
+    cmd = shlex.split(cmd)
+  #fi
+
+  p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=shell);
+  (pid, r) = os.waitpid(p.pid, 0);
+  return p.communicate()
 #edef
 
 ###############################################################################

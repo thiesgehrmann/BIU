@@ -1,0 +1,10 @@
+channels:
+ - hcc
+dependencies:
+ - pyvcf
+ - tabix
+ - neo4j-python-driver
+ - numpy
+ - pandas
+ - lftp 
+ - sqlite

@@ -1,5 +1,7 @@
 import gzip
 
+from .. import utils
+
 ###############################################################################
 
 class Fasta(object):
@@ -20,7 +22,6 @@ class Fasta(object):
   #edef
 
   def __str__(self):
-    print ("hello")
     dstr  = "Fasta object\n"
     dstr += " Where: %s\n" % self.fileName
     dstr += " Entries: %d\n" % len(self.entries)
@@ -49,7 +50,7 @@ class Fasta(object):
     if seqID in self.entries:
       return self.entries[seqID]
     else:
-      print("Error, unknown sequence '%s'" % seqID)
+      utils.error("Unknown sequence '%s'" % seqID)
       return ""
     #fi
   #edef

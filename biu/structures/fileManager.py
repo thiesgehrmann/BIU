@@ -1,10 +1,16 @@
+
+# Python modules
 import os
 import imp
 from pathlib import Path
 
+# Internal module
 from .. import utils as utils
+from ..config import settings as settings
 
 imp.reload(utils)
+
+#############################################################################
 
 class FileManager(object):
 
@@ -16,7 +22,10 @@ class FileManager(object):
 
   #############################################################################
 
-  def __init__(self, where, fileIndex, objects=None, downloadOnDemand=True, localCopy=None, **kwargs):
+  def __init__(self, fileIndex, where=None, objects=None, downloadOnDemand=True, localCopy=None, **kwargs):
+    if where is None:
+      where = settings.getWhere()
+    #fi
     self._where = os.path.abspath(where)
     self._fileIndex = fileIndex
     self._localCopy = localCopy
@@ -37,11 +46,15 @@ class FileManager(object):
       if item in self._fileIndex:
         url, fname, options = self._fileIndex[item]
         loc = self.getFileName(item)
-        if url is None:
+        if (url is None) and ("curlCommand" not in options):
           continue
         #fi
 
-        utils.downloadIfNotExists(url, loc, overwrite=overwrite, **options)
+        r = utils.downloadIfNotExists(url, loc, overwrite=overwrite, **options)
+        if r != 0:
+          utils.rmFile(loc)
+          utils.error("downloading '%s'" % item)
+          return r;
         if ("tabix" in options) and options["tabix"]:
           utils.tabix(loc, **options)
         #fi
@@ -61,10 +74,10 @@ class FileManager(object):
       if haveItem:
         continue
       elif self._downloadOnDemand:
-        print("Downloading %s" % item)
+        utils.dbm("Downloading %s" % item)
         self._download(what=[item])
         if not(self.haveFile(item)):
-          print("Error: Failed to download '%s'" % item)
+          utils.error("Failed to download '%s'" % item)
           return False
         #fi
       else:
@@ -81,7 +94,19 @@ class FileManager(object):
   #edef
 
   def getFileName(self, what):
+    #utils.dbm(self._fileIndex)
     return '%s/%s' % (self._where, self._fileIndex[what][1]) if what in self._fileIndex else None
+  #edef
+
+  def touchFile(self, what, alwaysTouch=False):
+    if not(self.haveFile(what)) or alwaysTouch:
+      dirname = os.path.dirname(self.getFileName(what))
+      if not(os.path.exists(dirname)):
+        utils.mkdirp(dirname)
+      #fi
+      utils.dbm("ok we will touch the file")
+      utils.touchFile(self.getFileName(what))
+    #fi
   #edef
 
   #############################################################################
@@ -99,17 +124,17 @@ class FileManager(object):
           if os.path.exists(currLoc) and os.path.islink(currLoc) and (str(Path(currLoc).resolve()) != loc):
             utils.runCommand("unlink '%s'" % currLoc)
             p = utils.runCommand("ln -s '%s' '%s'" % (loc, currLoc))
-            print(( "Made symbolic link for '%s'" if p == 0 else "Error using local copy of '%s'") % item)
+            utils.dbm(( "Made symbolic link for '%s'" if p == 0 else "Error using local copy of '%s'") % item)
           elif os.path.exists(currLoc) and os.path.islink(currLoc) and (str(Path(currLoc).resolve()) == loc):
-            print("Same symbolic link already exists for '%s'" %item)
+            utils.dbm("Same symbolic link already exists for '%s'" %item)
           elif not(os.path.exists(currLoc)):
             p = utils.runCommand("ln -s '%s' '%s'" % (loc, currLoc))
-            print(( "Made symbolic link for '%s'" if p == 0 else "Error using local copy of '%s'") % item)
+            utils.dbm(( "Made symbolic link for '%s'" if p == 0 else "Error using local copy of '%s'") % item)
           else:
-            print("Could not use local copy of '%s' as file already exists at '%s'" % (item, currLoc))
+            utils.error("Could not use local copy of '%s' as file already exists at '%s'" % (item, currLoc))
           #fi
         else:
-          print("Error: Local copy of '%s' does not exist" % item)
+          utils.error("Local copy of '%s' does not exist" % item)
         #fi
       #efor
     #fi

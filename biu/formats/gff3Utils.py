@@ -1,3 +1,6 @@
+from .. import utils
+
+
 import errno
 import os
 import csv
@@ -117,7 +120,8 @@ class GFF3(object):
     if ID in self.index:
       return self.index[ID][1]
     else:
-      return None
+      utils.error("No children found for '%s'" % ID)
+      return []
     #fi
   #edef
       
@@ -133,6 +137,10 @@ class GFF3(object):
         ids.extend([ (cdepth+1, c[0], c[1]) for c in self.getIDChildren(cid) ])
       #fi
     #ewhile
+
+    if feature is not None:
+      relEntries = [ r for r in relEntries if r.feature in feature ]
+    #fi
 
     if newObject:
       return GFF3(entries = relEntries)

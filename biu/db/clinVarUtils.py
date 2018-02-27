@@ -1,5 +1,5 @@
-from . import fileManager as fm
-from . import resourceManager as rm
+from ..structures import fileManager as fm
+from ..structures import resourceManager as rm
 from .. import utils
 
 ###############################################################################
@@ -78,7 +78,7 @@ def urlFileIndex(version):
       "inject":"sort -t $'\\t' -k19,19V -k 20,21n | awk -F $'\\t' 'BEGIN {OFS = FS} { if($19 != \"na\"){ print $0}}'"})
   files["sum_tbi"] = (None, 'summary.tsv.bgz.tbi', {})
 
-  return files
+  return { k : (u, 'clinvar_%s/%s' % (version, l), o) for (k, (u, l, o)) in files.items() }
 #edef
 
 def listVersions():
@@ -92,18 +92,13 @@ def listVersions():
 
 class ClinVar(fm.FileManager):
 
-  genomeID = None
-  where    = None
-  fileIndex = None
-
-  def __init__(self, version=list(versions.keys())[0], where='./', **kwargs):
-    fm.FileManager.__init__(self, where, urlFileIndex(version), [ "summary", "vcf" ], **kwargs)
+  def __init__(self, version=list(versions.keys())[0], **kwargs):
+    fm.FileManager.__init__(self, urlFileIndex(version), objects=[ "summary", "vcf" ], **kwargs)
     self.version = version
 
     # Define the objects in the clinVar fields
     self.summary = rm.TabixTSVResourceManager(self, "sum", "sum_tbi", fieldNames = clinVarSummaryFields)
     self.vcf     = rm.VCFResourceManager(self, "vcf", "vcf_tbi")
-
 
     self.addStrFunction(lambda s: "Version: %s" % self.version)
   #edef

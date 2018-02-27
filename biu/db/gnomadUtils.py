@@ -1,8 +1,6 @@
-import imp
-
-
-from . import fileManager as fm
-from . import resourceManager as rm
+from ..structures import fileManager as fm
+from ..structures import resourceManager as rm
+from ..config import settings as settings
 
 ###############################################################################
 
@@ -32,7 +30,7 @@ def urlFileIndex(version):
     files["chr_%s_cov_tbi" % chrID] = (None, 'gnomad.coverage.chr.%s.tsv.bgz.tbi' % chrID, {})
   #efor
 
-  return files
+  return { k : (u, 'gnomad_%s/%s' % (version, l), o) for (k, (u, l, o)) in files.items() }
 #edef
 
 def listVersions():
@@ -47,8 +45,8 @@ class Gnomad(fm.FileManager):
 
   version = None
 
-  def __init__(self, version=list(versions.keys())[0], where='./', **kwargs):
-    fm.FileManager.__init__(self, where, urlFileIndex(version), ["vcf", "cov"], **kwargs)
+  def __init__(self, version=list(versions.keys())[0], **kwargs):
+    fm.FileManager.__init__(self, urlFileIndex(version), objects=["vcf"] + [ ("cov", chrID) for chrID in versions[version]["chr" ] ], **kwargs)
     self.version = version
 
     self.vcf = rm.VCFResourceManager(self, "vcf", "vcf_tbi")
@@ -63,13 +61,31 @@ class Gnomad(fm.FileManager):
   _covEntryFields = [ "chrom", "pos", "mean", "median", "q1", "q5", "q10", "q15", "q20", "q25", "q30", "q50", "q100" ]
 
   def queryVCF(self, chromosome, start, end):
+    return self.query(chromosome, start, end)
+  #edef
+
+  def query(self, chromosome, start, end):
     return self.vcf.query(chromosome, start, end)
+  #edef
+
+  def queryRegions(self, regions):
+    return self.vcf.queryRegions(regions)
   #edef
 
   def queryCov(self, chromosome, start, end, **kwargs):
     chromosome = str(chromosome)
     return self.cov[chromosome].query(chromosome, start, end, **kwargs)
   #edef
+
+  def queryCovRegions(self, regions):
+    R = []
+    for (c,s,e) in regions:
+      for r in self.queryCov(c, s, e):
+        R.append(r)
+      #efor
+    #efor
+    return R
+  #edef 
     
 
 #eclass

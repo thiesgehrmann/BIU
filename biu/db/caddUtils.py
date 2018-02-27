@@ -1,6 +1,7 @@
 
-from . import fileManager as fm
-from . import resourceManager as rm
+from ..structures import fileManager as fm
+from ..structures import resourceManager as rm
+from ..config import settings as settings
 
 ###############################################################################
 
@@ -31,11 +32,11 @@ class CADD(fm.FileManager):
 
   version = None
 
-  def __init__(self, version=list(versions.keys())[0], where='./', **kwargs):
-    fm.FileManager.__init__(self, where, urlFileIndex(version), ["scores"], **kwargs)
+  def __init__(self, version=list(versions.keys())[0], **kwargs):
+    fm.FileManager.__init__(self, urlFileIndex(version), objects=["scores"], **kwargs)
     self.version = version
 
-    self.scores = rm.TabixTSVResourceManager(self, "tsv", "tsv_tbi", fieldNames=self._caddFields)
+    self.scores = rm.TabixTSVResourceManager(self, "tsv", "tsv_tbi", fieldNames=self._caddFields, **kwargs)
 
     self.addStrFunction(lambda s: "Version: %s" % self.version)
   #edef
