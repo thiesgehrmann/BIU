@@ -65,12 +65,21 @@ class SQLDict(fm.FileManager):
     #fi
   #edef
 
+  def _delete(self, key):
+    return self._sqlDict.execute("DELETE FROM data WHERE id IS ?;", [key])
+  #edef
+
   def __getitem__(self, key):
     return self._retrieve(key)
   #edef
 
   def __setitem__(self, key, value):
     return self._store(key, value)
+  #edef
+
+  def __delitem__(self, key):
+    del self._cache[key]
+    return self._delete(key)
   #edef
 
   def __contains__(self, key):
@@ -94,5 +103,27 @@ class SQLDict(fm.FileManager):
     v = self._iterKeys.pop()
     return v[0]
   #edef
+
+  def _loadCache(self):
+    res = self._sqlDict.execute("SELECT id, value FROM data;")
+    for r in res:
+      key, value = r
+      self._cache[key] = json.loads(value)
+    #efor
+  #edef
+
+  def keys(self):
+    self._loadCache()
+    return self._cache.keys()
+  #edef
+
+  def values(self):
+    self._loadCache()
+    return self._cache.values()
+  #edef
+
+  def items():
+    self._loadCache()
+    return self._cache.items()
  
 #eclass

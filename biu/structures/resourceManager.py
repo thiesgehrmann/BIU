@@ -149,6 +149,21 @@ class GFF3ResourceManager(ResourceManager, formats.GFF3):
 
 ###############################################################################
 
+class XLSXResourceManager(ResourceManager, formats.XLSX):
+  def __init__(self, fmObject, xlsxFile, **kwargs):
+    ResourceManager.__init__(self, fmObject, [ xlsxFile ])
+    if self._initialized:
+      formats.XLSX.__init__(self, fileName=self._fmObject.getFileName(xlsxFile), **kwargs)
+    #fi
+  #edef
+
+  def __str__(self):
+    return formats.XLSX.__str__(self)
+  #edef
+#eclass
+
+###############################################################################
+
 class FastaResourceManager(ResourceManager, formats.Fasta):
   def __init__(self, fmObject, fastaFile, fileSkipLines=0, fileMaxLines=None, **kwargs):
     ResourceManager.__init__(self, fmObject, [ fastaFile ], **kwargs)

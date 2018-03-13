@@ -95,7 +95,17 @@ class FileManager(object):
 
   def getFileName(self, what):
     #utils.dbm(self._fileIndex)
-    return '%s/%s' % (self._where, self._fileIndex[what][1]) if what in self._fileIndex else None
+    if what not in self._fileIndex:
+      utils.dbm("'%s' not in fileIndex." % what)
+      return None
+    #fi
+
+    url, loc, options = self._fileIndex[what]
+    if options.get("localCopy", False):
+      return loc
+    else:
+      return '%s/%s' % (self._where, loc)
+    #fi
   #edef
 
   def touchFile(self, what, alwaysTouch=False):
@@ -129,7 +139,12 @@ class FileManager(object):
             utils.dbm("Same symbolic link already exists for '%s'" %item)
           elif not(os.path.exists(currLoc)):
             p = utils.runCommand("ln -s '%s' '%s'" % (loc, currLoc))
-            utils.dbm(( "Made symbolic link for '%s'" if p == 0 else "Error using local copy of '%s'") % item)
+            if p == 0:
+              utils.dbm("Made symbolic link for '%s'" % item)
+            else: 
+              utils.dbm("Could not make Symbolic link for '%s'. Rewriting internal location." % item)
+              self._fileIndex[item] = (None, loc, {"localCopy" : True})
+            #fi
           else:
             utils.error("Could not use local copy of '%s' as file already exists at '%s'" % (item, currLoc))
           #fi

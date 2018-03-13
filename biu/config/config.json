@@ -4,5 +4,11 @@
 
   "neo4j_install_dir" : "/exports/molepi/tgehrmann/src/neo4j",
   "debug_messages" : true,
-  "debug_stream" : "stderr"
+  "debug_stream" : "stderr",
+
+  "pipelines_base" : "/exports/molepi/tgehrmann/pipeline_runs",
+  "pipelines_common_name" : "common",
+  "pipelines_temporary_indir_name" : "temporary_input",
+  "pipelines_conda_prefix_name" : "conda"
+ 
 }

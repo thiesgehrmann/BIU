@@ -43,7 +43,29 @@ class globalSettings(object):
   def setWhere(self, where):
     self.setSettings(where=where)
   #edef
-  
+
+  ###############################################################################
+
+  def getPipelineOutdir(self):
+    return self.getSetting("pipelines_base")
+  #edef
+
+  def setPipelineOutdir(self, outdir):
+    self.setSetting(pipelines_outdir_base=outdir)
+  #edef
+
+  def getPipelineTemporaryInputDir(self):
+    return '%s/%s' % (self.getPipelineOutdir(), self.getSetting("pipelines_temporary_indir_name"))
+  #edef
+
+  def getPipelineCondaPrefixDir(self):
+    return '%s/%s' % (self.getPipelineOutdir(), self.getSetting("pipelines_conda_prefix_name"))
+  #edef
+
+  def getPipelineCommonDir(self):
+    return '%s/%s' % (self.getPipelineOutdir(), self.getSetting("pipelines_common_name"))
+  #edef
+
   ###############################################################################
   
   def getNeo4jDir(self):

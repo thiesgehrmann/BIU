@@ -17,7 +17,7 @@ versions = {
     "chr" : [ "1" ,"2" ,"3" ,"4" ,"5" ,"6" ,"7" ,"8" ,"9" ,"10" ,"11" ,"12" ,"13" ,"14" ,"15" ,"16" ,"17" ,"18" ,"19" ,"20" ,"21" ,"22", "X", "Y" ],
     "cdsURL" : "ftp://ftp.ensembl.org/pub/grch37/update/fasta/homo_sapiens/cds/Homo_sapiens.GRCh37.cds.all.fa.gz" },
 
-  "Ensembl_91" : {
+  "Ensembl_GRCh38_91" : {
     "cdsURL" : "ftp://ftp.ensembl.org/pub/release-91/fasta/homo_sapiens/cds/Homo_sapiens.GRCh38.cds.all.fa.gz",
     "aaURL" :  "ftp://ftp.ensembl.org/pub/release-91/fasta/homo_sapiens/pep/Homo_sapiens.GRCh38.pep.all.fa.gz",
     "genomeURLs" : { chr : "ftp://ftp.ensembl.org/pub/release-91/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.chromosome.%s.fa.gz" % chr for chr in [ "1" ,"2" ,"3" ,"4" ,"5" ,"6" ,"7" ,"8" ,"9" ,"10" ,"11" ,"12" ,"13" ,"14" ,"15" ,"16" ,"17" ,"18" ,"19" ,"20" ,"21" ,"22", "MT", "X", "Y" ] },

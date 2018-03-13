@@ -1,0 +1,38 @@
+###############################################################################
+# VEP PIPELINE                                                                #
+###############################################################################
+rule vep_prepare:
+  output:
+    outdir = '%s/vep_genomes/%s_%s' % (config["common_dir"], config["install_species"], config["install_assembly"])
+  conda: "conda.yaml"
+  params:
+    species=config["install_species"],
+    assembly=config["install_assembly"]
+  shell: """
+    echo "Producing the VEP cache. This WILL take a while..."
+    mkdir -p "{output.outdir}"
+    PERL5LIB="" vep_install -a cf -s "{params.species}" -y "{params.assembly}" -c "{output.outdir}"
+  """
+
+rule vep:
+  input:
+    vcf = config["vcf_file"],
+    cachedir = rules.vep_prepare.output.outdir
+  output:
+    res = "%s/result.txt" % config["outdir"]
+  params:
+    options = config["vep_options"]
+  conda: "conda.yaml"
+  threads: 2
+  shell: """
+    PERL5LIB="" vep --fork {threads} --offline --cache "{input.cachedir}" --dir "{input.cachedir}" {params.options} -i "{input.vcf}" -o "{output.res}"
+  """
+
+rule output:
+  input:
+    res = rules.vep.output.res
+  output:
+    res = "%s/%s" % (config["outdir"], config["output_file_name"])
+  shell: """
+    ln -s "{input.res}" "{output.res}"
+  """

@@ -46,6 +46,8 @@ class LLS(fm.FileManager):
       self.vcf[chrID] = rm.VCFResourceManager(self, "vcf_%s" % chrID, "vcf_%s_tbi" % chrID)
     #efor
 
+    self.phenotypes = rm.TSVResourceManager(self, "phen", delimiter=' ') 
+
     self.addStrFunction(lambda s: "Version: %s" % self.version)
   #edef
 

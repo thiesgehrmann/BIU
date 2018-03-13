@@ -5,6 +5,7 @@ import os
 import shlex, subprocess, os;
 import csv
 import sys
+import hashlib
 from collections import namedtuple
 
 from ..config import settings as settings
@@ -16,6 +17,15 @@ def stripkwargs(kwargs):
 
   return { k : kwargs[k] for k in kwargs if k not in internalKwargs }
 #edef
+
+###############################################################################
+
+def mkdirname(fileName):
+  dirname = os.path.dirname(fileName)
+  return mkdirp(dirname)
+#edef
+
+###############################################################################
 
 def mkdirp(directory):
   #pathlib.Path(directory).mkdir(parents=True, exist_ok=True)
@@ -35,6 +45,7 @@ def rmFile(fileName):
 ###############################################################################
 
 def touchFile(fileName):
+  mkdirname(fileName)
   p = runCommand("touch '%s'" % fileName)
   return p
 #edef
@@ -242,3 +253,20 @@ def readNamedColumnTsvFile(fileName,
   return D
 #edef
 
+
+###############################################################################
+
+def hashArray(arr, strategy="tmb", f=hashlib.md5):
+  h = f()
+
+  if strategy == 'tmb':
+    middle = int(len(arr) / 2)
+    for o in arr[:10] + arr[middle:middle+10] + arr[:-10]:
+      h.update(str(o).encode())
+    #efor
+  #fi
+
+  return h.hexdigest()
+#edef
+
+###############################################################################

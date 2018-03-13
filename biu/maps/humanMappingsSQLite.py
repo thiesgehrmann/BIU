@@ -32,7 +32,7 @@ class HumanMapping(fm.FileManager):
 
     dbFile = self.getFileName("sqlite_db")
 
-    self.touchIfNotExists("sqlite_db")
+    self.touchFile("sqlite_db")
     self.sqlite = rm.SQLiteResourceManager(self, "sqlite_db")
 
     tableDetails = {

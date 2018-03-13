@@ -40,9 +40,12 @@ from .goUtils import listVersions as listGOVersions
 from .keggUtils import KEGG as KEGG
 from .keggUtils import listVersions as listKEGGVersions
 
+from .mirmineUtils import MiRmine as MiRmine
+from .mirmineUtils import listVersions as listMiRmineVersions
+
 def list():
   print("Available databases:")
-  for db in sorted(["Genomes", "CADD", "ClinVar", "Gnomad", "GTeX", "UniProt", "Cosmic", "HAGR", "Reactome", "LLS", "BBMRI", "GO", "KEGG" ]):
+  for db in sorted(["Genomes", "CADD", "ClinVar", "Gnomad", "GTeX", "UniProt", "Cosmic", "HAGR", "Reactome", "LLS", "BBMRI", "GO", "KEGG", "MiRmine" ]):
     print(" * %s" % db)
   #efor
 #eclass
@@ -83,5 +86,8 @@ def listVersions():
 
   print("KEGG:")
   listKEGGVersions()
+
+  print("MiRmine:")
+  listMiRmineVersions()
 
 #edef
