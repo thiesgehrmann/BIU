@@ -147,8 +147,8 @@ class VCFResourceManager(ResourceManager):
   def queryRegions(self, regions, **kwargs):
     R = []
     for (seqid, start, end) in regions:
-      for r in self.query(seqid, start, end):
-        R.append(R)
+      for r in self.query(seqid, start, end, **kwargs):
+        R.append(r)
     #efor
     return R
   #edef

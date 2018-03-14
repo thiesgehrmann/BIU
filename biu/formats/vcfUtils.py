@@ -17,8 +17,12 @@ def query(VCFstruct, chrom, start, end):
 
 ###############################################################################
 
-def makeIdentifier(record):
-  alts = [ a.sequence if hasattr(a, "sequence") else "-" for a in record.ALT ]
+def makeIdentifier(record, altPos=None):
+  if altPos is not None:
+    alts = [ record.ALT[altPos].sequence if hasattr(record.ALT[altPos], "sequence") else '-' ]
+  else:
+    alts = [ a.sequence if hasattr(a, "sequence") else "-" for a in record.ALT ]
+  #fi
   return "%s-%d-%s-%s" % (record.CHROM, record.POS, record.REF, '/'.join(alts))
 #edef
 
@@ -157,22 +161,45 @@ def extract(arr, extract=None):
 
 ###############################################################################
 
-def summary(arr):
-  # Basically copied from Erik's getGenoCountsFromMat function
+def summary(arr, altPos=None, refPos=None):
+  # Basically copied from Erik's getGenoCountsFromMat function,
+  # except that I WANT TO ALLOW FOR SUMMARIES FROM NON 0/1 genotype calls, but also for 1/2 0/2 etc...
+  # NEED TO ADAPT THIS!
 
-  def singleSummary(record):
+  def singleSummary(record, refp, altp):
     gtypes = [ s.data.GT if hasattr(s.data, "GT") else '-' for s in  record.samples ]
-    S = ( makeIdentifier(record),
-          len([ x for x in gtypes if x in [ "0/0","0|0" ] ]),
-          len([ x for x in gtypes if x in [ "0" ] ]),
-          len([ x for x in gtypes if x in [ "0/1","1/0","1|0","0|1" ] ]),
-          len([ x for x in gtypes if x in [ "1" ] ]),
-          len([ x for x in gtypes if x in [ "1/1","1|1" ] ]),
-          len([ x for x in gtypes if x not in [ "0","0/0","0|0", "1","0/1","0|1","1/0","1|0","1/1","1|1" ] ]) )
+    #S = ( makeIdentifier(record, ),
+    #      len([ x for x in gtypes if x in [ "0/0","0|0" ] ]),
+    #      len([ x for x in gtypes if x in [ "0" ] ]),
+    #      len([ x for x in gtypes if x in [ "0/1","1/0","1|0","0|1" ] ]),
+    #      len([ x for x in gtypes if x in [ "1" ] ]),
+    #      len([ x for x in gtypes if x in [ "1/1","1|1" ] ]),
+    #      len([ x for x in gtypes if x not in [ "0","0/0","0|0", "1","0/1","0|1","1/0","1|0","1/1","1|1" ] ]) )
+    S = ( makeIdentifier(record, altp-1),
+          len([ x for x in gtypes if x in [ "%d/%d" % (refp, refp),"%d|%d" % (refp,refp) ] ]),
+          len([ x for x in gtypes if x in [ "%d" % refp ] ]),
+          len([ x for x in gtypes if x in [ "%d/%d" % (refp, altp),"%d/%d" % (altp, refp), "%d|%d" % (altp, refp),"%d|%d" % (refp, altp) ] ]),
+          len([ x for x in gtypes if x in [ "%d" % (altp) ] ]),
+          len([ x for x in gtypes if x in [ "%d/%d" % (altp, altp),"%d|%d" % (altp, altp) ] ]),
+          len([ x for x in gtypes if x not in [ "%d" % refp, "%d/%d" % (refp, refp) ,"%d|%d" % (refp, refp), "%d" % altp, "%d/%d" % (refp, altp),"%d|%d" % (refp, altp),"%d/%d" % (altp, refp),"%d|%d" % (altp, refp), "%d/%d" % (altp, altp),"%d|%d" % (altp, altp) ] ]) )
     return S
   #edef
 
-  return pd.DataFrame([ singleSummary(r) for r in arr], columns=[ "id", "RR", "R", "RA", "A", "AA", "U"])
+  return pd.DataFrame( [ singleSummary(v, 0 if refPos is None else refPos[i], 1 if altPos is None else altPos[i] ) for i,v in enumerate(arr)], 
+                       columns=[ "id", "RR", "R", "RA", "A", "AA", "U"])
+#edef
+
+###############################################################################
+
+def genotypeInfoFieldIndexes(altAlleleID, ref=0):
+    """ For multi-allelic sites, genotype INFO fields have a particular order.
+        If we want to extract information from these fields for a specific variant allele, we need to be able to reconstruct this order for an arbitrary number of alleles.
+        The order is defined in the VCF specification, and implemented here.
+        Search for 'GL : genotype likelihoods' in VCF spec.
+        F(j/k) = (k*(k+1)/2)+j. I """
+    
+    F = lambda k,j : int(k*(k+1)/2)+j
+    return [ F(ref, ref), F(ref, altAlleleID), F(altAlleleID,altAlleleID) ]
 #edef
 
 ###############################################################################

@@ -1,6 +1,9 @@
 from ..structures import fileManager as fm
 from ..structures import resourceManager as rm
 from ..config import settings as settings
+from .. import formats
+
+import pandas as pd
 
 ###############################################################################
 
@@ -65,11 +68,53 @@ class Gnomad(fm.FileManager):
   #edef
 
   def query(self, *args, **kwargs):
-    return self.vcf.query(*args, **kwargs)
+    return self.queryRegions([ tuple(args) ], **kwargs)
   #edef
 
-  def queryRegions(self, *args, **kwargs):
-    return self.vcf.queryRegions(*args, **kwargs)
+  def queryRegions(self, *args, extract=None, **kwargs):
+    res = self.vcf.queryRegions(*args, extract=None, **kwargs)
+    if extract == "summary":
+      return self.summary(res)
+    #fi
+    return res
+  #edef
+
+  def summary(self, arr, altPos=None):
+    def singleSummary(var, altp):
+      gcIndexes  = formats.VCF.genotypeInfoFieldIndexes(altp+1)
+      gcmale   = [ var.INFO["GC_Male"][i] for i in gcIndexes ] if "GC_Male" in var.INFO else [0, 0, 0]
+      gcfemale   = [ var.INFO["GC_Female"][i] for i in gcIndexes ] if "GC_Female" in var.INFO else [0, 0, 0]
+      
+      rr = 0
+      r  = 0
+      ra = 0
+      a  = 0
+      aa = 0
+      u  = 0
+
+      chrom = var.CHROM.lower()      
+      if chrom == 'y':
+        a = var.INFO["AC"][altp]
+        r = var.INFO["AN"] - a
+      elif chrom == 'x':
+        rr = gcfemale[0]
+        ra = gcfemale[1]
+        aa = gcfemale[2]
+        r = gcmale[0]
+        a = gcmale[1]
+      else:
+        rr = gcmale[0] + gcfemale[0]
+        ra = gcmale[1] + gcfemale[1]
+        aa = gcmale[2] + gcfemale[2]
+      #fi
+      
+      return pd.DataFrame( [(formats.VCF.makeIdentifier(var, altp), rr, r, ra, a, aa, u)],
+                           columns = ["id", "RR", "R", "RA", "A", "AA", "U"])
+    #edef
+
+    S = [ singleSummary(v, 0 if altPos is None else altPos[i]) for i,v in enumerate(arr) ]
+    S = pd.concat([ s for s in S if s is not None ])
+    return S
   #edef
 
   def queryCov(self, chromosome, start, end, **kwargs):

@@ -1,7 +1,11 @@
 # BIU (BIo Utilities)
 
-Tools I developed to manage biological data sets
+Toolkit I developed to manage biological datatypes/datasets/pipelines/analysis
 
-# Example usage
+## Documentation
 
-See [example.ipynb](example.ipynb) for an example usage
+See [Documentation](docs) for documentation.
+
+## Example usage
+
+See [example.ipynb](example.ipynb) for an example usage.
