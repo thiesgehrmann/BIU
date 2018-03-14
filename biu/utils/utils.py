@@ -54,7 +54,7 @@ def touchFile(fileName):
 
 def dbm(message):
   if settings.getDebugState():
-    for line in message.split('\n'):
+    for line in str(message).split('\n'):
       if settings.getDebugStream == 'stdout':
         sys.stdout.write('D: %s\n' % line)
       else:
@@ -67,7 +67,7 @@ def dbm(message):
 ###############################################################################
 
 def error(message):
-  for line in message.split('\n'):
+  for line in str(message).split('\n'):
     sys.stderr.write('E: %s\n' % line)
   #efor
 #edef
@@ -150,20 +150,11 @@ def tabix(fileName, seqField=1, beginField=2, endField=3, ignoreExtension=False,
   #fi
 #edef
 
+###############################################################################
+
 def tabixQueryWrapper(struct, chrom, start, end):
   try:
     return struct.query(str(chrom), int(start), int(end))
-  except Exception as e:
-    print(e)
-    return []
-  #etry
-#edef
-
-###############################################################################
-
-def vcfQueryWrapper(struct, chrom, start, end):
-  try:
-    return struct.fetch(str(chrom), int(start), int(end))
   except Exception as e:
     print(e)
     return []

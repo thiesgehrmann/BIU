@@ -60,16 +60,16 @@ class Gnomad(fm.FileManager):
 
   _covEntryFields = [ "chrom", "pos", "mean", "median", "q1", "q5", "q10", "q15", "q20", "q25", "q30", "q50", "q100" ]
 
-  def queryVCF(self, chromosome, start, end):
-    return self.query(chromosome, start, end)
+  def queryVCF(self, chromosome, start, end, **kwargs):
+    return self.query(chromosome, start, end, **kwargs)
   #edef
 
-  def query(self, chromosome, start, end):
-    return self.vcf.query(chromosome, start, end)
+  def query(self, *args, **kwargs):
+    return self.vcf.query(*args, **kwargs)
   #edef
 
-  def queryRegions(self, regions):
-    return self.vcf.queryRegions(regions)
+  def queryRegions(self, *args, **kwargs):
+    return self.vcf.queryRegions(*args, **kwargs)
   #edef
 
   def queryCov(self, chromosome, start, end, **kwargs):
@@ -77,10 +77,10 @@ class Gnomad(fm.FileManager):
     return self.cov[chromosome].query(chromosome, start, end, **kwargs)
   #edef
 
-  def queryCovRegions(self, regions):
+  def queryCovRegions(self, regions, **kwargs):
     R = []
     for (c,s,e) in regions:
-      for r in self.queryCov(c, s, e):
+      for r in self.queryCov(c, s, e, **kwargs):
         R.append(r)
       #efor
     #efor

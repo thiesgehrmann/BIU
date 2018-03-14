@@ -105,8 +105,16 @@ class ClinVar(fm.FileManager):
 
   ###############################################################################
 
-  def queryVCF(self, chromosome, start, end):
-    return self.vcf.query(chromosome, start, end)
+  def queryVCF(self, *args, **kwargs):
+    return self.vcf.query(*args, **kwargs)
+  #edef
+
+  def queryRegions(self, *args, **kwargs):
+    return self.vcf.queryRegions(*args, **kwargs)
+  #edef
+
+  def query(self, chromosome, start, end, **kwargs):
+    return self.query(chromosome, start, end, **kwargs)
   #edef
 
   def querySummary(self, chromosome, start, end):

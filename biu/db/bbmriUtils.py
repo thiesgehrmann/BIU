@@ -48,20 +48,20 @@ class BBMRI(fm.FileManager):
     self.addStrFunction(lambda s: "Version: %s" % self.version)
   #edef
 
-  def query(self, chrID, start, end):
+  def query(self, chrID, start, end, **kwargs):
     chrID = str(chrID)
     if chrID in self.vcf:
-      return self.vcf[chrID].query(chrID, start, end)
+      return self.vcf[chrID].query(chrID, start, end, **kwargs)
     else:
       utils.error("Could not find chromosome '%s'" % chrID)
       return iter(())
     #fi
   #edef
 
-  def queryRegions(self, regions):
+  def queryRegions(self, regions, **kwargs):
     R = []
     for (c,s,e) in regions:
-      R.extend(list(self.query(c,s,e)))
+      R.extend(list(self.query(c,s,e, **kwargs)))
     #efor
     return R
   #edef

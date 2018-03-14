@@ -1,10 +1,13 @@
 from . import Pipeline
+from .. import formats
 
 import vcf
 import pandas as pd
 
 import inspect, os
 snakemakeFile  = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) + '/vep/Snakefile'
+
+###############################################################################
 
 class VEP(Pipeline):
 
@@ -42,8 +45,7 @@ class VEP(Pipeline):
     if not(exists):
       with open(fileName, "w") as ofd:
         for record in vcfArray:
-           alts = [ a.sequence if hasattr(a, "sequence") else "-" for a in record.ALT ]
-           ofd.write("%s\t%d\t%d\t%s\t%s\t%s\n" % (record.CHROM, record.POS, record.POS, '%s/%s' % ( record.REF, '/'.join(alts)), '+', "%s-%d-%s-%s" % (record.CHROM, record.POS, record.REF, '/'.join(alts)))) 
+           ofd.write("%s\t%d\t%d\t%s\t%s\t%s\n" % (record.CHROM, record.POS, record.POS, '%s/%s' % ( record.REF, '/'.join(alts)), '+', formats.VCF.makeIdentifier(record))) 
         #efor
       #ewith
     #fi

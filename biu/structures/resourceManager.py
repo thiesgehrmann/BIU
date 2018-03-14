@@ -7,9 +7,8 @@ import json
 
 # Internal modules
 from .. import formats
-
-from ..config import settings as settings
 from .. import utils
+from ..config import settings as settings
 
 from .lazyObject import LazyObject
 
@@ -30,7 +29,7 @@ class ResourceManager(LazyObject):
   _requiredFiles = None
 
   def __init__(self, fmObject, requiredFiles, **kwargs):
-    utils.dbm("Initializing the object NOW")
+    utils.dbm("Initializing the %s object NOW" % type(self).__name__)
     self._fmObject = fmObject
     self._requiredFiles = requiredFiles
     if not(fmObject.satisfyRequiredFiles(requiredFiles)):
@@ -119,11 +118,33 @@ class VCFResourceManager(ResourceManager):
     #fi
   #edef
 
-  def query(self, seqid, start, end, pandas=False, namedtuple=False, tabixIter=True):
-    return utils.vcfQueryWrapper(self._resource, seqid, start, end)
+  def query(self, seqid, start, end,
+    filters=None,
+    gtFilters=None,
+    sampleFilters=None,
+    types=None,
+    subTypes=None,
+    extract=None, **kwargs):
+    """ This function is hacked together from the pyVCF _Record and _Call classes. I hope that their definitions don't change anytime soon.
+    """
+
+    res = formats.VCF.query(self._resource, seqid, start, end)
+
+    # Filter out variants and samples
+    # To filter out samples, we need to modify the _Call.samples and _sample_indexes variables.
+    # In my version of pyvcf, the is_filtered function is not defined for some reason, so I add it here.
+
+    res = formats.VCF.filterType(res, types=types)
+    res = formats.VCF.filterSubTypes(res, subTypes=subTypes)
+    res = formats.VCF.filter(res, gtFilters=gtFilters)
+    res = formats.VCF.filterSamples(res, sampleFilters=sampleFilters)
+
+    res = formats.VCF.extract(res, extract=extract)
+
+    return res
   #edef
 
-  def queryRegions(self, regions):
+  def queryRegions(self, regions, **kwargs):
     R = []
     for (seqid, start, end) in regions:
       for r in self.query(seqid, start, end):
@@ -179,16 +200,6 @@ class FastaResourceManager(ResourceManager, formats.Fasta):
 
 ###############################################################################
 
-#class ZipFileResourceManager(ResourceManager):
-#  def __init__(self, fmObject, zipFile, filePath, outFilePath, **kwargs):
-#    ResourceManager.__init__(self, fmObject, zipFile, **kwargs)
-#    if self._initialized:
-#      self._fmObject._fileIndex["zipFile : " + filePath] = (None, outFilePath), {})
-#      utils.runCommand("unzip -p '%s' > '%s'" % (self._fmObject.getFileName(zipFile), outFilePath))
-#    #fi
-#  #edef
-##eclass
-
 class SQLiteResourceManager(ResourceManager, formats.SQLite):
 
   def __init__(self, fmObject, sqliteFile, **kwargs):
@@ -203,6 +214,8 @@ class SQLiteResourceManager(ResourceManager, formats.SQLite):
   #edef
 #eclass
 
+###############################################################################
+
 class GAFResourceManager(ResourceManager, formats.GAF):
   def __init__(self, fmObject, gafFile, **kwargs):
     ResourceManager.__init__(self, fmObject, [ gafFile ], **kwargs)
@@ -215,6 +228,8 @@ class GAFResourceManager(ResourceManager, formats.GAF):
     return formats.GAF.__str__(self)
   #edef
 #eclass
+
+###############################################################################
 
 class TSVMapResourceManager(TSVResourceManager):
   _mapping = None

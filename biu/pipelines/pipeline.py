@@ -9,6 +9,8 @@ from snakemake import snakemake
 from ..config import settings as settings
 from .. import utils
 
+###############################################################################
+
 def defaultSnakemakeOptions():
   return {
    "use_conda" : True,
@@ -16,12 +18,16 @@ def defaultSnakemakeOptions():
   }
 #edef
 
+###############################################################################
+
 def defaultSnakemakeConfig(name):
   return {
     "common_dir" : "%s/%s" % (settings.getPipelineCommonDir(), name),
     "tmp_dir" : "%s/%s" % (settings.getPipelineTemporaryInputDir(), name)
   }
 #edef
+
+###############################################################################
 
 class Pipeline(object):
   

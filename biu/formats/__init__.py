@@ -5,3 +5,5 @@ from .gafUtils import GAF as GAF
 from .xlsxUtils import XLSX as XLSX
 
 from .sqlDictUtils import SQLDict as SQLDict
+
+from . import vcfUtils as VCF
