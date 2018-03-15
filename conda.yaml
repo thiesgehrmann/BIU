@@ -10,3 +10,4 @@ dependencies:
  - sqlite
  - openpyxl
  - scikit-learn
+ - intervaltree

@@ -110,48 +110,19 @@ class TabixTSVResourceManager(ResourceManager):
 
 ###############################################################################
 
-class VCFResourceManager(ResourceManager):
-  def __init__(self, fmObject, vcfFile, tabixFile, fieldNames=None, **kwargs):
+class VCFResourceManager(ResourceManager, formats.VCF):
+  def __init__(self, fmObject, vcfFile, tabixFile, **kwargs):
     ResourceManager.__init__(self, fmObject, [ vcfFile, tabixFile ], **kwargs)
     if self._initialized:
-      self._resource = vcf.Reader(filename=self._fmObject.getFileName(vcfFile), compressed=True, **kwargs)
+      formats.VCF.__init__(self, self._fmObject.getFileName(vcfFile), tabix=True, **kwargs)
     #fi
   #edef
 
-  def query(self, seqid, start, end,
-    filters=None,
-    gtFilters=None,
-    sampleFilters=None,
-    types=None,
-    subTypes=None,
-    extract=None, **kwargs):
-    """ This function is hacked together from the pyVCF _Record and _Call classes. I hope that their definitions don't change anytime soon.
-    """
-
-    res = formats.VCF.query(self._resource, seqid, start, end)
-
-    # Filter out variants and samples
-    # To filter out samples, we need to modify the _Call.samples and _sample_indexes variables.
-    # In my version of pyvcf, the is_filtered function is not defined for some reason, so I add it here.
-
-    res = formats.VCF.filterType(res, types=types)
-    res = formats.VCF.filterSubTypes(res, subTypes=subTypes)
-    res = formats.VCF.filter(res, gtFilters=gtFilters)
-    res = formats.VCF.filterSamples(res, sampleFilters=sampleFilters)
-
-    res = formats.VCF.extract(res, extract=extract)
-
-    return res
+  def __str__(self):
+    return formats.VCF.__str__(self)
   #edef
 
-  def queryRegions(self, regions, **kwargs):
-    R = []
-    for (seqid, start, end) in regions:
-      for r in self.query(seqid, start, end, **kwargs):
-        R.append(r)
-    #efor
-    return R
-  #edef
+#eclass
 
 ###############################################################################
 

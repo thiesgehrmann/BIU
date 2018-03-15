@@ -32,14 +32,19 @@ class SQLDict(fm.FileManager):
   _sqlDict = None
   _cache   = None
 
-  def __init__(self, name, **kwargs):
-    fm.FileManager.__init__(self, urlFileIndex(name), objects=[ "_sqlDict" ], **kwargs)
+  def __init__(self, name, load=False, where=None, **kwargs):
+
+    fm.FileManager.__init__(self, urlFileIndex(name), objects=[ "_sqlDict" ], where=where, **kwargs)
     self._sqlDict = rm.SQLiteResourceManager(self, "sqlite_db")
     self._cache   = {}
 
     if not(self.haveFile("sqlite_db")):
       self.touchFile("sqlite_db")
       self._sqlDict.execute("CREATE TABLE data(id STRING PRIMARY KEY, value TEXT);")
+    #fi
+
+    if load:
+      self.load()
     #fi
   #edef
 
@@ -104,7 +109,7 @@ class SQLDict(fm.FileManager):
     return v[0]
   #edef
 
-  def _loadCache(self):
+  def load(self):
     res = self._sqlDict.execute("SELECT id, value FROM data;")
     for r in res:
       key, value = r

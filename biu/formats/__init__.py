@@ -1,9 +1,9 @@
 from .fastaUtils import Fasta as Fasta
 from .gff3Utils import GFF3 as GFF3
-from .sqliteUtils import SQLite as SQLite
+from .vcfUtils import VCF as VCF
 from .gafUtils import GAF as GAF
 from .xlsxUtils import XLSX as XLSX
+from .seqUtils import Sequence as Sequence
 
+from .sqliteUtils import SQLite as SQLite
 from .sqlDictUtils import SQLDict as SQLDict
-
-from . import vcfUtils as VCF

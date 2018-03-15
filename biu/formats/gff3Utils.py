@@ -1,6 +1,5 @@
 from .. import utils
 
-
 import errno
 import os
 import csv
@@ -49,21 +48,21 @@ class GFF3(object):
   _parentField = None
   _nameField = None
 
-  def __init__(self, entries=None, fileName=None, idField=idField, parentField=parentField, nameField=nameField, **kwargs):
-    if (fileName is not None) and entries is None:
-      self._fileName = fileName
-      entries = readGFF3File(fileName, **kwargs)
-    #fi
-
+  def __init__(self, data, idField=idField, parentField=parentField, nameField=nameField, **kwargs):
     self._idField = idField
     self._parentField = parentField
     self._nameField = nameField
 
-    if entries is not None:
-      self.entries = entries
-      self.seqids  = set([ e.seqid for e in self.entries])
-      self.index, self.topLevel = self._index()
+    if isinstance(data, str):
+      utils.dbm("GFF input source is file.")
+      self._fileName = data
+      self.entries = readGFF3File(data, **kwargs)
+    else:
+      utils.dbm("GFF input source is list of GFF3Entries.")
+      self.entries = data
     #fi
+    self.seqids  = set([ e.seqid for e in self.entries])
+    self.index, self.topLevel = self._index()
   #edef
 
   def __str__(self):
@@ -140,6 +139,21 @@ class GFF3(object):
 
     if feature is not None:
       relEntries = [ r for r in relEntries if r.feature in feature ]
+    #fi
+
+    # Strip the parent tag if the parent == ID
+    # "seqid, source, feature, start, end, score, strand, phase, attr"
+    if not(containParent):
+      E = []
+      for e in relEntries:
+        if self._parentField(e) == ID:
+          attr = { k : v for (k,v) in e.attr.items() if v != ID }
+          E.append(gff3Entry(e.seqid, e.source, e.feature, e.start, e.end, e.score, e.strand, e.phase, attr))
+        else:
+          E.append(e)
+        #fi
+      #efor
+      relEntries = E
     #fi
 
     if newObject:

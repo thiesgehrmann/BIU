@@ -74,6 +74,14 @@ def error(message):
 
 ###############################################################################
 
+def warning(message):
+  for line in str(message).split('\n'):
+    sys.stderr.write('W: %s\n' % line)
+  #efor
+#edef
+
+###############################################################################
+
 def download(url, fileName, urlIsGzipped=None, fileIsGzipped=None, bgzip=None, zipPath=None, inject=None, curlCommand=None, **kwargs):
   """
     Available options

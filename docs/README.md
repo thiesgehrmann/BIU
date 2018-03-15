@@ -8,15 +8,15 @@ The BIU toolkit contains many many utilities that help my analysis. Here I provi
 
 ## Accessing/Handling different formats
  * Standard Bioinformatics formats
-  * Fasta Files : biu.formats.Fasta
-  * GFF3 Files : biu.formats.GFF3
-  * VCF Files : biu.formats.VCF
-  * XLSX Files : biu.formats.XLSX
-  * GAF Filies : biu.formats.GAF
+  * Fasta Files : (biu.formats.Fasta)[biu.formats.Fasta.ipynb]
+  * GFF3 Files :  (biu.formats.GFF3)[biu.forbiu.formats.GFF3.ipynb]
+  * VCF Files :   (biu.formats.VCF)[biu.forbiu.formats.VCF.ipynb]
+  * XLSX Files :  (biu.formats.XLSX)[biu.forbiu.formats.XLSX.ipynb]
+  * GAF Filies :  (biu.formats.GAF)[biu.forbiu.formats.GAF.ipynb]
 
  * Additional formats
-  * SQLite Databases : biu.formats.SQLite
-  * SQLite Dictionary : biu.formats.SQLDict
+  * SQLite Databases :  (biu.formats.SQLite)[biu.formats.SQLite.ipynb]
+  * SQLite Dictionary : (biu.formats.SQLDict)[biu.formats.SQLDict.ipynb]
 
 ## Databases
 
