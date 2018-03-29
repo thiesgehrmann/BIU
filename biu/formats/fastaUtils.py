@@ -8,69 +8,69 @@ from .seqUtils import Sequence
 
 class Fasta(object):
 
-  entries = None
-  fileName = None
+  __entries = None
+  __fileName = None
 
-  def __init__(self, data, entries=None, fileName=None, seqType=Sequence.DNATYPE):
+  def __init__(self, data, seqType=Sequence.DNATYPE):
     if isinstance(data, str):
       utils.dbm("Fasta input source is file")
-      self.entries = Fasta.loadFasta(data, seqType)
-      self.fileName = data
+      self.__entries = Fasta.loadFasta(data, seqType)
+      self.__fileName = data
     else:
       if isinstance(data, dict):
         utils.dbm("Fasta input source is dictionary of sequences.")
-        self.entries = data
+        self.__entries = data
       elif hasattr(data, "__iter__"):
         utils.dbm("Fasta input source is a list of sequences.")
-        self.entries = { s.name : s if isinstance(s, Sequence) else Sequence(str(i), s, seqType)  for i,s in enumerate(data) }
+        self.__entries = { s.name : s if isinstance(s, Sequence) else Sequence(str(i), s, seqType)  for i,s in enumerate(data) }
       #fi
     #fi
   #edef
 
   def __str__(self):
     dstr  = "Fasta object\n"
-    dstr += " Where: %s\n" % self.fileName
-    dstr += " Entries: %d\n" % len(self.entries)
+    dstr += " Where: %s\n" % self.__fileName
+    dstr += " Entries: %d\n" % len(self.__entries)
     dstr += " Primary type: %s\n" % self.primaryType
     return dstr
   #edef
 
   @property
   def primaryType(self):
-    for k in self.entries:
-      return self.entries[k].seqType
+    for k in self.__entries:
+      return self.__entries[k].seqType
     #efor
     return Sequence.UNKNOWNTYPE
   #edef
 
   def keys(self):
-    return self.entries.keys()
+    return self.__entries.keys()
   #edef
 
   def items(self):
-    return self.entries.items()
+    return self.__entries.items()
   #edef
 
   def values(self):
-    return self.entries.values()
+    return self.__entries.values()
   #edef
 
   def __iter__(self):
-    self._iterKeys = list(self.keys())
+    self.__iterKeys = list(self.__entries.keys())
     return self
   #edef
 
   def __next__(self):
-    if len(self._iterKeys) == 0:
+    if len(self.__iterKeys) == 0:
       raise StopIteration
     #fi
-    v = self._iterKeys.pop()
+    v = self.__iterKeys.pop()
     return v
   #edef
 
   def __getitem__(self, seqID):
-    if seqID in self.entries:
-      return self.entries[seqID]
+    if seqID in self.__entries:
+      return self.__entries[seqID]
     else:
       utils.error("Unknown sequence '%s'" % seqID)
       return None
@@ -81,19 +81,19 @@ class Fasta(object):
     if not(isinstance(seq, Sequence)):
       seq = Sequence(seqID, seq, self.primaryType)
     #fi
-    self.entries[seqID] = seq
+    self.__entries[seqID] = seq
   #edef
 
   def update(self, d):
-    self.entries.update(d)
+    self.__entries.update(d)
   #edef
 
   def merge(self, other):
-    return Fasta({**self.entries, **other.entries})
+    return Fasta({**self.__entries, **other.__entries})
   #edef
 
   def write(self, outfile):
-    Fasta.writeFasta(self.entries, outfile)
+    Fasta.writeFasta(self.__entries, outfile)
   #edef
 
   ###############################################################################
@@ -106,8 +106,8 @@ class Fasta(object):
     current_seq = ""
     current_seq_full = ""
     buffer_seq  = ""
-    
-    with (gzip.open(fastaFile, "r") if fastaFile[-2:] == "gz" else open(fastaFile, "r")) as fd:
+   
+    with utils.gzopen(fastaFile, 'rt', encoding='UTF-8') as fd: 
       for line in fd:
         line = line.strip()
         if len(line) == 0:
@@ -119,7 +119,12 @@ class Fasta(object):
           current_seq_full = line[1:]
           buffer_seq = ""
         else:
-          buffer_seq = buffer_seq + line.strip()
+          try:
+            buffer_seq = buffer_seq + line
+          except TypeError:
+            print(type(buffer_seq))
+            
+            print(type(line))
         #fi
     #ewith
     F[current_seq] = Sequence(current_seq, buffer_seq, seqType, current_seq_full)

@@ -179,9 +179,9 @@ class FileManager(object):
       for o in self._objects:
         if isinstance(o, tuple):
           oname, idx = o
-          dstr += "  * [%s] %s[%s]\n" % ('X' if getattr(self,oname)[idx].__initialized__() else ' ', oname, str(idx))
+          dstr += "  * [%s] %s[%s]\n" % ('X' if getattr(self,oname)[idx].lazyInitialized else ' ', oname, str(idx))
         else:
-          dstr += "  * [%s] %s\n" % ('X' if getattr(self, o).__initialized__() else ' ', o)
+          dstr += "  * [%s] %s\n" % ('X' if getattr(self, o).lazyInitialized else ' ', o)
         #fi
       #efor
     #fi

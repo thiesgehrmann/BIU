@@ -45,6 +45,7 @@ class VEP(Pipeline):
     if not(exists):
       with open(fileName, "w") as ofd:
         for record in vcfArray:
+           alts = '/'.join([ a.sequence if hasattr(a, 'sequence') else '.' for a in record.ALT])
            ofd.write("%s\t%d\t%d\t%s\t%s\t%s\n" % (record.CHROM, record.POS, record.POS, '%s/%s' % ( record.REF, '/'.join(alts)), '+', formats.VCF.makeIdentifier(record))) 
         #efor
       #ewith

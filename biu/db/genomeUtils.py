@@ -3,6 +3,8 @@ from ..structures import fileManager as fm
 from ..structures import resourceManager as rm
 from ..config import settings as settings
 
+from .. import formats
+
 versions = {
   "GRCh37" : {
     "genomeURLs" : { chr : "ftp://ftp.ensembl.org/pub/grch37/update/fasta/homo_sapiens/dna/Homo_sapiens.GRCh37.dna.chromosome.%s.fa.gz" % chr for chr in [ "1" ,"2" ,"3" ,"4" ,"5" ,"6" ,"7" ,"8" ,"9" ,"10" ,"11" ,"12" ,"13" ,"14" ,"15" ,"16" ,"17" ,"18" ,"19" ,"20" ,"21" ,"22", "MT", "X", "Y" ] }, 
@@ -80,9 +82,9 @@ class Genome(fm.FileManager):
     self.addStrFunction( lambda s: "Genome : %s" % s.version )
 
     self.gff    = rm.GFF3ResourceManager(self, "gff")
-    self.genome = { chrID: rm.FastaResourceManager(self, "chr_%s" % chrID) for chrID in versions[self.version]["chr"] }
-    self.cds    = rm.FastaResourceManager(self, "cds")
-    self.aa     = rm.FastaResourceManager(self, "aa")
+    self.genome = { chrID: rm.FastaResourceManager(self, "chr_%s" % chrID, seqType=formats.Sequence.DNATYPE) for chrID in versions[self.version]["chr"] }
+    self.cds    = rm.FastaResourceManager(self, "cds", seqType=formats.Sequence.DNATYPE)
+    self.aa     = rm.FastaResourceManager(self, "aa", seqType=formats.Sequence.PROTTYPE)
   #edef
 
   ###############################################################################

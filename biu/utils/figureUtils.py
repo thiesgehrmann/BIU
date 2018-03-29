@@ -1,10 +1,11 @@
 import matplotlib.pylab as plt
 
-def subplots(**kwargs):
-  fig, axes = ply.subplots(**kwargs)
+def subplots(dpi=300, **kwargs):
+  fig, axes = plt.subplots(**kwargs)
   if hasattr(axes, '__len__'):
     axes = axes.flatten()
-  #fi
+  else:
+    axes = [axes]
   return fig, axes
 #edef
   

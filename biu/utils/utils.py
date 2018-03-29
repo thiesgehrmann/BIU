@@ -176,7 +176,7 @@ def gzopen(fileName, mode="r", **kwargs):
   if isGzipped:
     return gzip.open(fileName, mode, **kwargs)
   else:
-    return open(fileName, mode, **kwargs)
+    return open(fileName, mode)
   #fi
 #edef
 

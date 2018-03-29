@@ -2,6 +2,7 @@
 from ..structures import fileManager as fm
 from ..structures import resourceManager as rm
 from ..config import settings as settings
+from .. import formats
 
 import itertools
 
@@ -58,11 +59,11 @@ class BBMRI(fm.FileManager):
     #fi
   #edef
 
-  def queryRegions(self, regions, **kwargs):
+  def queryRegions(self, regions, extract=None, **kwargs):
     R = []
     for (c,s,e) in regions:
       R.extend(list(self.query(c,s,e, **kwargs)))
     #efor
-    return R
+    return formats.VCF.extract(R, extract=extract)
   #edef
 #eclass

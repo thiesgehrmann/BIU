@@ -1,6 +1,7 @@
 from ..structures import fileManager as fm
 from ..structures import resourceManager as rm
 from ..config import settings as settings
+from .. import formats
 
 import itertools
 
@@ -38,7 +39,7 @@ class LLS(fm.FileManager):
   vcf = None
 
   def __init__(self, version=list(versions.keys())[0], where="/exports/molepi/LLSSEQ", **kwargs):
-    fm.FileManager.__init__(self, urlFileIndex(version), objects=[ ("vcf", chrID) for chrID in versions[version]["chrs"] ], where=where, **kwargs)
+    fm.FileManager.__init__(self, urlFileIndex(version), objects=["phenotypes"] + [ ("vcf", chrID) for chrID in versions[version]["chrs"] ], where=where, **kwargs)
     self.version = version
 
     self.vcf = {}
@@ -61,14 +62,12 @@ class LLS(fm.FileManager):
     #fi
   #edef
 
-  def queryRegions(self, regions, **kwargs):
+  def queryRegions(self, regions, extract=None, **kwargs):
     R = []
     for (c,s,e) in regions:
-      for r in self.query(c, s, e, **kwargs):
-        R.append(r)
-      #efor
+      R.extend(list(self.query(c,s,e, **kwargs)))
     #efor
-    return R
+    return formats.VCF.extract(R, extract=extract)
   #edef
 
 #eclass

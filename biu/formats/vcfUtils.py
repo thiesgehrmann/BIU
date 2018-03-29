@@ -73,25 +73,34 @@ class VCF(object):
     #efor
   #edef
 
-  def query(self, seqid, start, end,
-    filters=None,
-    gtFilters=None,
-    sampleFilters=None,
-    types=None,
-    subTypes=None,
-    extract=None, **kwargs):
-    """ This function is hacked together from internals of the pyVCF _Record and _Call classes. I hope that their definitions don't change anytime soon.
-    """
-
+  def __singleQuery(self, seqid, start, end):
     if self.__tabix:
       res = self.__tabixQuery(seqid, start, end)
     else:
       res = self.__nonTabixQuery(seqid, start, end)
     #fi
+    return res
+  #edef
 
-    # Filter out variants and samples
-    # To filter out samples, we need to modify the _Call.samples and _sample_indexes variables.
-    # In my version of pyvcf, the is_filtered function is not defined for some reason, so I add it here.
+  def query(self, seqid, start, end, **kwargs):
+    return self.queryRegions( [ (seqid, start, end) ], **kwargs)
+  #edef
+
+  def queryRegions(self, regions,
+                   filters=None,
+                   gtFilters=None,
+                   sampleFilters=None,
+                   types=None,
+                   subTypes=None,
+                   extract=None):
+    """ This function is hacked together from internals of the pyVCF _Record and _Call classes. I hope that their definitions don't change anytime soon.
+    """
+
+    res = []
+    for (seqid, start, end) in regions:
+      for r in self.__singleQuery(seqid, start, end):
+        res.append(r)
+    #efor
 
     res = self.filterType(res, types=types)
     res = self.filterSubTypes(res, subTypes=subTypes)
@@ -101,15 +110,6 @@ class VCF(object):
     res = self.extract(res, extract=extract)
 
     return res
-  #edef
-
-  def queryRegions(self, regions, **kwargs):
-    R = []
-    for (seqid, start, end) in regions:
-      for r in self.query(seqid, start, end, **kwargs):
-        R.append(r)
-    #efor
-    return R
   #edef
 
   def __nonTabixQuery(self, chrom, start, end):
@@ -311,7 +311,7 @@ class VCF(object):
     #edef
   
     return pd.DataFrame( [ singleSummary(v, 0 if refPos is None else refPos[i], 1 if altPos is None else altPos[i] ) for i,v in enumerate(arr)], 
-                         columns=[ "id", "RR", "R", "RA", "A", "AA", "U"])
+                         columns=[ "id", "RR", "R", "RA", "A", "AA", "O"])
   #edef
   
   ###############################################################################

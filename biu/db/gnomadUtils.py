@@ -63,8 +63,8 @@ class Gnomad(fm.FileManager):
 
   _covEntryFields = [ "chrom", "pos", "mean", "median", "q1", "q5", "q10", "q15", "q20", "q25", "q30", "q50", "q100" ]
 
-  def queryVCF(self, chromosome, start, end, **kwargs):
-    return self.query(chromosome, start, end, **kwargs)
+  def queryVCF(self, *args, **kwargs):
+    return self.query(*args, **kwargs)
   #edef
 
   def query(self, *args, **kwargs):
@@ -84,7 +84,7 @@ class Gnomad(fm.FileManager):
       gcIndexes  = formats.VCF.genotypeInfoFieldIndexes(altp+1)
       gcmale   = [ var.INFO["GC_Male"][i] for i in gcIndexes ] if "GC_Male" in var.INFO else [0, 0, 0]
       gcfemale   = [ var.INFO["GC_Female"][i] for i in gcIndexes ] if "GC_Female" in var.INFO else [0, 0, 0]
-      
+
       rr = 0
       r  = 0
       ra = 0
@@ -109,7 +109,7 @@ class Gnomad(fm.FileManager):
       #fi
       
       return pd.DataFrame( [(formats.VCF.makeIdentifier(var, altp), rr, r, ra, a, aa, u)],
-                           columns = ["id", "RR", "R", "RA", "A", "AA", "U"])
+                           columns = ["id", "RR", "R", "RA", "A", "AA", "O"])
     #edef
 
     S = [ singleSummary(v, 0 if altPos is None else altPos[i]) for i,v in enumerate(arr) ]

@@ -9,10 +9,10 @@ The BIU toolkit contains many many utilities that help my analysis. Here I provi
 ## Accessing/Handling different formats
  * Standard Bioinformatics formats
   * Fasta Files : [biu.formats.Fasta](biu.formats.Fasta.ipynb)
-  * GFF3 Files :  [biu.formats.GFF3](biu.forbiu.formats.GFF3.ipynb)
-  * VCF Files :   [biu.formats.VCF](biu.forbiu.formats.VCF.ipynb)
-  * XLSX Files :  [biu.formats.XLSX](biu.forbiu.formats.XLSX.ipynb)
-  * GAF Filies :  [biu.formats.GAF](biu.forbiu.formats.GAF.ipynb)
+  * GFF3 Files :  [biu.formats.GFF3](biu.formats.GFF3.ipynb)
+  * VCF Files :   [biu.formats.VCF](biu.formats.VCF.ipynb)
+  * XLSX Files :  [biu.formats.XLSX](biu.formats.XLSX.ipynb)
+  * GAF Filies :  [biu.formats.GAF](biu.formats.GAF.ipynb)
 
  * Additional formats
   * SQLite Databases :  [biu.formats.SQLite](biu.formats.SQLite.ipynb)
@@ -20,24 +20,32 @@ The BIU toolkit contains many many utilities that help my analysis. Here I provi
 
 ## Databases
 
- * Internal LUMC Datasets
-  * BBMRI
-  * LLS
+### Internal datasets
 
- * External Databases
-  * CADD : biu.db.CADD 
-  * Clinvar : biu.db.ClinVar
-  * Cosmic : biu.db.Cosmic
-  * Genomes : biu.db.Genome
-  * GnomAD : biu.db.Gnomad
-  * Gene Ontology : biu.db.GO
-  * GTeX : biu.db.GTeX
-  * HAGR : biu.db.HAGR
-  * KEGG : biu.db.KEGG
-  * MiRmine : biu.db.MiRmine
-  * Neo4jDB : biu.db.Neo4jDB
-  * Reactome : biu.db.Reactome
-  * Uniprot : biu.db.UniProt
+ Internal datasets contain data that cannot be accessed from the internet.
+ They primarily can only be accessed from the SHARK cluster of the LUMC.
+
+ * BBMRI : [biu.db.BBMRI](biu.db.BBMRI.ipynb)
+ * LLS   : [biu.db.LLS](biu.db.LLS.ipynb)
+
+### External Databases
+
+ External datasets can be downloaded from the internet.
+ Usually they can be retrieved by BIU, but for some, such as GTeX, you must provide the files yourself.
+
+ * CADD : biu.db.CADD 
+ * Clinvar : biu.db.ClinVar
+ * Cosmic : biu.db.Cosmic
+ * Genomes : [biu.db.Genome](biu.db.Genome.ipynb)
+ * GnomAD : [biu.db.Gnomad](biu.db.Gnomad.ipynb)
+ * Gene Ontology : [biu.db.GO](biu.db.GO.ipynb)
+ * GTeX : biu.db.GTeX
+ * HAGR : biu.db.HAGR
+ * KEGG : biu.db.KEGG
+ * MiRmine : biu.db.MiRmine
+ * Neo4jDB : biu.db.Neo4jDB
+ * Reactome : biu.db.Reactome
+ * Uniprot : biu.db.UniProt
 
 ## Mapping utilities
 

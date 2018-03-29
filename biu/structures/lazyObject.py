@@ -8,6 +8,13 @@ class LazyProxy(object):
 
     self.__dict__["_obj"]=None
   #edef
+
+  def __init_obj(self):
+    self.__dict__["_obj"]=object.__new__(self.__dict__["_cls"])
+    self.__dict__["_obj"].__init__(*self.__dict__["_params"],
+                                   **self.__dict__["_kwargs"])
+  #edef
+
   def __getattr__(self, name):
     if self.__dict__["_obj"] is None:
       self.__init_obj()
@@ -20,12 +27,6 @@ class LazyProxy(object):
       self.__init_obj()
     #fi
     setattr(self.__dict__["_obj"], name, value)
-  #edef
-
-  def __init_obj(self):
-    self.__dict__["_obj"]=object.__new__(self.__dict__["_cls"])
-    self.__dict__["_obj"].__init__(*self.__dict__["_params"], 
-                                   **self.__dict__["_kwargs"])
   #edef
 
   def __str__(self):
@@ -56,7 +57,22 @@ class LazyProxy(object):
     return self.__dict__["_obj"].__setitem__(key, value)
   #edef
 
-  def __initialized__(self):
+  def __iter__(self):
+    if self.__dict__["_obj"] is None:
+      self.__init_obj()
+    #fi
+    return self.__dict__["_obj"].__iter__()
+  #edef
+
+  def __next__(self):
+    if self.__dict__["_obj"] is None:
+      self.__init_obj()
+    #fi
+    return self.__dict__["_obj"].__next__()
+  #edef
+
+  @property
+  def lazyInitialized(self):
     return (self.__dict__["_obj"] is not None)
   #edef
 

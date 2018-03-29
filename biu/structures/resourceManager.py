@@ -130,7 +130,7 @@ class GFF3ResourceManager(ResourceManager, formats.GFF3):
   def __init__(self, fmObject, gff3File, **kwargs):
     ResourceManager.__init__(self, fmObject, [ gff3File ])
     if self._initialized:
-      formats.GFF3.__init__(self, fileName=self._fmObject.getFileName(gff3File), **kwargs)
+      formats.GFF3.__init__(self, self._fmObject.getFileName(gff3File), **kwargs)
     #fi
   #edef
 
@@ -160,7 +160,7 @@ class FastaResourceManager(ResourceManager, formats.Fasta):
   def __init__(self, fmObject, fastaFile, fileSkipLines=0, fileMaxLines=None, **kwargs):
     ResourceManager.__init__(self, fmObject, [ fastaFile ], **kwargs)
     if self._initialized:
-      formats.Fasta.__init__(self, fileName=self._fmObject.getFileName(fastaFile), **kwargs)
+      formats.Fasta.__init__(self, self._fmObject.getFileName(fastaFile), **kwargs)
     #fi
   #edef
 
