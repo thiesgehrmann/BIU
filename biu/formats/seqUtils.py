@@ -41,7 +41,42 @@ class Sequence(object):
   #edef
 
   def __getitem__(self, s):
-    return self.seq[s]
+    return Sequence(self.name, self.seq[s], self.seqType, self.fullName)
+  #edef
+
+  def __len__(self):
+    return len(self.seq)
+  #edef
+
+  def __eq__(self, other):
+    if type(self) != type(other):
+      return False
+    else:
+      return self.seq.lower() == other.seq.lower()
+    #fi
+  #edef
+
+  def __add__(self, other):
+    if isinstance(other, str):
+      seq = self.seq + other
+      fullName = self.fullName
+    elif isinstance(other, type(self)):
+      seq = self.seq + other.seq
+      fullName = "%s + %s" % (self.name, other.name)
+    else:
+      utils.error("Cannot combine two sequences of different types!")
+      return None
+    #fi
+    return Sequence(self.name, seq, self.seqType, fullName)
+  #edef
+
+  def __radd__(self, other):
+    if isinstance(other, str):
+      seq = self.seq + other
+    else:
+      seq = self.seq
+    #fi
+    return Sequence(self.name, seq, self.seqType, self.fullName)
   #edef
 
   @property
@@ -66,6 +101,10 @@ class Sequence(object):
   @property
   def seqType(self):
     return self.__seqType
+  #edef
+
+  def __iter__(self):
+    return self.seq.__iter__()
   #edef
 
   ###############################################################################

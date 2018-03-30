@@ -43,6 +43,41 @@ class LazyProxy(object):
     return self.__dict__["_obj"].__call__()
   #edef
 
+  def __len__(self):
+    if self.__dict__["_obj"] is None:
+      self.__init_obj()
+    #fi
+    return self.__dict__["_obj"].__len__()
+  #edef
+
+  def __eq__(self):
+    if self.__dict__["_obj"] is None:
+      self.__init_obj()
+    #fi
+    return self.__dict__["_obj"].__eq__()
+  #edef
+
+  def __ne__(self):
+    if self.__dict__["_obj"] is None:
+      self.__init_obj()
+    #fi
+    return self.__dict__["_obj"].__ne__()
+  #edef
+
+  def __add__(self):
+    if self.__dict__["_obj"] is None:
+      self.__init_obj()
+    #fi
+    return self.__dict__["_obj"].__add__()
+  #edef
+
+  def __radd__(self):
+    if self.__dict__["_obj"] is None:
+      self.__init_obj()
+    #fi
+    return self.__dict__["_obj"].__radd__()
+  #edef
+
   def __getitem__(self, key):
     if self.__dict__["_obj"] is None:
       self.__init_obj()

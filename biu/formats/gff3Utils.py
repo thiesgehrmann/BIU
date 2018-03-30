@@ -21,6 +21,15 @@ seqIDField  = lambda e: e.seqid
 
 class GFF3Entry(object):
 
+  seqid = None
+  source = None
+  feature = None
+  start = None
+  end = None
+  score = None
+  phase = None
+  attr = None
+
   def __init__(self, row, idField=idField, parentField=parentField, nameField=nameField, **kwargs):
   
     self.__idField = idField
@@ -63,9 +72,18 @@ class GFF3Entry(object):
     return self.__nameField(self)
   #edef
 
-  def getSeq(self, FastaObject):
-    if self.strand == '+':
-      substr = FastaObject['self.seqid']
+  def seq(self, fastaObject):
+    if self.seqid not in fastaObject:
+      utils.error("Sequence '%s' not found in provided fastaObject." % self.seqid)
+      return None
+    #fi
+
+    substr = fastaObject[self.seqid][self.start-1:self.end]
+    if self.strand == '-':
+      substr = substr.revcomp()
+    #fi
+
+    return substr
   #edef
 
   def __attrString(self):
@@ -121,6 +139,10 @@ class GFF3(object):
     self.__index, self.topLevel = self._index()
   #edef
 
+  def __iter__(self):
+    return self.entries
+  #edef
+
   def __str__(self):
     dstr  = "GFF3 object\n"
     dstr += " Where: %s\n" % (self.__fileName if self.__fileName is not None else hex(id(self)))
@@ -134,12 +156,15 @@ class GFF3(object):
       
 
   def _index(self):
+    internal_counter = 0
+
     idx = {}
     topLevel = {}
     for i, e in enumerate(self.entries):
       ID = e.id
       if ID is None:
-        continue
+        ID = "internal.%d" % internal_counter
+        internal_counter += 1
       #fi
 
       parent = e.parent
@@ -163,6 +188,24 @@ class GFF3(object):
     return idx, topLevel
   #edef
 
+  def __len__(self):
+    return len(self.entries)
+  #edef
+
+  def seq(self, ID, fastaObject):
+    entries = self.getChildren(ID, feature="CDS").entries
+    if len(entries) == 0:
+      utils.error("Could not find ID '%s'" % ID)
+      return None
+    #fi
+    entries = sorted(entries, key=lambda e: e.start)
+    if entries[0].strand == '-':
+      entries = entries[::-1]
+    #fi
+
+    return sum([ e.seq(fastaObject) for e in entries ])
+  #edef
+
   def getIDEntry(self, ID):
     if ID in self.__index:
       return self.entries[self.__index[ID][0]]
@@ -180,7 +223,7 @@ class GFF3(object):
     #fi
   #edef
       
-  def getChildren(self, ID, feature=None, depth=None, containParent=False, newObject=False):
+  def getChildren(self, ID, feature=None, depth=None, containParent=False):
 
     relEntries = [ self.getIDEntry(ID) ] if containParent else []
     ids = [ (0, c[0], c[1]) for c in self.getIDChildren(ID) ]
@@ -213,11 +256,7 @@ class GFF3(object):
       relEntries = E
     #fi
 
-    if newObject:
-      return GFF3(entries = relEntries)
-    else:
-      return relEntries
-    #fi
+    return GFF3(data = relEntries)
   #edef  
 
   def indexByInterval(self):
@@ -254,6 +293,13 @@ class GFF3(object):
     else:
       return False
     #fi
+  #edef
+
+  @property
+  def dataFrame(self):
+    import pandas as pd
+    return pd.DataFrame([ (e.seqid, e.source, e.feature, e.start, e.end, e.score, e.phase, e.attr) for e in self.entries ],
+                        columns=("seqid", "source", "feature", "start", "end", "score", "phase", "attr") )
   #edef
 
   def areSameStrand(self, id1, id2):

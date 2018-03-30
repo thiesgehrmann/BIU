@@ -21,6 +21,7 @@ class VCF(object):
 
     if not(isinstance(data, str)):
       utils.dbm("VCF Input source is list of Records.")
+      self.__reader = data
       self.__makeIndex(data)
     elif self.__tabix:
       utils.dbm("VCF Input source is tabixed file.")
@@ -29,7 +30,7 @@ class VCF(object):
     else:
       utils.dbm("VCF Input source is unindexed file.")
       self.__fileName =  data
-      self.__reader = vcf.Reader(open(self.__fileName, 'r'), **self.__vcfArgs)
+      self.__reader = [ v for v in vcf.Reader(open(self.__fileName, 'r'), **self.__vcfArgs) ]
       self.__makeIndex(self.__reader)
     #fi
   #edef
@@ -47,6 +48,14 @@ class VCF(object):
       return self.__reader.samples
     #fi
       return []
+  #edef
+
+  def __iter__(self):
+    return self.__reader.__iter__()
+  #edef
+
+  def __next__(self):
+    return self.__reader.__next__()
   #edef
 
   def __str__(self):
