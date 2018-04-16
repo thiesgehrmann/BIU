@@ -156,6 +156,21 @@ class XLSXResourceManager(ResourceManager, formats.XLSX):
 
 ###############################################################################
 
+class XLSResourceManager(ResourceManager, formats.XLS):
+  def __init__(self, fmObject, xlsFile, **kwargs):
+    ResourceManager.__init__(self, fmObject, [ xlsFile ])
+    if self._initialized:
+      formats.XLS.__init__(self, fileName=self._fmObject.getFileName(xlsFile), **kwargs)
+    #fi
+  #edef
+
+  def __str__(self):
+    return formats.XLS.__str__(self)
+  #edef
+#eclass
+
+###############################################################################
+
 class FastaResourceManager(ResourceManager, formats.Fasta):
   def __init__(self, fmObject, fastaFile, fileSkipLines=0, fileMaxLines=None, **kwargs):
     ResourceManager.__init__(self, fmObject, [ fastaFile ], **kwargs)

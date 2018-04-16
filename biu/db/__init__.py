@@ -43,9 +43,13 @@ from .keggUtils import listVersions as listKEGGVersions
 from .mirmineUtils import MiRmine as MiRmine
 from .mirmineUtils import listVersions as listMiRmineVersions
 
+from .rvisUtils import RVIS as RVIS
+from .gdiUtils import GDI as GDI
+from .dneUtils import DNE as DNE
+
 def list():
   print("Available databases:")
-  for db in sorted(["Genomes", "CADD", "ClinVar", "Gnomad", "GTeX", "UniProt", "Cosmic", "HAGR", "Reactome", "LLS", "BBMRI", "GO", "KEGG", "MiRmine" ]):
+  for db in sorted(["Genomes", "CADD", "ClinVar", "Gnomad", "GTeX", "UniProt", "Cosmic", "HAGR", "Reactome", "LLS", "BBMRI", "GO", "KEGG", "MiRmine", "RVIS", "GDI", "DNE" ]):
     print(" * %s" % db)
   #efor
 #eclass

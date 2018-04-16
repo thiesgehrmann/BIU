@@ -101,6 +101,7 @@ class VCF(object):
                    sampleFilters=None,
                    types=None,
                    subTypes=None,
+                   nAlleles=None,
                    extract=None):
     """ This function is hacked together from internals of the pyVCF _Record and _Call classes. I hope that their definitions don't change anytime soon.
     """
@@ -115,6 +116,7 @@ class VCF(object):
     res = self.filterSubTypes(res, subTypes=subTypes)
     res = self.filter(res, filters=filters, gtFilters=gtFilters)
     res = self.filterSamples(res, sampleFilters=sampleFilters)
+    res = self.filterAlleles(res, nAlleles=nAlleles)
 
     res = self.extract(res, extract=extract)
 
@@ -222,6 +224,15 @@ class VCF(object):
   #edef
   
   ###############################################################################
+
+  @staticmethod
+  def filterAlleles(arr, nAlleles=None):
+    res =  arr
+    if nAlleles is not None:
+      res = [ v for v in arr if len(v.ALT) <= nAlleles ]
+    #fi
+    return res
+  #edef
 
   @staticmethod
   def filterType(arr, types=None):

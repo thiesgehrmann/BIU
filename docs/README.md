@@ -12,6 +12,7 @@ The BIU toolkit contains many many utilities that help my analysis. Here I provi
   * GFF3 Files :  [biu.formats.GFF3](biu.formats.GFF3.ipynb)
   * VCF Files :   [biu.formats.VCF](biu.formats.VCF.ipynb)
   * XLSX Files :  [biu.formats.XLSX](biu.formats.XLSX.ipynb)
+  * XLS Files : (Works like XLSX files)
   * GAF Filies :  [biu.formats.GAF](biu.formats.GAF.ipynb)
 
  * Additional formats
@@ -46,6 +47,11 @@ The BIU toolkit contains many many utilities that help my analysis. Here I provi
  * Neo4jDB : biu.db.Neo4jDB
  * Reactome : biu.db.Reactome
  * Uniprot : biu.db.UniProt
+
+ * Human Gene Essentiality metrics
+  * Residual Variation Intolerance Score (RVIS): biu.db.RVIS
+  * Gene Damage Index (GDI): biu.db.GDI
+  * De Novo Excess (DNE): biu.db.DNE
 
 ## Mapping utilities
 

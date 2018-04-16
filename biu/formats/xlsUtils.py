@@ -1,9 +1,9 @@
-import openpyxl as xl
+import xlrd as xl
 import pandas as pd
 
 from .. import utils
 
-class XLSX(object):
+class XLS(object):
 
   _fileName = None
   _xlBook = None
@@ -11,24 +11,19 @@ class XLSX(object):
 
   def __init__(self, fileName):
     self._fileName = fileName
-    self._xlBook = xl.load_workbook(fileName)
+    self._xlBook = xl.open_workbook(fileName)
     self._data = {}
   #edef
 
-  def loadSheet(self, sheetName, index=None, columns=None, header=False, names=None, skiprows=0, refresh=False):
-    if sheetName not in self._xlBook.sheetnames:
+  def loadSheet(self, sheetName, index=None, columns=None, header=0, names=None, skiprows=0, refresh=False):
+    if sheetName not in self._xlBook.sheet_names():
       utils.error("Sheet '%s' not in workbook '%s'." % (sheetName, self._fileName))
       return None
     #fi
 
-    sheetData = self._xlBook[sheetName].values
-    sheetData = list(sheetData)[skiprows:]
-    if header:
-      columns = sheetData[0]
-      sheetData = sheetData[1:]
-    #fi
+    sheetData = pd.read_excel(io=self._xlBook, sheet_name=sheetName, header=header, skiprows=skiprows, index=index, engine="xlrd")
 
-    self._data[sheetName] = pd.DataFrame(sheetData, columns=columns, index=index)
+    self._data[sheetName] = sheetData
     return self._data[sheetName]
   #edef
 
@@ -45,10 +40,10 @@ class XLSX(object):
   #edef
 
   def __str__(self):
-    dstr  = "XLSX object\n"
+    dstr  = "XLS object\n"
     dstr += " Where: %s\n" % (self._fileName if self._fileName is not None else hex(id(self)))
     dstr += " Sheets:\n"
-    for sheet in self._xlBook.sheetnames:
+    for sheet in self._xlBook.sheet_names():
       dstr += "  * [%s] %s\n" % ( 'X' if sheet in self._data else ' ', sheet)
     #efor
     return dstr
