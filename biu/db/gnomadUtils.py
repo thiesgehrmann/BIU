@@ -71,16 +71,18 @@ class Gnomad(fm.FileManager):
     return self.queryRegions([ tuple(args) ], **kwargs)
   #edef
 
-  def queryRegions(self, *args, extract=None, **kwargs):
+  def queryRegions(self, *args, extract=None, sub=None, **kwargs):
     res = self.vcf.queryRegions(*args, extract=None, **kwargs)
-    if extract == "summary":
-      return self.summary(res)
+
+    #see http://gnomad.broadinstitute.org/faq for the different subpopulations
+    if extract  == "summary":
+      res = self.summary(res, sub=summarySub)
     #fi
     return res
   #edef
 
-  def summary(self, arr, altPos=None):
-    def singleSummary(var, altp):
+  def summary(self, arr, altPos=None, sub=None):
+    def allSummary(var, altp):
       gcIndexes  = formats.VCF.genotypeInfoFieldIndexes(altp+1)
       gcmale   = [ var.INFO["GC_Male"][i] for i in gcIndexes ] if "GC_Male" in var.INFO else [0, 0, 0]
       gcfemale   = [ var.INFO["GC_Female"][i] for i in gcIndexes ] if "GC_Female" in var.INFO else [0, 0, 0]
@@ -107,12 +109,31 @@ class Gnomad(fm.FileManager):
         ra = gcmale[1] + gcfemale[1]
         aa = gcmale[2] + gcfemale[2]
       #fi
-      
+
       return pd.DataFrame( [(formats.VCF.makeIdentifier(var, altp), rr, r, ra, a, aa, u)],
                            columns = ["id", "RR", "R", "RA", "A", "AA", "O"])
     #edef
 
-    S = [ singleSummary(v, 0 if altPos is None else altPos[i]) for i,v in enumerate(arr) ]
+    def subSummary(var, altp, sub):
+    # See http://gnomad.broadinstitute.org/faq for the different subpopulations
+      if sub is None:
+        return allSummary(var, altp)
+      #fi
+
+      gc = "GC_%s" % sub
+      gcIndexes = formats.VCF.genotypeInfoFieldIndexes(altp+1)
+      gc        = [ var.INFO[gc][i] for i in gcIndexes ] if gc in var.INFO else [0, 0, 0]
+      rr = gc[0]
+      r  = 0
+      ra = gc[1]
+      a  = 0
+      aa = gc[2]
+      u  = 0
+      return pd.DataFrame( [(formats.VCF.makeIdentifier(var, altp), rr, r, ra, a, aa, u)],
+                           columns = ["id", "RR", "R", "RA", "A", "AA", "O"])
+    #edef
+
+    S = [ subSummary(v, 0 if altPos is None else altPos[i], sub) for i,v in enumerate(arr) ]
     S = pd.concat([ s for s in S if s is not None ])
     return S
   #edef
