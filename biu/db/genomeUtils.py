@@ -95,6 +95,18 @@ class Genome(fm.FileManager):
 
   ###############################################################################
 
+  def seq(self, ID):
+    entry = self.gff[ID]
+    if entry is None:
+      return None
+    #fi
+    seqid = entry.seqid
+    if seqid not in self.genome:
+      seqid = 'all' if 'all' in self.genome else list(self.genome.keys())[0]
+    #fi
+    return self.gff.seq(ID, self.genome[seqid])
+  #edef
+
 #eclass
 
 

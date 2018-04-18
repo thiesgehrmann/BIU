@@ -84,6 +84,10 @@ class Sequence(object):
     return self.__name
   #edef
 
+  def setName(self, name):
+    self.__name = name
+  #edef
+
   @property
   def fullName(self):
     if self.__fullName is None:
@@ -91,6 +95,10 @@ class Sequence(object):
     else:
       return self.__fullName
     #fi
+  #edef
+
+  def setFullName(self, fullName):
+    self.__fullName = fullName
   #edef
 
   @property

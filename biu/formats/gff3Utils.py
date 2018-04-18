@@ -99,8 +99,9 @@ class GFF3Entry(object):
     return GFF3Entry([self.seqid, self.source, self.feature, self.start, self.end, self.score, self.strand, self.phase, self.attr], idField=self.__idField, parentField=self.__parentField, nameField=self.__nameField)
   #edef
 
-  def removeParent(self):
-    self.attr = { k : v for (k,v) in self.attr.items() if v != self.parent }
+  def withoutParent(self):
+    newAttr = { k : v for (k,v) in self.attr.items() if v != self.parent }
+    return GFF3Entry([self.seqid, self.source, self.feature, self.start, self.end, self.score, self.strand, self.phase, newAttr], idField=self.__idField, parentField=self.__parentField, nameField=self.__nameField)
   #edef
 
   def __str__(self):
@@ -120,9 +121,10 @@ class GFF3(object):
   entries = None
   seqids = None
   index = None
-  topLevel = None
+  features = None
 
   __index = None
+  __intervalIndex = None
   __fileName = None
 
   def __init__(self, data, **kwargs):
@@ -131,35 +133,54 @@ class GFF3(object):
       utils.dbm("GFF input source is file.")
       self.__fileName = data
       self.entries = GFF3.read(data, **kwargs)
+    elif isinstance(data, type(self)):
+      utils.dbm("GFF input source is GFF3 structure")
+      self.entries = data.entries
     else:
       utils.dbm("GFF input source is list of GFF3Entries.")
       self.entries = data
     #fi
     self.seqids  = set([ e.seqid for e in self.entries])
-    self.__index, self.topLevel = self._index()
+    self.__index, self.features = self._index()
   #edef
 
   def __iter__(self):
-    return self.entries
+    return self.entries.__iter__()
   #edef
 
   def __str__(self):
     dstr  = "GFF3 object\n"
     dstr += " Where: %s\n" % (self.__fileName if self.__fileName is not None else hex(id(self)))
     dstr += " Entries: %d\n" % len(self.entries)
-    dstr += " Top level statistics:\n"
-    for featureType in self.topLevel:
-      dstr += "  * %s : %d\n" % (featureType, len(self.topLevel[featureType]))
+    dstr += " Indexed: %s\n" % ("Yes" if self.__index is not None else "No")
+
+    if self.__intervalIndex is not None:
+      dstr += " Interval Indexes:\n"
+      for indexFeatures in self.__intervalIndex:
+        dstr += "  * %s\n" % ",".join(indexFeatures)
+      #efor
+    #fi
+
+    dstr += " Feature statistics:\n"
+    for featureType in self.features:
+      dstr += "  * %s : %d\n" % (featureType, len(self.features[featureType]))
     #efor
     return dstr
   #edef
-      
+
+  def __getitem__(self, c):
+    if isinstance(c, str):
+      return self.getIDEntry(c)
+    else:
+      return self.entries[c]
+    #fi
+  #edef
 
   def _index(self):
     internal_counter = 0
 
     idx = {}
-    topLevel = {}
+    features = {}
     for i, e in enumerate(self.entries):
       ID = e.id
       if ID is None:
@@ -167,33 +188,39 @@ class GFF3(object):
         internal_counter += 1
       #fi
 
-      parent = e.parent
       if ID not in idx:
         idx[ID] = [i, [] ]
       else:
         idx[ID] = [i, idx[ID][1] ]
       #fi
-      if parent is None:
-        if e.feature not in topLevel:
-          topLevel[e.feature] = []
+
+      # Add feature to top Level index
+      feature = e.feature
+      if feature != "":
+        if feature not in features:
+          features[feature] = []
         #fi
-        topLevel[e.feature].append(ID)
-      else:
+        features[e.feature].append(ID)
+      #fi
+
+      # Construct hierarchical structure
+      parent = e.parent
+      if parent is not None:
         if parent not in idx:
           idx[parent] = [ None, [] ]
         #fi
         idx[parent][1].append((i, ID))
       #fi
     #efor
-    return idx, topLevel
+    return idx, features
   #edef
 
   def __len__(self):
     return len(self.entries)
   #edef
 
-  def seq(self, ID, fastaObject):
-    entries = self.getChildren(ID, feature="CDS").entries
+  def seq(self, ID, fastaObject, feature='CDS'):
+    entries = self.getChildren(ID, feature=feature).entries
     if len(entries) == 0:
       utils.error("Could not find ID '%s'" % ID)
       return None
@@ -203,7 +230,9 @@ class GFF3(object):
       entries = entries[::-1]
     #fi
 
-    return sum([ e.seq(fastaObject) for e in entries ])
+    sequence = sum([ e.seq(fastaObject) for e in entries ])
+    sequence.setName(ID)
+    return sequence
   #edef
 
   def getIDEntry(self, ID):
@@ -225,7 +254,7 @@ class GFF3(object):
       
   def getChildren(self, ID, feature=None, depth=None, containParent=False):
 
-    relEntries = [ self.getIDEntry(ID) ] if containParent else []
+    relEntries = [ self.getIDEntry(ID).withoutParent() ] if containParent else []
     ids = [ (0, c[0], c[1]) for c in self.getIDChildren(ID) ]
 
     while len(ids) > 0:
@@ -246,8 +275,7 @@ class GFF3(object):
       E = []
       for e in relEntries:
         if e.parent == ID:
-          e = e.copy()
-          e.removeParent()
+          e = e.withoutParent()
           E.append(e)
         else:
           E.append(e)
@@ -259,17 +287,63 @@ class GFF3(object):
     return GFF3(data = relEntries)
   #edef  
 
-  def indexByInterval(self):
-    try: 
-      from intervaltree import Interval, IntervalTree
-    
-      t = { seqid: IntervalTree() for seqid in self.seqids }
-      for e in [ e for e in self.entries if e.type.lower() == "mrna"]:
-        t[e.seqid][e.start:e.end] = e
-      #efor
-      return t
-    except ImportError:
-      return {}
+  def __getIntervalIndex(self, features):
+    if features is None:
+      features = list(self.features.keys())
+    #fi
+
+    if isinstance(features, str):
+      features = [ features ]
+    #fi
+    features = tuple(sorted([ f.lower() for f in features]))
+
+    if self.__intervalIndex is None:
+      self.__intervalIndex = {}
+    #fi
+
+    if features not in self.__intervalIndex:
+      try: 
+        from intervaltree import Interval, IntervalTree
+      
+        t = { str(seqid) : IntervalTree() for seqid in self.seqids }
+        for e in [ e for e in self.entries if e.feature.lower() in features ]:
+          t[str(e.seqid)][e.start:e.end] = e
+        #efor
+      except ImportError:
+        return {}
+      #etry
+      self.__intervalIndex[features] = t
+    #fi
+    return self.__intervalIndex[features]
+  #edef
+
+  def query(self, chromosome, start, stop, features=None):
+    return self.queryRegions([(chromosome, start, stop)], features=features)
+  #edef
+
+  def queryRegions(self, regions, features=None):
+    R = []
+    for (c,s,e) in regions:
+      r = self.__query(c, s, e, features)
+      R.extend(r)
+    #efor
+    return GFF3(R)
+  #edef
+
+  def __query(self, c, s, e, features):
+    # Make a string of the seqid
+    c = str(c)
+    # reorder the coords
+    if s > e:
+      s, e = ( min(s, e), max(s, e))
+    #fi
+
+    relIntervalIndex = self.__getIntervalIndex(features)
+    if c not in relIntervalIndex:
+      utils.warning("Seqid '%s' not in GFF." % c)
+      return []
+    #fi
+    return [ i[-1] for i in relIntervalIndex[c][s:e] ]
   #edef
 
   def getID(self, ID):
@@ -277,21 +351,6 @@ class GFF3(object):
       return self.entries[self.__index[ID][0]]
     else:
       return None
-    #fi
-  #edef
-
-  def areTandem(self, id1, id2):
-    f1 = self.getID(id1)
-    f2 = self.getID(id2)
-    if gene1.seqid != gene2.seqid:
-      return False
-    #fi
-
-    inregion = set([ e[-1].attr["ID"] for e in self.interval[gene1.seqid][min(gene1.end,gene2.end):max(gene1.start,gene2.start)] ])
-    if len(inregion - set([gene1.attr["ID"], gene2.attr["ID"]])) == 0:
-      return True
-    else:
-      return False
     #fi
   #edef
 

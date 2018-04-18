@@ -1,14 +1,14 @@
 ##gff-version 3
 ctg123	.	Gene	1300	9001	.	+	.	ID=gene0001;Name=sonichedgehog
-ctg123	.	mRNA	1300	9000	.	+	.	ID=mrna0001.2;Name=sonichedgehog.1;Parent=gene0001
-ctg123	.	exon	1300	1500	.	+	.	ID=exon00001.1;Parent=mrna0001
-ctg123	.	exon	1050	1500	.	+	.	ID=exon00002.1;Parent=mrna0001
-ctg123	.	exon	3000	3902	.	+	.	ID=exon00003.1;Parent=mrna0001
-ctg123	.	exon	5000	5500	.	+	.	ID=exon00004.1;Parent=mrna0001
-ctg123	.	exon	7000	9000	.	+	.	ID=exon00005.1;Parent=mrna0001
+ctg123	.	mRNA	1300	9000	.	+	.	ID=mrna0001.1;Name=sonichedgehog.1;Parent=gene0001
+ctg123	.	exon	1300	1500	.	+	.	ID=exon00001.1;Parent=mrna0001.1
+ctg123	.	exon	1050	1500	.	+	.	ID=exon00002.1;Parent=mrna0001.1
+ctg123	.	exon	3000	3902	.	+	.	ID=exon00003.1;Parent=mrna0001.1
+ctg123	.	exon	5000	5500	.	+	.	ID=exon00004.1;Parent=mrna0001.1
+ctg123	.	exon	7000	9000	.	+	.	ID=exon00005.1;Parent=mrna0001.1
 ctg123	.	mRNA	1301	9001	.	+	.	ID=mrna0001.2;Name=sonichedgehog.2;Parent=gene0001
-ctg123	.	exon	1301	1501	.	+	.	ID=exon00001.2;Parent=mrna0001
-ctg123	.	exon	1051	1501	.	+	.	ID=exon00002.2;Parent=mrna0001
-ctg123	.	exon	3001	3901	.	+	.	ID=exon00003.2;Parent=mrna0001
-ctg123	.	exon	5001	5501	.	+	.	ID=exon00004.2;Parent=mrna0001
-ctg123	.	exon	7001	9001	.	+	.	ID=exon00005.2;Parent=mrna0001
+ctg123	.	exon	1301	1501	.	+	.	ID=exon00001.2;Parent=mrna0001.2
+ctg123	.	exon	1051	1501	.	+	.	ID=exon00002.2;Parent=mrna0001.2
+ctg123	.	exon	3001	3901	.	+	.	ID=exon00003.2;Parent=mrna0001.2
+ctg123	.	exon	5001	5501	.	+	.	ID=exon00004.2;Parent=mrna0001.2
+ctg123	.	exon	7001	9001	.	+	.	ID=exon00005.2;Parent=mrna0001.2
