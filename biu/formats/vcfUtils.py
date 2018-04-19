@@ -392,7 +392,6 @@ class VCF(object):
   
     def singleSummary(record, refp, altp):
       gtypes = [ s.data.GT if hasattr(s.data, "GT") else '-' for s in  record.samples ]
-      print(gtypes)
       #S = ( makeIdentifier(record, ),
       #      len([ x for x in gtypes if x in [ "0/0","0|0" ] ]),
       #      len([ x for x in gtypes if x in [ "0" ] ]),
