@@ -1,3 +1,4 @@
+from .. import formats
 from ..structures import fileManager as fm
 from ..structures import resourceManager as rm
 from ..config import settings as settings
@@ -72,13 +73,13 @@ class Gnomad(fm.FileManager):
   #edef
 
   def queryRegions(self, *args, extract=None, sub=None, **kwargs):
-    res = self.vcf.queryRegions(*args, extract=None, **kwargs)
+    res = list(self.vcf.queryRegions(*args, extract=None, **kwargs))
 
     #see http://gnomad.broadinstitute.org/faq for the different subpopulations
     if extract  == "summary":
-      res = self.summary(res, sub=summarySub)
+      return self.summary(res, sub=sub)
     #fi
-    return res
+    return formats.VCF(res)
   #edef
 
   def summary(self, arr, altPos=None, sub=None):

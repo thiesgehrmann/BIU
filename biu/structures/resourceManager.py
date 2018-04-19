@@ -202,6 +202,15 @@ class SQLiteResourceManager(ResourceManager, formats.SQLite):
 
 ###############################################################################
 
+class SQLDictResourceManager(ResourceManager, formats.SQLDict):
+  def __init__(self, fmObject, sqliteFile, **kwargs):
+    formats.SQLDict.__init__(self, fmObject.getFileName(sqliteFile))
+    ResourceManager.__init__(self, fmObject, [ sqliteFile ], **kwargs)
+  #edef
+#eclass
+
+###############################################################################
+
 class GAFResourceManager(ResourceManager, formats.GAF):
   def __init__(self, fmObject, gafFile, **kwargs):
     ResourceManager.__init__(self, fmObject, [ gafFile ], **kwargs)

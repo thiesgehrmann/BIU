@@ -15,6 +15,27 @@ class LazyProxy(object):
                                    **self.__dict__["_kwargs"])
   #edef
 
+  def __contains__(self, k):
+    if self.__dict__["_obj"] is None:
+      self.__init_obj()
+    #fi
+    return k in self.__dict__["_obj"]
+  #edef
+
+  def __iter__(self):
+    if self.__dict__["_obj"] is None:
+      self.__init_obj()
+    #fi
+    return self.__dict__["_obj"].__iter__()
+  #edef
+
+  def __next__(self):
+    if self.__dict__["_obj"] is None:
+      self.__init_obj()
+    #fi
+    return self.__dict__["_obj"].__next__()
+  #edef
+
   def __getattr__(self, name):
     if self.__dict__["_obj"] is None:
       self.__init_obj()

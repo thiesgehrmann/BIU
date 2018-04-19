@@ -2,18 +2,12 @@ from ..structures import fileManager as fm
 from ..structures import resourceManager as rm
 from .. import utils
 
+from . import SQLite
+
 import os
 import json
 
-def urlFileIndex(name):
-  files = {}
-
-  files["sqlite_db"] = (None, "sqlDict/%s.sqlDict.sqlite" % name, {})
-
-  return files
-#edef
-
-class SQLDict(fm.FileManager):
+class SQLDict:
   """SQLDict is designed to behave like a dictionary, except that it stores the values of the dictionary in JSON Strings in a SQLite database behind the scenes.
   To improve speed, it also caches the values that it stores and retrieves from the SQLite database during runtime.
   This allows you to keep a running dataset of values without the need to recompute stuff each time.
@@ -29,17 +23,22 @@ class SQLDict(fm.FileManager):
       print(D["key"])
   """
 
-  _sqlDict = None
-  _cache   = None
+  _sqlDict  = None
+  _fileName = None
+  _cache    = None
 
-  def __init__(self, name, load=False, where=None, **kwargs):
+  def __init__(self, fileName, load=False):
 
-    fm.FileManager.__init__(self, urlFileIndex(name), objects=[ "_sqlDict" ], where=where, **kwargs)
-    self._sqlDict = rm.SQLiteResourceManager(self, "sqlite_db")
-    self._cache   = {}
+    new = not(os.path.isfile(fileName))
+    if new:
+      utils.touchFile(fileName)
+    #fi
 
-    if not(self.haveFile("sqlite_db")):
-      self.touchFile("sqlite_db")
+    self._fileName = fileName
+    self._sqlDict  = SQLite(fileName)
+    self._cache    = {}
+
+    if new:
       self._sqlDict.execute("CREATE TABLE data(id STRING PRIMARY KEY, value TEXT);")
     #fi
 
@@ -72,6 +71,22 @@ class SQLDict(fm.FileManager):
 
   def _delete(self, key):
     return self._sqlDict.execute("DELETE FROM data WHERE id IS ?;", [key])
+  #edef
+
+  def __str__(self):
+    dstr  = "SQLDict object\n"
+    dstr += " Where: %s\n" % self._fileName
+    dstr += " Entries: %d\n" % len(self)
+    return dstr
+  #edef
+
+  def __len__(self):
+    res = list(self._sqlDict.execute("SELECT COUNT(*) FROM data;"))
+    if len(res) == 0:
+      return 0
+    else:
+      return res[0][0]
+    #fi
   #edef
 
   def __getitem__(self, key):

@@ -12,33 +12,52 @@ class VCF(object):
   __reader = None
   __tabix = None
   __fileName = None
+  __template = None
   __vcfArgs = None
   __readerIndex = None
 
-  def __init__(self, data, tabix=False, **kwargs):
+  def __init__(self, data, template=None, tabix=False, **kwargs):
     self.__tabix = tabix
     self.__vcfArgs = kwargs
 
     if not(isinstance(data, str)):
       utils.dbm("VCF Input source is list of Records.")
-      self.__reader = data
-      self.__makeIndex(data)
+      self.__reader = list(data)
+      self.__template = template
     elif self.__tabix:
       utils.dbm("VCF Input source is tabixed file.")
       self.__fileName = data
       self.__reader = vcf.Reader(filename=self.__fileName, compressed=True, **kwargs)
+      self.__template = self.__fileName
     else:
       utils.dbm("VCF Input source is unindexed file.")
       self.__fileName =  data
-      self.__reader = [ v for v in vcf.Reader(open(self.__fileName, 'r'), **self.__vcfArgs) ]
-      self.__makeIndex(self.__reader)
+      self.__reader = list([ v for v in vcf.Reader(open(self.__fileName, 'r'), **self.__vcfArgs) ])
+      self.__template = self.__fileName
     #fi
+  #edef
+
+  def write(self, outFile, template=None):
+    # NOTE: This may not work if you have used gtFilters or sampleFilters
+    template = self.__template if template is None else template
+    if template is None:
+      utils.error("There is no template defined for this VCF file.")
+      return False
+    #fi
+
+    with open(outFile, 'wb') as ofd:
+      writer = vcf.Writer(ofd, template)
+      for record in self.__reader:
+        writer.write_record(record)
+      #efor
+    #ewith
+    return True
   #edef
 
   @property
   def samples(self):
-    if self.__reader is None:
-      if len(self.__readerIndex) == 0:
+    if isinstance(self.__reader, list):
+      if len(self.__getReaderIndex()) == 0:
         return []
       #fi
       for item in self.__readerIndex[list(self.__readerIndex.keys())[0]]:
@@ -48,6 +67,15 @@ class VCF(object):
       return self.__reader.samples
     #fi
       return []
+  #edef
+
+  def __getitem__(self, k):
+    if isinstance(self.__reader, list):
+      return self.__reader[k]
+    else:
+      utils.warning("Tabix Indexed VCF files cannot be indexed numerically.")
+      return []
+    #fi
   #edef
 
   def __iter__(self):
@@ -61,11 +89,12 @@ class VCF(object):
   def __str__(self):
     dstr  = "VCF object\n"
     dstr += " Where: %s\n" % (self.__fileName if self.__fileName is not None else hex(id(self)))
+    dstr += " Template: %s\n" % (self.__template if self.__template is not None else "No Template!")
     if self.__tabix is False:
-      dstr += "Entries: %d\n" % sum( [len(self.__readerIndex[k]) for k in self.__readerIndex] )
+      dstr += " Entries: %d\n" % sum( [len(self.__getReaderIndex(k)) for k in self.__getReaderIndex()] )
     #fi
-    dstr += "Number of genotypes: %d\n" % len(self.samples)
-    dstr += "Tabix: %s\n" % ("Yes" if self.__tabix else "No")
+    dstr += " Number of Samples: %d\n" % len(self.samples)
+    dstr += " Tabix: %s\n" % ("Yes" if self.__tabix else "No")
     return dstr
   #edef
 
@@ -80,6 +109,20 @@ class VCF(object):
       #fi
       self.__readerIndex[record.CHROM].addi(record.POS-1, record.POS, record)
     #efor
+  #edef
+
+  def __getReaderIndex(self, k=None):
+    if self.__readerIndex is None:
+      self.__makeIndex(self.__reader)
+    #fi
+
+    if k is None:
+      return self.__readerIndex
+    elif k not in self.__readerIndex:
+      return None
+    else:
+      return self.__readerIndex[k]
+    #fi
   #edef
 
   def __singleQuery(self, seqid, start, end):
@@ -114,22 +157,53 @@ class VCF(object):
 
     res = self.filterType(res, types=types)
     res = self.filterSubTypes(res, subTypes=subTypes)
-    res = self.filter(res, filters=filters, gtFilters=gtFilters)
-    res = self.filterSamples(res, sampleFilters=sampleFilters)
+    res = self.filterFilter(res, filters=filters, gtFilters=gtFilters)
     res = self.filterAlleles(res, nAlleles=nAlleles)
+    res = self.filterSamples(res, sampleFilters=sampleFilters)
 
     res = self.extract(res, extract=extract)
+
+    if extract is None:
+      res = VCF(data=res, template=self.__template)
+    #fi
 
     return res
   #edef
 
+  def filter(self, filters=None,
+                   gtFilters=None,
+                   sampleFilters=None,
+                   types=None,
+                   subTypes=None,
+                   nAlleles=None):
+
+    if not(isinstance(self.__reader, list)):
+      utils.error("Cannot filter tabix indexed VCF files. First perform a query on it, and then you can filter it, or load without the tabix file")
+      return None
+    #fi
+
+    res = self.__reader
+    res = self.filterType(res, types=types)
+    res = self.filterSubTypes(res, subTypes=subTypes)
+    res = self.filterSamples(res, sampleFilters=sampleFilters)
+    res = self.filterFilter(res, filters=filters, gtFilters=gtFilters)
+    res = self.filterAlleles(res, nAlleles=nAlleles)
+
+    return VCF(data=res, template=self.__template)
+  #edef
+
+  #edef
+
   def __nonTabixQuery(self, chrom, start, end):
     chrom = str(chrom)
-    if chrom not in self.__readerIndex:
+
+    # Build the index if we haven't already - Delay building it if we don't need to!
+    idx = self.__getReaderIndex(chrom)
+    if idx is None:
       utils.dbm("Provided chromosome '%s' is not present in VCF." % chrom)
       return []
     else:
-      return [ res.data for res in self.__readerIndex[chrom].search(start, end) ]
+      return [ res.data for res in idx.search(start, end) ]
     #fi
   #edef
   
@@ -159,7 +233,7 @@ class VCF(object):
   ###############################################################################
 
   @staticmethod  
-  def filter(arr, filters=None, gtFilters=None):
+  def filterFilter(arr, filters=None, gtFilters=None):
   
     # Filter out variants and samples
     # To filter out samples, we need to modify the _Call.samples and _sample_indexes variables.
@@ -213,6 +287,11 @@ class VCF(object):
               filtSamples.append(s)
             #fi
           #efor
+
+          # If there are no VARIANT genotype calls that pass this filter, then we should remove the variant.
+          if (len([ s for s in filtSamples if s.is_variant ]) == 0) and (len(samples) > 0):
+            continue
+          #fi
           r.samples = filtSamples
           r._sample_indexes = { s.sample : i for i,s in enumerate(r.samples) }
         #fi

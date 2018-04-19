@@ -35,10 +35,8 @@ def mkdirp(directory):
 ###############################################################################
 
 def rmFile(fileName):
-  if os.path.exists(fileName):
-    if os.path.isfile(fileName):
-      return runCommand("rm '%s'" % fileName)
-    #fi
+  if os.path.isfile(fileName):
+    return runCommand("rm '%s'" % fileName)
   #fi
 #edef
 

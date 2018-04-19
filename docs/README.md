@@ -42,7 +42,7 @@ The BIU toolkit contains many many utilities that help my analysis. Here I provi
  * Gene Ontology : [biu.db.GO](biu.db.GO.ipynb)
  * GTeX : biu.db.GTeX
  * HAGR : biu.db.HAGR
- * KEGG : biu.db.KEGG
+ * KEGG : [biu.db.KEGG](biu.db.KEGG.ipynb)
  * MiRmine : biu.db.MiRmine
  * Neo4jDB : biu.db.Neo4jDB
  * Reactome : biu.db.Reactome
