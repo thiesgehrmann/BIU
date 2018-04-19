@@ -392,6 +392,7 @@ class VCF(object):
   
     def singleSummary(record, refp, altp):
       gtypes = [ s.data.GT if hasattr(s.data, "GT") else '-' for s in  record.samples ]
+      print(gtypes)
       #S = ( makeIdentifier(record, ),
       #      len([ x for x in gtypes if x in [ "0/0","0|0" ] ]),
       #      len([ x for x in gtypes if x in [ "0" ] ]),
@@ -409,7 +410,7 @@ class VCF(object):
       return S
     #edef
   
-    return pd.DataFrame( [ singleSummary(v, 0 if refPos is None else refPos[i], 1 if altPos is None else altPos[i] ) for i,v in enumerate(arr)], 
+    return pd.DataFrame( [ singleSummary(v, 0 if refPos is None else refPos[i], 1 if altPos is None else altPos[i]+1 ) for i,v in enumerate(arr)], 
                          columns=[ "id", "RR", "R", "RA", "A", "AA", "O"])
   #edef
   

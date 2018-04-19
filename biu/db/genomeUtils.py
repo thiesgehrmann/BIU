@@ -82,13 +82,13 @@ class Genome(fm.FileManager):
   fileIndex = None
 
   def __init__(self, version, **kwargs):
-    fm.FileManager.__init__(self, urlFileIndex(version), objects=["gff", "cds", "aa"] + [ ("genome", chrID) for chrID in versions[version]["chr"] ], **kwargs)
+    fm.FileManager.__init__(self, urlFileIndex(version), objects=["gff", "cds", "aa"] + [ ("genome", chrID) for chrID in versions[version]["genomeURLs"] ], **kwargs)
     self.version = version
 
     self.addStrFunction( lambda s: "Genome : %s" % s.version )
 
     self.gff    = rm.GFF3ResourceManager(self, "gff")
-    self.genome = { chrID: rm.FastaResourceManager(self, "chr_%s" % chrID, seqType=formats.Sequence.DNATYPE) for chrID in versions[self.version]["chr"] }
+    self.genome = { chrID: rm.FastaResourceManager(self, "chr_%s" % chrID, seqType=formats.Sequence.DNATYPE) for chrID in versions[self.version]["genomeURLs"] }
     self.cds    = rm.FastaResourceManager(self, "cds", seqType=formats.Sequence.DNATYPE)
     self.aa     = rm.FastaResourceManager(self, "aa", seqType=formats.Sequence.PROTTYPE)
   #edef

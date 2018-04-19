@@ -55,6 +55,10 @@ class Fasta(object):
     return self.__entries.values()
   #edef
 
+  def __contains(self, k):
+    return (k in self.__entries)
+  #edef
+
   def __iter__(self):
     self.__iterKeys = list(self.__entries.keys())
     return self
