@@ -21,14 +21,16 @@ seqIDField  = lambda e: e.seqid
 
 class GFF3Entry(object):
 
-  seqid = None
-  source = None
-  feature = None
-  start = None
-  end = None
-  score = None
-  phase = None
-  attr = None
+  __slots__ = [ 'seqid', 'source', 'feature', 'start', 'end', 'score', 'phase', 'strand', 'attr', '__idField', '__parentField', '__nameField' ]
+
+  #seqid = None
+  #source = None
+  #feature = None
+  #start = None
+  #end = None
+  #score = None
+  #phase = None
+  #attr = None
 
   def __init__(self, row, idField=idField, parentField=parentField, nameField=nameField, **kwargs):
   
@@ -118,14 +120,17 @@ class GFF3Entry(object):
 ###############################################################################
 
 class GFF3(object):
-  entries = None
-  seqids = None
-  index = None
-  features = None
 
-  __index = None
-  __intervalIndex = None
-  __fileName = None
+  __slots__ = [ 'entries', 'seqids', 'index', 'features', '__index', '__intervalIndex', '__fileName' ]
+
+  #entries = None
+  #seqids = None
+  #index = None
+  #features = None
+
+  #__index = None
+  #__intervalIndex = None
+  #__fileName = None
 
   def __init__(self, data, **kwargs):
 

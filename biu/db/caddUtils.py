@@ -3,6 +3,8 @@ from ..structures import fileManager as fm
 from ..structures import resourceManager as rm
 from ..config import settings as settings
 
+import numpy as np
+
 ###############################################################################
 
 versions = { "GRCh37" : {
@@ -50,21 +52,21 @@ class CADD(fm.FileManager):
     if (alt is None) and (end is None):
       resPhred = {}
       for res in qres:
-        resPhred[res.alt] = res.phred
+        resPhred[res.alt] = float(res.phred)
       #efor
       return resPhred
     #fi
     if (alt is None) and (end is not None):
       resPhred = {}
       for res in qres:
-        resPhred[(int(res.pos),res.alt)] = res.phred
+        resPhred[(int(res.pos),res.alt)] = float(res.phred)
       #efor
       return resPhred
     #fi
     if (alt is not None) and (end is not None):
       resPhred = {}
       for res in [r for r in qres if r.alt == alt]:
-        resPhred[int(res.pos)] = res.phred
+        resPhred[int(res.pos)] = float(res.phred)
       #efor
       return resPhred
     #fi
@@ -73,10 +75,30 @@ class CADD(fm.FileManager):
       if len(relRes) != 1:
         return None
       else:
-        return relRes[0].phred
+        return float(relRes[0].phred)
       #fi
     #fi
   #edef
 
+  def queryRegions(self, regions):
+    resPhred = {}
+    for (c,s,e) in regions:
+      qres = self.scores.query(c, s, e, namedtuple=True) 
+      for res in qres:
+        resPhred[(int(res.pos),res.alt)] = float(res.phred)
+      #efor
+    #efor
+    return resPhred
+  #edef
+
+  def regionThresh(self, chromosome, start, end, percentile=95):
+    return self.regionsThresh( [(chromosome, start, end)], percentile )
+  #edef
+
+  def regionsThresh(self, regions, percentile=95):
+    return np.percentile(np.array(list(self.queryRegions(regions).values())), percentile)
+  #edef
+ 
+
 #eclass
-    
+   

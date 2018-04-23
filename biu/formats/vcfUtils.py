@@ -9,12 +9,14 @@ from .. import utils
 
 class VCF(object):
 
-  __reader = None
-  __tabix = None
-  __fileName = None
-  __template = None
-  __vcfArgs = None
-  __readerIndex = None
+  __slots__ = [ '__reader', '__tabix', '__fileName', '__template', '__vcfArgs', '__ReaderIndex' ]
+
+  #__reader = None
+  #__tabix = None
+  #__fileName = None
+  #__template = None
+  #__vcfArgs = None
+  #__readerIndex = None
 
   def __init__(self, data, template=None, tabix=False, **kwargs):
     self.__tabix = tabix
@@ -134,6 +136,41 @@ class VCF(object):
     return res
   #edef
 
+  def whoHas(self, chromosome, pos, alt, ref=0):
+    var = self.getVar(chromosome, pos, alt)
+    if var is None:
+      return []
+    #fi
+    var, altPos = var
+    altGTs = [ '%d/%d' % (altPos, ref), '%d/%d' % (ref, altPos), '%d|%d' % (altPos, ref), '%d|%d' % (ref, altPos) ]
+    theyHave = []
+    for sample in var.samples:
+      if not(hasattr(sample.data, 'GT')):
+        continue
+      #fi
+      if sample.data.GT in altGTs:
+        theyHave.append(sample.sample)
+      #fi
+    #efor
+    return theyHave
+  #edef
+
+  def getVar(self, chromosome, pos, alt, **kwargs):
+    """ Return (VCF._Record, altPos) if the alternative variant exists, otherwise None
+        AltPos is the index of the alternative allele (in the case of a multi-allelic site)
+    """
+    V = self.query(chromosome, int(pos)-1, pos, **kwargs)
+    for v in V:
+      try:
+        altPos = [ a.sequence for a in v.ALT ].index(alt)
+        return (v, altPos+1)
+      except ValueError:
+        return None
+      #etry
+    #efor
+    return None
+  #edef
+
   def query(self, seqid, start, end, **kwargs):
     return self.queryRegions( [ (seqid, start, end) ], **kwargs)
   #edef
@@ -223,7 +260,7 @@ class VCF(object):
   @staticmethod
   def makeIdentifier(record, altPos=None):
     if altPos is not None:
-      alts = [ record.ALT[altPos].sequence if hasattr(record.ALT[altPos], "sequence") else '-' ]
+      alts = [ record.ALT[altPos].sequence if hasattr(record.ALT[altPos-1], "sequence") else '-' ]
     else:
       alts = [ a.sequence if hasattr(a, "sequence") else "-" for a in record.ALT ]
     #fi
@@ -409,7 +446,7 @@ class VCF(object):
       return S
     #edef
   
-    return pd.DataFrame( [ singleSummary(v, 0 if refPos is None else refPos[i], 1 if altPos is None else altPos[i]+1 ) for i,v in enumerate(arr)], 
+    return pd.DataFrame( [ singleSummary(v, 0 if refPos is None else refPos[i], 1 if altPos is None else altPos[i] ) for i,v in enumerate(arr)], 
                          columns=[ "id", "RR", "R", "RA", "A", "AA", "O"])
   #edef
   

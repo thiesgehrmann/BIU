@@ -66,4 +66,23 @@ class BBMRI(fm.FileManager):
     #efor
     return formats.VCF.extract(R, extract=extract)
   #edef
+
+  def getVar(self, chromosome, *pargs, **kwargs):
+    chromosome = str(chromosome)
+    if chromosome not in self.vcf:
+      utils.error("Could not find chromosome '%s'" % chromosome)
+      return None
+    #fi
+    return self.vcf[chromosome].getVar(chromosome, *pargs, **kwargs)
+  #edef
+
+  def whoHas(self, chromosome, *pargs, **kwargs):
+    chromosome = str(chromosome)
+    if chromosome not in self.vcf:
+      utils.error("Could not find chromosome '%s'" % chromosome)
+      return None
+    #fi
+    return self.vcf[chromosome].whoHas(chromosome, *pargs, **kwargs)
+  #edef
+
 #eclass

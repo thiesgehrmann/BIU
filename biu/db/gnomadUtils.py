@@ -12,7 +12,7 @@ versions = { "GRCh37" : {
   "vcfURL" : "https://storage.googleapis.com/gnomad-public/release/2.0.2/vcf/exomes/gnomad.exomes.r2.0.2.sites.vcf.bgz",
   "vcfTabixURL"   : "https://storage.googleapis.com/gnomad-public/release/2.0.2/vcf/exomes/gnomad.exomes.r2.0.2.sites.vcf.bgz.tbi",
   "covURLProto"   : "https://storage.googleapis.com/gnomad-public/release/2.0.2/coverage/exomes/gnomad.exomes.r2.0.2.chr%s.coverage.txt.gz",
-  "chr"           : [ "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "X", "Y" ],
+  "chr"           : [ "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "X", "Y" ],
   "covSeqField"   : 1,
   "covBeginField" : 2,
   "covEndField"    : 2
@@ -84,7 +84,7 @@ class Gnomad(fm.FileManager):
 
   def summary(self, arr, altPos=None, sub=None):
     def allSummary(var, altp):
-      gcIndexes  = formats.VCF.genotypeInfoFieldIndexes(altp+1)
+      gcIndexes  = formats.VCF.genotypeInfoFieldIndexes(altp)
       gcmale   = [ var.INFO["GC_Male"][i] for i in gcIndexes ] if "GC_Male" in var.INFO else [0, 0, 0]
       gcfemale   = [ var.INFO["GC_Female"][i] for i in gcIndexes ] if "GC_Female" in var.INFO else [0, 0, 0]
 
@@ -97,7 +97,7 @@ class Gnomad(fm.FileManager):
 
       chrom = var.CHROM.lower()      
       if chrom == 'y':
-        a = var.INFO["AC"][altp]
+        a = var.INFO["AC"][altp-1]
         r = var.INFO["AN"] - a
       elif chrom == 'x':
         rr = gcfemale[0]
@@ -111,7 +111,7 @@ class Gnomad(fm.FileManager):
         aa = gcmale[2] + gcfemale[2]
       #fi
 
-      return pd.DataFrame( [(formats.VCF.makeIdentifier(var, altp), rr, r, ra, a, aa, u)],
+      return pd.DataFrame( [(formats.VCF.makeIdentifier(var, altp-1), rr, r, ra, a, aa, u)],
                            columns = ["id", "RR", "R", "RA", "A", "AA", "O"])
     #edef
 
@@ -122,7 +122,7 @@ class Gnomad(fm.FileManager):
       #fi
 
       gc = "GC_%s" % sub
-      gcIndexes = formats.VCF.genotypeInfoFieldIndexes(altp+1)
+      gcIndexes = formats.VCF.genotypeInfoFieldIndexes(altp)
       gc        = [ var.INFO[gc][i] for i in gcIndexes ] if gc in var.INFO else [0, 0, 0]
       rr = gc[0]
       r  = 0
@@ -130,7 +130,7 @@ class Gnomad(fm.FileManager):
       a  = 0
       aa = gc[2]
       u  = 0
-      return pd.DataFrame( [(formats.VCF.makeIdentifier(var, altp), rr, r, ra, a, aa, u)],
+      return pd.DataFrame( [(formats.VCF.makeIdentifier(var, altp-1), rr, r, ra, a, aa, u)],
                            columns = ["id", "RR", "R", "RA", "A", "AA", "O"])
     #edef
 
@@ -154,5 +154,13 @@ class Gnomad(fm.FileManager):
     return R
   #edef 
     
+
+  def getVar(self, *pargs, **kwargs):
+    return self.vcf.getVar(*pargs, **kwargs)
+  #edef
+
+  def whoHas(self, *pargs, **kwargs):
+    return self.vcf.whoHas(*pargs, **kwargs)
+  #edef
 
 #eclass

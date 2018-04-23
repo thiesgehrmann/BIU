@@ -24,10 +24,12 @@ class Sequence(object):
   PROTTYPE = 'prot'
   UNKNOWNTYPE = 'unknown'
 
-  __name = None
-  __fullName = None
-  __seq = None
-  __seqType = None
+  __slots__ = [ '__name', '__fullName', '__seq', '__seqType' ]
+
+  #__name = None
+  #__fullName = None
+  #__seq = None
+  #__seqType = None
 
   def __init__(self, name, seq, seqType = DNATYPE, fullName=None):
     self.__name = name

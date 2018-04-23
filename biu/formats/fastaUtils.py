@@ -8,8 +8,11 @@ from .seqUtils import Sequence
 
 class Fasta(object):
 
-  __entries = None
-  __fileName = None
+  __slots__ = [ '__entries', '__fileName', '__iterKeys' ]
+
+  #__entries = None
+  #__fileName = None
+  #__iterKeys = None
 
   def __init__(self, data, seqType=Sequence.DNATYPE):
     if isinstance(data, str):
