@@ -1,8 +1,12 @@
 channels:
  - hcc
+ - bioconda
 dependencies:
  - pyvcf
  - tabix
+ - pytabix
+ - snakemake
+ - pysam
  - neo4j-python-driver
  - numpy
  - pandas
