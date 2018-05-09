@@ -490,6 +490,10 @@ class DAT(object):
     return self.__fields.__iter__()
   #edef
 
+  def __contains__(self, field):
+    return field in self.__names
+  #edef
+
   def getFeatureType(self, field):
     fieldID, fieldType, fieldName = self[field]
     return fieldType
@@ -563,6 +567,7 @@ class DAT(object):
         fieldType = 'S' if self.__mask[i] else fieldType.upper()
         ofd.write("%s\t%s\n" % (fieldType, fieldName))
       #efor
+      ofd.write("E\tEND-OF-DATA\n")
       self.__fileName = fileName
     #ewith
   #edef
@@ -662,6 +667,22 @@ class PED(object):
         self[famID][memberID].setFeature(featureName, emptyValue)
       #efor
     #efor
+  #edef
+
+  def getFeature(self, featureName):
+    values = {}
+    if featureName not in self.__datFormat:
+      utils.error("Feature '%s' doesn't exist." % featureName)
+      return values
+    #fi
+
+    for famID in self.families:
+      family = self[famID]
+      for memberID in family:
+        values[(famID, memberID)] = family[memberID].getFeature(featureName)
+      #efor
+    #efor
+    return values
   #edef
 
   def __iter__(self):

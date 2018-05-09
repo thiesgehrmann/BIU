@@ -226,6 +226,24 @@ class GAFResourceManager(ResourceManager, formats.GAF):
 
 ###############################################################################
 
+#class LargeMapResourceManager(ResourceManager):
+#
+#  __mapping = None
+#
+#  def __init__(self, fmObject, sqliteFile, largeFile, mapFrom=0, mapTo=[1]):
+#    ResourceManager.__init__(self, fmObject, [ largeFile ], **kwargs)
+#    self._resource = formats.SQLite(self._fmObject.getFileName(sqliteFile))
+#    if not self._fmObject.haveFile(largeFile):
+#      self._resource.execute("CREATE TABLE data(id STRING PRIMARY KEY, value TEXT);")
+#      with utils.gzopen(self._fmObject.getFileName(largeFile), 
+#      
+#
+#  def __getitem__(self, key):
+#
+##eclass
+
+###############################################################################
+
 class TSVMapResourceManager(TSVResourceManager):
   _mapping = None
   _mappingR = None

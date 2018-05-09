@@ -12,10 +12,12 @@ versions = {
   "human_9606_b150_GRCh37p13" : {
     "vcf" : "ftp://ftp.ncbi.nih.gov/snp/organisms/human_9606_b150_GRCh37p13/VCF/All_20170710.vcf.gz",
     "tbi" : "ftp://ftp.ncbi.nih.gov/snp/organisms/human_9606_b150_GRCh37p13/VCF/All_20170710.vcf.gz.tbi",
+    "assemblyid" : "GRCh37.p13"
   },
   "human_9606_b150_GRCh38p7" : {
     "vcf" : "ftp://ftp.ncbi.nih.gov/snp/organisms/human_9606_b150_GRCh38p7/VCF/All_20170710.vcf.gz",
     "tbi" : "ftp://ftp.ncbi.nih.gov/snp/organisms/human_9606_b150_GRCh38p7/VCF/All_20170710.vcf.gz.tbi",
+    "assemblyid" : "GRCh38.p7"
   }
 }
 
@@ -86,16 +88,53 @@ class DBSNP(fm.FileManager):
     return res
   #edef
 
+  def __getAssemblyPosition(self, ID):
+    utils.dbm("Querying for rs%d via REST." % ID)
+    assemblyid = versions[self.version]["assemblyid"]
+
+    def seqPosLookup(restResult):
+      for asm in restResult['primary_snapshot_data']['placements_with_allele']:
+        for seq in asm['placement_annot']['seq_id_traits_by_assembly']:
+          if seq['assembly_name'] == assemblyid:
+            possiblePositions = [ (allele['allele']['spdi']['seq_id'], allele['allele']['spdi']['position']) for allele in asm['alleles'] ]
+            return possiblePositions[0]
+          #fi
+        #efor
+      #efor
+      return None
+    #edef
+
+    url = 'https://api.ncbi.nlm.nih.gov/variation/v0/beta/refsnp/%d' % ID
+    dat = str(utils.getCommandOutput('curl -X GET --header "Accept: application/json" "%s"' % url)[0].decode('UTF-8'))
+    dat = json.loads(dat)
+
+    if 'primary_snapshot_data' not in dat:
+      newkey = int(dat['merged_snapshot_data']['merged_into'][0])
+      utils.dbm("Redirecting %d -> %d" % (ID, newkey))
+      return self.idLookup(newkey)
+    #fi
+
+    pos = seqPosLookup(dat)
+    if pos is None:
+      return None
+    #fi
+    seqid, pos = pos
+
+    cmd = 'curl "https://www.ncbi.nlm.nih.gov/nuccore/%s?report=docsum&log$=seqview" | grep "<title>Homo sapiens" | sed -e \'s/^[[:blank:]]*//g\' | cut -d\  -f4 | cut -f1 -d,' % seqid
+    seqnumber = str(utils.getCommandOutput(cmd, shell=True)[0].decode('UTF-8'))
+    return (seqnumber.strip(), pos)
+  #edef
+
   def idLookup(self, ID):
     if ID in self.info:
       return self.info[ID]
     else:
-      url = 'https://api.ncbi.nlm.nih.gov/variation/v0/beta/refsnp/%d' % ID
-      utils.dbm("Downloading via REST from '%s'" % url)
-      dat = str(utils.getCommandOutput('curl -X GET --header "Accept: application/json" "%s"' % url)[0].decode('UTF-8'))
-      dat = json.loads(dat)
-      self.info[ID] = dat
-      return dat
+      pos = self.__getAssemblyPosition(ID)
+      if pos is None:
+        return None
+      #fi
+      self.info[ID] = pos
+      return pos
     #fi
 
   def __call__(self, *pargs, **kwargs):
