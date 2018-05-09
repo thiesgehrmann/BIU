@@ -211,9 +211,10 @@ def getCommandOutput(cmd, stderr=None, shell=False, verbose=False):
     cmd = shlex.split(cmd)
   #fi
 
-  p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=shell);
-  (pid, r) = os.waitpid(p.pid, 0);
-  return p.communicate()
+  #p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=shell);
+  p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=shell)
+  
+  return p.stdout
 #edef
 
 ###############################################################################

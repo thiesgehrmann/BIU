@@ -88,6 +88,8 @@ class DBSNP(fm.FileManager):
     return res
   #edef
 
+  __assemblySeqIDChromosomes = {}
+
   def __getAssemblyPosition(self, ID):
     utils.dbm("Querying for rs%d via REST." % ID)
     assemblyid = versions[self.version]["assemblyid"]
@@ -105,7 +107,7 @@ class DBSNP(fm.FileManager):
     #edef
 
     url = 'https://api.ncbi.nlm.nih.gov/variation/v0/beta/refsnp/%d' % ID
-    dat = str(utils.getCommandOutput('curl -X GET --header "Accept: application/json" "%s"' % url)[0].decode('UTF-8'))
+    dat = str(utils.getCommandOutput('curl -X GET --header "Accept: application/json" "%s"' % url).decode('UTF-8'))
     dat = json.loads(dat)
 
     if 'primary_snapshot_data' not in dat:
@@ -120,9 +122,13 @@ class DBSNP(fm.FileManager):
     #fi
     seqid, pos = pos
 
-    cmd = 'curl "https://www.ncbi.nlm.nih.gov/nuccore/%s?report=docsum&log$=seqview" | grep "<title>Homo sapiens" | sed -e \'s/^[[:blank:]]*//g\' | cut -d\  -f4 | cut -f1 -d,' % seqid
-    seqnumber = str(utils.getCommandOutput(cmd, shell=True)[0].decode('UTF-8'))
-    return (seqnumber.strip(), pos)
+    if seqid not in self.__assemblySeqIDChromosomes:
+      cmd = 'curl "https://www.ncbi.nlm.nih.gov/nuccore/%s?report=docsum&log$=seqview" | grep "<title>Homo sapiens" | sed -e \'s/^[[:blank:]]*//g\' | cut -d\  -f4 | cut -f1 -d,' % seqid
+      seqnumber = str(utils.getCommandOutput(cmd, shell=True).decode('UTF-8'))
+      self.__assemblySeqIDChromosomes[seqid] = seqnumber.strip()
+    #fi
+
+    return (self.__assemblySeqIDChromosomes[seqid], pos)
   #edef
 
   def idLookup(self, ID):
