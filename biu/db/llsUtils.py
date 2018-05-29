@@ -64,9 +64,15 @@ class LLS(fm.FileManager):
 
   def queryRegions(self, regions, extract=None, **kwargs):
     R = []
+    template = None
     for (c,s,e) in regions:
-      R.extend(list(self.query(c,s,e, **kwargs)))
+      R.extend(self.query(c,s,e, extract='raw', **kwargs))
+      template = self.vcf[c].template
     #efor
+    if extract is None:
+      return formats.VCF(R, template=template)
+    #fi
+
     return formats.VCF.extract(R, extract=extract)
   #edef
 
@@ -86,6 +92,23 @@ class LLS(fm.FileManager):
       return None
     #fi
     return self.vcf[chromosome].whoHas(chromosome, *pargs, **kwargs)
+  #edef
+
+  def cgIDToLLNR(self, cgID):
+    cgID    = cgID.replace('_240_37-ASM', '')
+    possible = self.phenotypes[self.phenotypes.cgID == cgID].LLnr.values 
+    if len(possible) > 0:
+      return possible[0]
+    #fi
+    return None
+  #edef
+
+  def llnrTpcgID(self, llnr):
+    possible = self.phenotypes[self.phenotypes.llnr == llnr].cgID.values
+    if len(possible) > 0:
+      return possible[0]
+    #fi
+    return None
   #edef
 
 #eclass

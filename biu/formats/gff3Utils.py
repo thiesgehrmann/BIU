@@ -134,6 +134,8 @@ class GFF3(object):
 
   def __init__(self, data, **kwargs):
 
+    self.__fileName = None
+
     if isinstance(data, str):
       utils.dbm("GFF input source is file.")
       self.__fileName = data
@@ -147,6 +149,7 @@ class GFF3(object):
     #fi
     self.seqids  = set([ e.seqid for e in self.entries])
     self.__index, self.features = self._index()
+    self.__intervalIndex = None
   #edef
 
   def __iter__(self):
@@ -257,7 +260,7 @@ class GFF3(object):
     #fi
   #edef
       
-  def getChildren(self, ID, feature=None, depth=None, containParent=False):
+  def getChildren(self, ID, feature=None, depth=None, containParent=False, raw=False):
 
     relEntries = [ self.getIDEntry(ID).withoutParent() ] if containParent else []
     ids = [ (0, c[0], c[1]) for c in self.getIDChildren(ID) ]
@@ -289,6 +292,9 @@ class GFF3(object):
       relEntries = E
     #fi
 
+    if raw:
+      return relEntries
+    #fi
     return GFF3(data = relEntries)
   #edef  
 
@@ -307,12 +313,13 @@ class GFF3(object):
     #fi
 
     if features not in self.__intervalIndex:
+      utils.dbm("Constructing interval index...")
       try: 
         from intervaltree import Interval, IntervalTree
       
         t = { str(seqid) : IntervalTree() for seqid in self.seqids }
         for e in [ e for e in self.entries if e.feature.lower() in features ]:
-          t[str(e.seqid)][e.start:e.end] = e
+          t[str(e.seqid)][e.start-1:e.end] = e
         #efor
       except ImportError:
         return {}
@@ -322,16 +329,19 @@ class GFF3(object):
     return self.__intervalIndex[features]
   #edef
 
-  def query(self, chromosome, start, stop, features=None):
-    return self.queryRegions([(chromosome, start, stop)], features=features)
+  def query(self, chromosome, start, stop, features=None, raw=False):
+    return self.queryRegions([(chromosome, start, stop)], features=features, raw=raw)
   #edef
 
-  def queryRegions(self, regions, features=None):
+  def queryRegions(self, regions, features=None, raw=False):
     R = []
     for (c,s,e) in regions:
       r = self.__query(c, s, e, features)
       R.extend(r)
     #efor
+    if raw:
+      return R
+    #fi
     return GFF3(R)
   #edef
 

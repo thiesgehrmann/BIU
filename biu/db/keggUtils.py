@@ -1,6 +1,9 @@
 from ..structures import fileManager as fm
 from ..structures import resourceManager as rm
 from .. import utils
+from .. import stats
+
+import pandas as pd
 
 import os
 
@@ -107,6 +110,10 @@ class KEGG(fm.FileManager):
     return self._getFeature(self._formatFeatureID(pathwayID, True))
   #edef
 
+  def getPathwayName(self, pathwayID):
+    return self.getPathwayInfo(pathwayID).split('\n')[1][4:].strip()
+  #edef
+
   def getGeneInfo(self, geneID):
     return self._getFeature(self._formatFeatureID(geneID, False))
   #edef
@@ -117,10 +124,33 @@ class KEGG(fm.FileManager):
     else:
       url = self._fileIndex["feature_data"][0] % (ID)
       utils.dbm("Downloading via REST from '%s'" % url)
-      dat = str(utils.getCommandOutput("curl --silent -L '%s'" % url)[0].decode('UTF-8'))
+      dat = str(utils.getCommandOutput("curl --silent -L '%s'" % url).decode('UTF-8'))
       self._featureData[ID] = dat
       return dat
     #fi
   #edef
+
+  def enrich(self, yourSet, pathway=None):
+    if pathway is None:
+        pathway = self.getPathways()
+    #fi
+    if isinstance(pathway, str):
+        pathway = [ pathway ]
+    #fi
+    R = []
+    B = kegg.getGeneIDs()
+    for p in pathway:
+        pathwayGenes = self.getPathwayGeneIDs(p)
+        e, t, m = stats.setEnrichment(yourSet, pathwayGenes, B)
+        oddsratio = 0
+        try:
+            oddsratio = (t[0][0] / t[0][1]) / (t[1][0] / t[1][1])
+        except:
+            oddsratio = 100
+        #etry
+        R.append((p, m, e[0], oddsratio, e[1]))
+    #efor
+    return pd.DataFrame(R, columns=['pathway', 'method', 'statistic', 'oddsratio', 'p'])
+#edef
 
 #eclass

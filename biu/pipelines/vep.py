@@ -1,7 +1,6 @@
 from . import Pipeline
 from .. import formats
 
-import vcf
 import pandas as pd
 
 import inspect, os
@@ -29,11 +28,11 @@ class VEP(Pipeline):
       smConfig.update(config)
     #fi
 
-    if isinstance(data, str):
-      smConfig["vcf_file"] = data
-    else:
-      smConfig["vcf_file"] = self._writeTemporaryFile(data)
+    if isinstance(data, formats.VCF):
+      data = [ record for record in data ]
     #fi
+
+    smConfig["vcf_file"] = self._writeTemporaryFile(data)
 
     self.setConfig(smConfig)
     self.run(["output"])

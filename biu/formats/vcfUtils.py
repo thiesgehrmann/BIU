@@ -9,7 +9,7 @@ from .. import utils
 
 class VCF(object):
 
-  __slots__ = [ '__reader', '__tabix', '__fileName', '__template', '__vcfArgs', '__ReaderIndex' ]
+  __slots__ = [ '__reader', '__tabix', '__fileName', '__template', '__vcfArgs', '__readerIndex' ]
 
   #__reader = None
   #__tabix = None
@@ -21,6 +21,10 @@ class VCF(object):
   def __init__(self, data, template=None, tabix=False, **kwargs):
     self.__tabix = tabix
     self.__vcfArgs = kwargs
+    self.__readerIndex = None
+    self.__tabix = tabix
+    self.__fileName = None
+    self.__template = None
 
     if not(isinstance(data, str)):
       utils.dbm("VCF Input source is list of Records.")
@@ -86,6 +90,16 @@ class VCF(object):
 
   def __next__(self):
     return self.__reader.__next__()
+  #edef
+
+  @property
+  def records(self):
+    return [ r for r in self.__reader ]
+  #edef
+
+  @property
+  def template(self):
+    return self.__template
   #edef
 
   def __str__(self):
@@ -159,7 +173,7 @@ class VCF(object):
     """ Return (VCF._Record, altPos) if the alternative variant exists, otherwise None
         AltPos is the index of the alternative allele (in the case of a multi-allelic site)
     """
-    V = self.query(chromosome, int(pos)-1, pos, **kwargs)
+    V = self.query(chromosome, int(pos)-1, pos, extract='raw', **kwargs)
     for v in V:
       try:
         altPos = [ a.sequence for a in v.ALT ].index(alt)

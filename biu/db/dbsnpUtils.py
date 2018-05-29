@@ -103,6 +103,7 @@ class DBSNP(fm.FileManager):
           #fi
         #efor
       #efor
+      utils.warning("Cannot find rs%d for genome %s!" % (ID, assemblyid))
       return None
     #edef
 
@@ -133,11 +134,18 @@ class DBSNP(fm.FileManager):
 
   def idLookup(self, ID):
     if ID in self.info:
-      return self.info[ID]
+      res = self.info[ID]
+      if res == -1:
+        return (None, None)
+      #fi
+      return res
+      
     else:
       pos = self.__getAssemblyPosition(ID)
       if pos is None:
-        return None
+        utils.dbm("Pos is None!")
+        self.info[ID] = -1
+        return (None, None)
       #fi
       self.info[ID] = pos
       return pos

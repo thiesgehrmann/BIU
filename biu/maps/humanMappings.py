@@ -23,10 +23,7 @@ class HumanMapping(fm.FileManager):
   uniprotmap   = None
 
   def __init__(self, **kwargs):
-    fm.FileManager.__init__(self, urlFileIndex(), objects=["geneid2ensemblgene",
-"geneid2genesymbol", 
-"ensembltranscript2ensemblgene", 
-"ensembltranscript2uniprot"], **kwargs)
+    fm.FileManager.__init__(self, urlFileIndex(), objects=["geneid2ensemblgene", "geneid2genesymbol"], **kwargs)
 
     self.geneid2ensemblgene = rm.TSVMapResourceManager(self, "geneid2ensemblgene", 1, 2, **kwargs)
     self.geneid2genesymbol = rm.TSVMapResourceManager(self, "geneid2genesymbol", 1, 2, **kwargs)
