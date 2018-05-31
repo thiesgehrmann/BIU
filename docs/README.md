@@ -50,7 +50,7 @@ The BIU toolkit contains many many utilities that help my analysis. Here I provi
  * MiRmine : biu.db.MiRmine
  * Neo4jDB : biu.db.Neo4jDB
  * Reactome : biu.db.Reactome
- * Uniprot : [biu.db.UniProt](biu.db.UniProt)
+ * Uniprot : [biu.db.UniProt](biu.db.UniProt.ipynb)
 
  * Human Gene Essentiality metrics
   * Residual Variation Intolerance Score (RVIS): biu.db.RVIS
@@ -60,7 +60,7 @@ The BIU toolkit contains many many utilities that help my analysis. Here I provi
 ## Mapping utilities
 
  * Human mappings
-  * Dictionary maps: [biu.maps.Human](biu.maps.Human)
+  * Dictionary maps: [biu.maps.Human](biu.maps.Human.ipynb)
   * SQLite maps: biu.maps.HumanS
 
 ## Pipelines
@@ -75,7 +75,7 @@ The BIU toolkit contains many many utilities that help my analysis. Here I provi
 
 ## Data processing
 
- * Matrix operations: [biu.processing.matrix](biu.processing.matrix)
+ * Matrix operations: [biu.processing.matrix](biu.processing.matrix.ipynb)
 
 ## Additional utilities
  * Utils : biu.utils
