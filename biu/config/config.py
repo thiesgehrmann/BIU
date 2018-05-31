@@ -34,6 +34,11 @@ class globalSettings(object):
     #fi
   #edef
 
+  @property
+  def settings(self):
+    return self._settings
+  #edef
+
   ###############################################################################
 
   def getWhere(self):
@@ -51,7 +56,7 @@ class globalSettings(object):
   #edef
 
   def setPipelineOutdir(self, outdir):
-    self.setSetting(pipelines_outdir_base=outdir)
+    self.setSettings(pipelines_outdir_base=outdir)
   #edef
 
   def getPipelineTemporaryInputDir(self):
