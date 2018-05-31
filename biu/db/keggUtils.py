@@ -130,7 +130,7 @@ class KEGG(fm.FileManager):
     #fi
   #edef
 
-  def enrich(self, yourSet, pathway=None):
+  def enrich(self, yourSet, pathway=None, correctionType=None, **kwargs):
     if pathway is None:
         pathway = self.getPathways()
     #fi
@@ -138,19 +138,19 @@ class KEGG(fm.FileManager):
         pathway = [ pathway ]
     #fi
     R = []
-    B = kegg.getGeneIDs()
+    B = self.getGeneIDs()
     for p in pathway:
         pathwayGenes = self.getPathwayGeneIDs(p)
-        e, t, m = stats.setEnrichment(yourSet, pathwayGenes, B)
-        oddsratio = 0
-        try:
-            oddsratio = (t[0][0] / t[0][1]) / (t[1][0] / t[1][1])
-        except:
-            oddsratio = 100
-        #etry
-        R.append((p, m, e[0], oddsratio, e[1]))
+        res = stats.enrichment.setEnrichment(yourSet, pathwayGenes, B)
+        R.append((p, res.method, res.c2statistic, res.oddsratio, res.pvalue))
     #efor
-    return pd.DataFrame(R, columns=['pathway', 'method', 'statistic', 'oddsratio', 'p'])
+
+    df = pd.DataFrame(R, columns=['pathway', 'method', 'c2statistic', 'oddsratio', 'p'])
+    if correctionType is not None:
+      df['q'] = stats.correction.correct(df.p.values, correctionType, **kwargs)
+    #fi
+
+    return df
 #edef
 
 #eclass

@@ -1,3 +1,3 @@
-from .enrichment import setEnrichment
+from . import enrichment as enrichment
 
-#from correction import fdr
+from . import correction as correction

@@ -1,3 +1,5 @@
+from collections import namedtuple as namedtuple
+
 
 from ..structures import fileManager as fm
 from ..structures import resourceManager as rm
@@ -80,7 +82,7 @@ class HumanMapping(fm.FileManager):
   #edef
 
   def getGeneIDEnsembl(self, geneID):
-    ensemblIDs = self.geneid2ensemblgene.lookup(geneID)
+    ensemblIDs = self.geneid2ensemblgene.lookup(str(geneID))
     return list(set(ensemblIDs))
 
   def getSymbolGeneID(self, symbol):
@@ -89,7 +91,7 @@ class HumanMapping(fm.FileManager):
   #edef
 
   def getGeneIDSymbol(self, geneID, other=False):
-    geneNameLookup = self.geneid2genesymbol.lookup(geneID, withEntry=other)
+    geneNameLookup = self.geneid2genesymbol.lookup(str(geneID), withEntry=other)
     if other:
       geneNames = [ r[0] for r in geneNameLookup ]
       otherEntries = [ n for r in geneNameLookup for n in self.geneid2ensemblgene[r[1]][5].split('|') if n != '-' ]
@@ -97,6 +99,35 @@ class HumanMapping(fm.FileManager):
     else:
       return list(set(geneNameLookup))
     #fi
+  #edef
+
+  __allIDs = namedtuple("GeneIDMapping", ['geneID', 'ensemblID', 'symbol'])
+
+  def fromEnsembl(self, ensemblID):
+    geneID = self.getEnsemblGeneID(ensemblID)
+    geneID = None if len(geneID) == 0 else geneID[0]
+    symbol = self.getEnsemblSymbol(ensemblID)
+    symbol = None if len(symbol) == 0 else symbol[0]
+
+    return self.__allIDs(geneID, ensemblID, symbol)
+  #edef
+
+  def fromGeneID(self, geneID):
+    ensemblID = self.getGeneIDEnsembl(geneID)
+    ensemblID = None if len(ensemblID) == 0 else ensemblID[0]
+    symbol = self.getGeneIDSymbol(geneID)
+    symbol = None if len(symbol) == 0 else symbol[0]
+
+    return self.__allIDs(geneID, ensemblID, symbol)
+  #edef
+
+  def fromSymbol(self, symbol):
+    geneID = self.getSymbolGeneID(symbol)
+    geneID = None if len(geneID) == 0 else geneID[0]
+    ensemblID = self.getSymbolEnsembl(symbol)
+    ensemblID = None if len(ensemblID) == 0 else symbol[0]
+
+    return self.__allIDs(geneID, ensemblID, symbol)
   #edef
 
 #eclass
