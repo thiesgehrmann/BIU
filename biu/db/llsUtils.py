@@ -1,61 +1,55 @@
-from ..structures import fileManager as fm
-from ..structures import resourceManager as rm
+from ..structures import Dataset
 from ..config import settings as settings
 from .. import formats
+from .. import utils
+import pandas as pd
 
 import itertools
 
 ###############################################################################
 
-versions = { "current":
-  { "chrs" : [ "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "M", "X", "Y" ] }
-}
+class LLS(Dataset):
 
-def urlFileIndex(version):
-  files = {}
-
-  chrs = versions[version]["chrs"]
-  for chrID in chrs:
-    files["vcf_%s" % chrID] = (None, "tbx/merged.chr%s.vcf.bgz" % chrID, {})
-    files["vcf_%s_tbi" % chrID] = (None, "tbx/merged.chr%s.vcf.bgz.tbi" % chrID, {})
-  #efor
-
-  files["phen"] = (None, "phen218.txt", {})
-
-  return files
-#edef
-
-def listVersions():
-  print("Available versions:")
-  for v in versions:
-    print(" * %s" % v)
-#edef
-
-###############################################################################
-
-class LLS(fm.FileManager):
-
+  versions = { "current":
+    { "chrs" : [ "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "M", "X", "Y" ] }
+  }
   version = None
   vcf = None
 
-  def __init__(self, version=list(versions.keys())[0], where="/exports/molepi/LLSSEQ", **kwargs):
-    fm.FileManager.__init__(self, urlFileIndex(version), objects=["phenotypes"] + [ ("vcf", chrID) for chrID in versions[version]["chrs"] ], where=where, **kwargs)
+  def __init__(self, version=list(versions.keys())[0], where="/exports/molepi/LLSSEQ", localCopy={}):
+    fileIndex = self.__genFileIndex(version, where)
+
+    Dataset.__init__(self, fileIndex, localCopy=localCopy)
     self.version = version
 
-    self.vcf = {}
-    for chrID in versions[self.version]["chrs"]:
-      self.vcf[chrID] = rm.VCFResourceManager(self, "vcf_%s" % chrID, "vcf_%s_tbi" % chrID)
+    for chrID in self.versions[self.version]["chrs"]:
+      self._registerObject('vcf_%s' % chrID, formats.VCF, [ "vcf_%s" % chrID, "vcf_%s_tbi" % chrID ], fileIndex["vcf_%s" % chrID].path, tabix=True)
     #efor
 
-    self.phenotypes = rm.TSVResourceManager(self, "phen", delimiter=' ') 
+    self._registerObject('phen', pd.read_csv, [ "phen"], fileIndex["phen"].path, delimiter=' ') 
 
-    self.addStrFunction(lambda s: "Version: %s" % self.version)
+    self._addStrFunction(lambda s: "Version: %s" % self.version)
+  #edef
+
+  def __genFileIndex(self, version, where=None):
+     finalPath = '%s/geneOntology_%s' % ( (settings.getWhere() if where is None else where), version)
+     files = {}
+     for chrID in self.versions[version]["chrs"]:
+       files['vcf_%s' % chrID] = utils.Acquire("%s/tbx/merged.chr%s.vcf.bgz" % (where, chrID), where=where)
+       files['vcf_%s_tbi' % chrID] = utils.Acquire("%s/tbx/merged.chr%s.vcf.bgz.tbi" % (where, chrID), where=where)
+     #efor
+
+     files['phen'] = utils.Acquire("/dev/null")
+
+     print(files)
+     return files
   #edef
 
   def query(self, chrID, start, end, **kwargs):
     chrID = str(chrID)
-    if chrID in self.vcf:
-      return self.vcf[chrID].query(chrID, start, end, **kwargs)
+    oname = "vcf_%s" % chrID
+    if self._objectExists(oname):
+      return self._getObject(oname).query(chrID, start, end, **kwargs)
     else:
       utils.error("Could not find chromosome '%s'" % chrID)
       return iter(())
@@ -67,10 +61,9 @@ class LLS(fm.FileManager):
     template = None
     for (c,s,e) in regions:
       R.extend(self.query(c,s,e, extract='raw', **kwargs))
-      template = self.vcf[c].template
     #efor
     if extract is None:
-      return formats.VCF(R, template=template)
+      return formats.VCF(R)
     #fi
 
     return formats.VCF.extract(R, extract=extract)
@@ -78,20 +71,27 @@ class LLS(fm.FileManager):
 
   def getVar(self, chromosome, *pargs, **kwargs):
     chromosome = str(chromosome)
-    if chromosome not in self.vcf:
+    oname = "vcf_%s" % chrID
+    if self._objectExists(oname):
       utils.error("Could not find chromosome '%s'" % chromosome)
       return None
     #fi
-    return self.vcf[chromosome].getVar(chromosome, *pargs, **kwargs)
+    return self._getObject(oname).getVar(chromosome, *pargs, **kwargs)
   #edef
 
   def whoHas(self, chromosome, *pargs, **kwargs):
     chromosome = str(chromosome)
-    if chromosome not in self.vcf:
+    oname = "vcf_%s" % chromosome
+    if not self._objectExists(oname):
       utils.error("Could not find chromosome '%s'" % chromosome)
       return None
     #fi
-    return self.vcf[chromosome].whoHas(chromosome, *pargs, **kwargs)
+    return self._getObject(oname).whoHas(chromosome, *pargs, **kwargs)
+  #edef
+
+  @property
+  def phenotypes(self):
+    return self._getObject("phen")
   #edef
 
   def cgIDToLLNR(self, cgID):
@@ -104,7 +104,7 @@ class LLS(fm.FileManager):
   #edef
 
   def llnrTpcgID(self, llnr):
-    possible = self.phenotypes[self.phenotypes.llnr == llnr].cgID.values
+    possible = self.self.phenotypes[self.phenotypes.llnr == llnr].cgID.values
     if len(possible) > 0:
       return possible[0]
     #fi

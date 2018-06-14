@@ -42,7 +42,7 @@ class globalSettings(object):
   ###############################################################################
 
   def getWhere(self):
-    return self.getSetting("where")
+    return os.path.abspath(self.getSetting("where"))
   #edef
 
   def setWhere(self, where):
@@ -51,8 +51,23 @@ class globalSettings(object):
 
   ###############################################################################
 
+  def getDownloadDir(self):
+    dldir = self.getSetting("download_dir")
+    if self.getSetting("download_dir") is None:
+      return self.getWhere() + '/_downloads'
+    else:
+      return os.path.abspath(dldir)
+    #fi
+  #edef
+
+  def setDownloadDir(self, dirName):
+    self.setSetting(download_dir=dirName)
+  #edef
+
+  ###############################################################################
+
   def getPipelineOutdir(self):
-    return self.getSetting("pipelines_base")
+    return os.path.abspath(self.getSetting("pipelines_base"))
   #edef
 
   def setPipelineOutdir(self, outdir):
@@ -74,7 +89,7 @@ class globalSettings(object):
   ###############################################################################
   
   def getNeo4jDir(self):
-    return self.getSetting("neo4j_install_dir")
+    return os.path.abspath(self.getSetting("neo4j_install_dir"))
   #edef
 
   ###############################################################################
@@ -94,7 +109,7 @@ class globalSettings(object):
   #edef
 
   def getDebugStream(self):
-    return self.getSettings("debug_stream")
+    return self.getSetting("debug_stream")
   #edef
 
   def setDebugStream(self, stream):

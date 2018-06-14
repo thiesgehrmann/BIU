@@ -61,18 +61,18 @@ class GTeX(fm.FileManager):
     return np.unique(self.sAttr['SAMPID'].apply(lambda x: x.split('-')[1]).values)
   #edef
 
-  def getPersonIDsAttrRows(self, personID):
+  def getPersonIDAttrRows(self, personID):
     return self.sAttr[self.sAttr['SAMPID'].apply(lambda x: x.split('-')[1] == personID)]
   #edef
 
   def getPersonIDSamples(self, personID, smafrze="RNASEQ"):
-    personRows = self.getPersonIDsAttrRows(personID)
+    personRows = self.getPersonIDAttrRows(personID)
     return personRows[personRows['SMAFRZE'] == smafrze]['SAMPID'].values
   #edef
 
   def getPersonIDTissueSampleID(self, personID, tissueType):
-    personRows = self.getPersonIDsAttrRows(personID)
-    return personRows[personRows['SMTSD'] == tissueType]['SAMPID']
+    personRows = self.getPersonIDAttrRows(personID)
+    return personRows[personRows['SMTSD'] == tissueType]['SAMPID'].values
   #edef
 
   def getSampleIDs(self):

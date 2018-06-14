@@ -79,6 +79,9 @@ The BIU toolkit contains many many utilities that help my analysis. Here I provi
 
 ## Additional utilities
  * Utils : biu.utils
+  * Filesystem utilities: [biu.utils.fs](biu.utils.fs.ipynb)
+  * Executable utilities: [biu.utils.exe](biu.utils.exe.ipynb)
+  * Message utilities: [biu.utils.msg](biu.utils.msg.ipynb)
   * Figure utilities [biu.utils.figure](biu.utils.figure.ipynb)
   * Python utilities [biu.utils.py](biu.utils.py.ipynb)
 

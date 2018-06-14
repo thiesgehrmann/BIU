@@ -1,4 +1,5 @@
 from .. import utils
+from .. import stats
 
 import pandas as pd
 
@@ -36,6 +37,16 @@ class GAF(object):
     #efor
   #edef
 
+  @property
+  def annotations(self):
+    return list(self._annotIndex.keys())
+  #edef
+
+  @property
+  def objects(self):
+    return list(self._objectIndex.keys())
+  #edefd
+
   def getAnnots(self, objectID):
     if objectID not in self._objectIndex:
       return []
@@ -50,6 +61,29 @@ class GAF(object):
       return [ a[0] for a in self._annotIndex[annotID] ]
     #fi
   #edef
+
+  def enrich(self, yourSet, pathway=None, correctionType=None, **kwargs):
+    if pathway is None:
+        pathway = self.get()
+    #fi
+    if isinstance(pathway, str):
+        pathway = [ pathway ]
+    #fi
+    R = []
+    B = self.objects
+    for p in self.annotations:
+        pathwayGenes = self.getAnnotated(p)
+        res = stats.enrichment.setEnrichment(yourSet, pathwayGenes, B)
+        R.append((p, res.method, res.c2statistic, res.oddsratio, res.pvalue))
+    #efor
+
+    df = pd.DataFrame(R, columns=['pathway', 'method', 'c2statistic', 'oddsratio', 'p'])
+    if correctionType is not None:
+      df['q'] = stats.correction.correct(df.p.values, correctionType, **kwargs)
+    #fi
+
+    return df
+#edef
 
   def __str__(self):
     dstr  = "GAF (GO Annotation File) Object\n"

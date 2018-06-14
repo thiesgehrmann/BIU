@@ -1,74 +1,62 @@
-from ..structures import fileManager as fm
-from ..structures import resourceManager as rm
+from ..structures import Dataset
 from ..config import settings as settings
+from .. import formats
 from .. import utils
+import pandas as pd
+
 from ..formats import VCF
 
 
 ###############################################################################
 
-versions = {
-  "grch37_85" :
-  { "vcfCodingURL"     : "cosmic/grch37/cosmic/v85/VCF/CosmicCodingMuts.vcf.gz",
-    "vcfNoncodingURL"  : "cosmic/grch37/cosmic/v85/VCF/CosmicNonCodingVariants.vcf.gz",
-  },
-  "grch37_84" :
-  { "vcfCodingURL"     : "cosmic/grch37/cosmic/v84/VCF/CosmicCodingMuts.vcf.gz",
-    "vcfNoncodingURL"  : "cosmic/grch37/cosmic/v84/VCF/CosmicNonCodingVariants.vcf.gz",
-  },
-  "grch38_84" :
-  { "vcfCodingURL"     : "cosmic/grch38/cosmic/v84/VCF/CosmicCodingMuts.vcf.gz",
-    "vcfNoncodingURL"  : "cosmic/grch38/cosmic/v84/VCF/CosmicNonCodingVariants.vcf.gz",
-  },
-  "grch38_85" :
-  { "vcfCodingURL"     : "cosmic/grch38/cosmic/v85/VCF/CosmicCodingMuts.vcf.gz",
-    "vcfNoncodingURL"  : "cosmic/grch38/cosmic/v85/VCF/CosmicNonCodingVariants.vcf.gz",
+class Cosmic(Dataset):
+
+  versions = {
+    "grch37_85" :
+    { "vcfCodingURL"     : "cosmic/grch37/cosmic/v85/VCF/CosmicCodingMuts.vcf.gz",
+      "vcfNoncodingURL"  : "cosmic/grch37/cosmic/v85/VCF/CosmicNonCodingVariants.vcf.gz",
+    },
+    "grch37_84" :
+    { "vcfCodingURL"     : "cosmic/grch37/cosmic/v84/VCF/CosmicCodingMuts.vcf.gz",
+      "vcfNoncodingURL"  : "cosmic/grch37/cosmic/v84/VCF/CosmicNonCodingVariants.vcf.gz",
+    },
+    "grch38_84" :
+    { "vcfCodingURL"     : "cosmic/grch38/cosmic/v84/VCF/CosmicCodingMuts.vcf.gz",
+      "vcfNoncodingURL"  : "cosmic/grch38/cosmic/v84/VCF/CosmicNonCodingVariants.vcf.gz",
+    },
+    "grch38_85" :
+    { "vcfCodingURL"     : "cosmic/grch38/cosmic/v85/VCF/CosmicCodingMuts.vcf.gz",
+      "vcfNoncodingURL"  : "cosmic/grch38/cosmic/v85/VCF/CosmicNonCodingVariants.vcf.gz",
+    }
   }
-}
 
-def urlFileIndex(version, username, password):
-
-  def sftpCommand(location):
-    return "env >&2; echo -en  'open sftp://sftp-cancer.sanger.ac.uk\\nuser \"%s\" \"%s\"\\ncat \"%s\"' | lftp | zcat" % (username, password, location)
-  #edef
-
-  files = { }
-  files["vcfCoding"] = (None, 'vcfCoding.vcf.bgz', { "curlCommand" : sftpCommand("cosmic/grch38/cosmic/v84/VCF/CosmicCodingMuts.vcf.gz"),
-                                                     "tabix" : True,
-                                                     "bgzip" : True,
-                                                     "seqField":1,
-                                                     "beginField":2, 
-                                                     "endField":2 })
-  files["vcfCoding_tbi"] = (None, 'vcfCoding.vcf.bgz.tbi', {})
-  files["vcfNonCoding"] = (None, 'vcfNonCoding.vcf.bgz', { "curlCommand" : sftpCommand("cosmic/grch38/cosmic/v84/VCF/CosmicNonCodingVariants.vcf.gz"),
-                                                           "tabix" : True,
-                                                           "bgzip" : True,
-                                                           "seqField":1,
-                                                           "beginField":2,
-                                                           "endField":2 })
-  files["vcfNonCoding_tbi"] = (None, 'vcfNonCoding.vcf.bgz.tbi', {})
-
-  return { k : (u, 'cosmic_%s/%s' % (version, l), o) for (k, (u, l, o)) in files.items() }
-#edef
-
-def listVersions():
-  print("Available versions:")
-  for version in versions:
-    print(" * %s" % version)
-  #efor
-#edef
-
-class Cosmic(fm.FileManager):
-
-  def __init__(self, username="t.gehrmann@lumc.nl", password="Cosmic_password1", version=list(versions.keys())[0], **kwargs):
-    fm.FileManager.__init__(self, urlFileIndex(version, username, password), objects=[ "vcfCoding", "vcfNonCoding" ], **kwargs)
+  def __init__(self, username="t.gehrmann@lumc.nl", password="Cosmic_password1", version=list(versions.keys())[0], where=None, **kwargs):
+    fileIndex = self.__genFileIndex(version, username, password, where)
+    Dataset.__init__(self, fileIndex, **kwargs)
     self.version = version
 
-    # Define the objects in the clinVar fields
-    self.vcfCoding = rm.VCFResourceManager(self, "vcfCoding", "vcfCoding_tbi")
-    self.vcfNonCoding = rm.VCFResourceManager(self, "vcfNonCoding", "vcfNonCoding_tbi")
+    self._registerObject("vcf_c", formats.VCF, [ 'vcf_coding', 'vcf_coding_tbi' ], fileIndex['vcf_coding'].path, tabix=True)
+    self._registerObject("vcf_nc", formats.VCF, [ 'vcf_non_coding', 'vcf_non_coding_tbi' ], fileIndex['vcf_non_coding'].path, tabix=True)
 
-    self.addStrFunction(lambda s: "Version: %s" % self.version)
+    self._addStrFunction(lambda s: "Version: %s" % self.version)
+  #edef
+
+  def __genFileIndex(self, version, username, password, where=None):
+     finalPath = '%s/cosmic_%s' % ( (settings.getWhere() if where is None else where), version)
+     files = {}
+     vcfCoding = utils.Acquire(where=where).lftp("sftp://sftp-cancer.sanger.ac.uk",
+                                                 self.versions[version]["vcfCodingURL"],
+                                                 username=username, password=password).gunzip().bgzip()
+     files['vcf_coding']     = vcfCoding.finalize('%s/vcfCoding.vcf.bgz' % finalPath)
+     files['vcf_coding_tbi'] = vcfCoding.tabix(seq=1, start=2, end=2).finalize('%s/vcfCoding.vcf.bgz.tbi' % finalPath)
+
+     vcfNonCoding = utils.Acquire(where=where).lftp("sftp://sftp-cancer.sanger.ac.uk",
+                                                    self.versions[version]["vcfNoncodingURL"],
+                                                    username=username, password=password).gunzip().bgzip()
+     files['vcf_non_coding']     = vcfNonCoding.finalize('%s/vcfNonCoding.vcf.bgz' % finalPath)
+     files['vcf_non_coding_tbi'] = vcfNonCoding.tabix(seq=1, start=2, end=2).finalize('%s/vcfNonCoding.vcf.bgz.tbi' % finalPath)
+
+     return files
   #edef
 
   ###############################################################################
@@ -82,9 +70,9 @@ class Cosmic(fm.FileManager):
   #edef
 
   def queryRegions(self, *args, coding=True, noncoding=True, extract=None, **kwargs):
-    cResults  = self.vcfCoding.queryRegions(*args, extract='raw', **kwargs) if coding else []
-    ncResults = self.vcfNonCoding.queryRegions(*args, extract='raw', **kwargs) if noncoding else []
-    return VCF(cResults + ncResults, self.vcfCoding.template)
+    cResults  = self._getObject("vcf_c").queryRegions(*args, extract='raw', **kwargs) if coding else []
+    ncResults = self._getObject("vcf_nc").queryRegions(*args, extract='raw', **kwargs) if noncoding else []
+    return VCF(cResults + ncResults, self._getObject("vcf_c").template)
   #edef
 
 #eclass

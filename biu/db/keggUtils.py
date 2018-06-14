@@ -132,7 +132,10 @@ class KEGG(fm.FileManager):
 
   def enrich(self, yourSet, pathway=None, correctionType=None, **kwargs):
     if pathway is None:
-        pathway = self.getPathways()
+        pathway = set([])
+        for gene in yourSet:
+          pathway = set(self.getGenePathways(gene)) | pathway
+        #efor
     #fi
     if isinstance(pathway, str):
         pathway = [ pathway ]

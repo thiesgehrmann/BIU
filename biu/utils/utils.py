@@ -1,14 +1,32 @@
-import gzip
 import pathlib
 import urllib
 import os
-import shlex, subprocess, os;
 import csv
 import sys
 import hashlib
 from collections import namedtuple
 
-from ..config import settings as settings
+###############################################################################
+
+  # For backwards compatability, import these names here too
+from .fsUtils import mkdirname
+from .fsUtils import mkdirp
+from .fsUtils import rmFile
+from .fsUtils import touchFile
+from .fsUtils import gzopen
+
+###############################################################################
+
+  # For backwards compatability, import these names here too
+from .msgUtils import dbm
+from .msgUtils import error
+from .msgUtils import warning
+
+###############################################################################
+
+  # For backwards compatability, import these names here too
+from .exeUtils import runCommand
+from .exeUtils import getCommandOutput
 
 ###############################################################################
 
@@ -16,66 +34,6 @@ def stripkwargs(kwargs):
   internalKwargs = [ "where", "version", "objects" ]
 
   return { k : kwargs[k] for k in kwargs if k not in internalKwargs }
-#edef
-
-###############################################################################
-
-def mkdirname(fileName):
-  dirname = os.path.dirname(fileName)
-  return mkdirp(dirname)
-#edef
-
-###############################################################################
-
-def mkdirp(directory):
-  #pathlib.Path(directory).mkdir(parents=True, exist_ok=True)
-  return runCommand("mkdir -p '%s'" % directory)
-#edef
-
-###############################################################################
-
-def rmFile(fileName):
-  if os.path.isfile(fileName):
-    return runCommand("rm '%s'" % fileName)
-  #fi
-#edef
-
-###############################################################################
-
-def touchFile(fileName):
-  mkdirname(fileName)
-  p = runCommand("touch '%s'" % fileName)
-  return p
-#edef
-
-###############################################################################
-
-def dbm(message):
-  if settings.getDebugState():
-    for line in str(message).split('\n'):
-      if settings.getDebugStream == 'stdout':
-        sys.stdout.write('D: %s\n' % line)
-      else:
-        sys.stderr.write('D: %s\n' % line)
-      #fi
-    #efor
-  #fi
-#edef
-
-###############################################################################
-
-def error(message):
-  for line in str(message).split('\n'):
-    sys.stderr.write('E: %s\n' % line)
-  #efor
-#edef
-
-###############################################################################
-
-def warning(message):
-  for line in str(message).split('\n'):
-    sys.stderr.write('W: %s\n' % line)
-  #efor
 #edef
 
 ###############################################################################
@@ -165,56 +123,6 @@ def tabixQueryWrapper(struct, chrom, start, end):
     print(e)
     return []
   #etry
-#edef
-
-###############################################################################
-
-def gzopen(fileName, mode="r", **kwargs):
-  isGzipped = fileName[-2:] == "gz"
-  if isGzipped:
-    return gzip.open(fileName, mode, **kwargs)
-  else:
-    return open(fileName, mode)
-  #fi
-#edef
-
-
-###############################################################################
-
-
-def runCommand(cmd, bg=False, stdin=None, stdout=None, stderr=None, shell=False, verbose=False):
-  if verbose:
-    print(cmd)
-  #fi
-
-  if not shell:
-    cmd = shlex.split(cmd)
-  #fi
-
-  p = subprocess.Popen(cmd, stdin=stdin, stdout=stdout, stderr=stderr, shell=shell);
-  if bg:
-    return p;
-  else:
-    (pid, r) = os.waitpid(p.pid, 0);
-    return r;
-  #fi
-#edef
-
-###############################################################################
-
-def getCommandOutput(cmd, stderr=None, shell=False, verbose=False):
-  if verbose:
-    print(cmd)
-  #fi
-
-  if not shell:
-    cmd = shlex.split(cmd)
-  #fi
-
-  #p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=shell);
-  p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=shell)
-  
-  return p.stdout
 #edef
 
 ###############################################################################

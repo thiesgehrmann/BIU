@@ -17,7 +17,6 @@ from .uniprotUtils import UniProt as UniProt
 from .uniprotUtils import listVersions as listUniProtVersions
 
 from .cosmicUtils import Cosmic as Cosmic
-from .cosmicUtils import listVersions as listCosmicVersions
 
 from .hagrUtils import HAGR as HAGR
 from .hagrUtils import listVersions as listHagrVersions
@@ -29,13 +28,11 @@ from .reactomeUtils import listVersions as listReactomeVersions
 #from .neo4j import listVersions as listNeo4jVersions
 
 from .llsUtils import LLS as LLS
-from .llsUtils import listVersions as listLLSVersions
 
 from .bbmriUtils import BBMRI as BBMRI
 from .bbmriUtils import listVersions as listBBMRIVersions
 
 from .goUtils import GO as GO
-from .goUtils import listVersions as listGOVersions
 
 from .keggUtils import KEGG as KEGG
 from .keggUtils import listVersions as listKEGGVersions
@@ -49,6 +46,23 @@ from .dbsnpUtils import listVersions as listDBPSNPVersions
 from .rvisUtils import RVIS as RVIS
 from .gdiUtils import GDI as GDI
 from .dneUtils import DNE as DNE
+
+__datasets = [ GO, LLS, Cosmic ]
+
+def versions(db = None):
+  if db is None:
+    db = __datasets
+  else:
+    db = [ db ]
+  #fi
+
+  for d in db:
+    print(type(d))
+    for version in d.versions:
+      print(" * %s" % version)
+    #efor
+  #efor
+#edef
 
 def list():
   print("Available databases:")
