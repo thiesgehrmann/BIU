@@ -1,7 +1,8 @@
-from ..structures import fileManager as fm
-from ..structures import resourceManager as rm
+from ..structures import Dataset
+from .. import formats
 from .. import utils
 from .. import stats
+from ..config import settings
 
 import pandas as pd
 
@@ -11,55 +12,45 @@ import os
 
 # https://www.biostars.org/p/71737/
 
-versions = {
-  "human" : "hsa",
-  "mouse" : "mmu",
-  "drosophilia" : "dme"
-}
 
-def urlFileIndex(version):
-  files = {}
+class KEGG(Dataset):
 
-  files["org_map"] = ( "http://rest.kegg.jp/link/%s/pathway" % versions[version], "org_map.tsv", {})
-  files["feature_data"] = ("http://rest.kegg.jp/get/%s", "feature_data.sqlite", {})
-
-  return { k : (u, 'kegg_%s/%s' % (version, l), o) for (k, (u, l, o)) in files.items() }
-#edef
-
-def listVersions():
-  print("Available versions:")
-  for version in versions:
-    print(" * %s" % version)
-  #efor
-#edef
-
-###############################################################################
-
-class KEGG(fm.FileManager):
-
-  _orgMap = None
-  _featureData = None
-  _orgID = None
+  versions = {
+    "human" : "hsa",
+    "mouse" : "mmu",
+    "drosophilia" : "dme"
+  }
 
   def __init__(self, version=list(versions.keys())[0], **kwargs):
-    fm.FileManager.__init__(self, urlFileIndex(version), objects=[ "_orgMap", "_featureData" ], skiprows=0, **kwargs)
+    fileIndex = self.__genFileIndex(version)
+    Dataset.__init__(self, fileIndex)
     self.version = version
-    self._orgID = versions[self.version]
+    self.__orgID = self.versions[self.version]
 
-    self._orgMap = rm.TSVMapResourceManager(self, "org_map", delimiter='\t')
-    self._featureData = rm.SQLDictResourceManager(self, "feature_data")
+    self._registerObject("_orgMap", formats.TSVMap, [ "org_map"], fileIndex["org_map"].path, delimiter='\t')
+    self._registerObject("_featureData", formats.SQLDict, ["feature_data"], fileIndex["feature_data"].path)
 
-    self.addStrFunction(lambda s: "Version: %s" % self.version)
+    self._addStrFunction(lambda s: "Version: %s" % self.version)
+  #edef
+
+
+  def __genFileIndex(self, version, where=None):
+     finalPath = '%s/kegg_%s' % ( (settings.getWhere() if where is None else where), version)
+     orgKey = self.versions[version]
+     files = {}
+     files['org_map'] = utils.Acquire(where=where).curl("http://rest.kegg.jp/link/%s/pathway" % orgKey).finalize('%s/org_map.tsv' % finalPath)
+     files['feature_data'] = utils.Acquire(where=where).touch('%s/feature_data.dict.sqlite' % finalPath)
+     return files
   #edef
 
   ###############################################################################
 
   def getPathways(self):
-    return list(self._orgMap.lookupKeys())
+    return list(self._orgMap.fromKeys)
   #edef
 
   def getGenes(self):
-    return list(self._orgMap.inverseKeys())
+    return list(self._orgMap.toKeys)
   #edef
 
   def getGeneIDs(self):
@@ -82,12 +73,12 @@ class KEGG(fm.FileManager):
   def _formatFeatureID(self, ID, pathway):
     if pathway:
       if isinstance(ID, int):
-        return "path:%s%05d" % (self._orgID, ID)
+        return "path:%s%05d" % (self.__orgID, ID)
       elif ID.isdigit():
-        return "path:%s%05d" % (self._orgID, int(ID))
-      elif ID[:5+len(self._orgID)] == "path:%s" % self._orgID:
+        return "path:%s%05d" % (self.__orgID, int(ID))
+      elif ID[:5+len(self.__orgID)] == "path:%s" % self.__orgID:
         return ID
-      elif ID[:len(self._orgID)] == self._orgID:
+      elif ID[:len(self.__orgID)] == self.__orgID:
         return "path:%s" % ID
       else:
         utils.dbm("Don't know what to do with: %s" % str(ID))
@@ -95,10 +86,10 @@ class KEGG(fm.FileManager):
       #fi
     else: # We want a gene ID
       if isinstance(ID, int):
-        return "%s:%d" % (self._orgID, ID)
+        return "%s:%d" % (self.__orgID, ID)
       elif ID.isdigit():
-        return "%s:%d" % (self._orgID, int(ID)) # Remove leading zeros from string
-      elif ID[:1+len(self._orgID)] == '%s:' % self._orgID:
+        return "%s:%d" % (self.__orgID, int(ID)) # Remove leading zeros from string
+      elif ID[:1+len(self.__orgID)] == '%s:' % self.__orgID:
         return ID
       else:
         utils.dbm("Don't know what to do with '%s'" % str(ID))
@@ -122,7 +113,7 @@ class KEGG(fm.FileManager):
     if ID in self._featureData:
       return self._featureData[ID]
     else:
-      url = self._fileIndex["feature_data"][0] % (ID)
+      url = "http://rest.kegg.jp/get/%s" % (ID)
       utils.dbm("Downloading via REST from '%s'" % url)
       dat = str(utils.getCommandOutput("curl --silent -L '%s'" % url).decode('UTF-8'))
       self._featureData[ID] = dat

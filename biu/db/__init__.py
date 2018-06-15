@@ -34,19 +34,17 @@ from .bbmriUtils import listVersions as listBBMRIVersions
 from .goUtils import GO as GO
 
 from .keggUtils import KEGG as KEGG
-from .keggUtils import listVersions as listKEGGVersions
 
 from .mirmineUtils import MiRmine as MiRmine
 from .mirmineUtils import listVersions as listMiRmineVersions
 
 from .dbsnpUtils import DBSNP as DBSNP
-from .dbsnpUtils import listVersions as listDBPSNPVersions
 
 from .rvisUtils import RVIS as RVIS
 from .gdiUtils import GDI as GDI
 from .dneUtils import DNE as DNE
 
-__datasets = [ GO, LLS, Cosmic, HAGR ]
+__datasets = [ GO, LLS, Cosmic, HAGR, KEGG, DBSNP, BBMRI ]
 
 def versions(db = None):
   if db is None:

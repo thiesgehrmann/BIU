@@ -89,9 +89,9 @@ class Dataset(object):
     for what in self.__fileIndex:
       loc = self.__fileIndex[what].path
       if os.path.islink(loc):
-        dstr += "  * [%s] %s : %s -> %s\n" % ('S' if os.path.exists(loc) else ' ', what, loc, Path(loc).resolve())
+        dstr += "  * [%s] %s : %s -> %s\n" % ('S' if self.__fileIndex[what].exists else ' ', what, loc, Path(loc).resolve())
       else:
-        dstr += "  * [%s] %s : %s\n" % ('X' if os.path.exists(loc) else ' ', what, loc)
+        dstr += "  * [%s] %s : %s\n" % ('X' if self.__fileIndex[what].exists else ' ', what, loc)
       #fi
     #efor
     return dstr
@@ -99,7 +99,7 @@ class Dataset(object):
 
   def __getattr__(self, oname):
     if not self._objectExists(oname):
-      raise NameError
+      raise NameError(oname)
     #fi
     return self._getObject(oname)
   #edef

@@ -29,7 +29,7 @@ class SQLDict:
 
   def __init__(self, fileName, load=False):
 
-    new = not(os.path.isfile(fileName))
+    new = utils.fs.isEmpty(fileName)
     if new:
       utils.touchFile(fileName)
     #fi

@@ -1,67 +1,62 @@
 
 import json
 
-from ..structures import fileManager as fm
-from ..structures import resourceManager as rm
+from ..structures import Dataset
 from ..config import settings as settings
 
 from .. import utils
 from .. import formats
 
-versions = {
-  "human_9606_b150_GRCh37p13" : {
-    "vcf" : "ftp://ftp.ncbi.nih.gov/snp/organisms/human_9606_b150_GRCh37p13/VCF/All_20170710.vcf.gz",
-    "tbi" : "ftp://ftp.ncbi.nih.gov/snp/organisms/human_9606_b150_GRCh37p13/VCF/All_20170710.vcf.gz.tbi",
-    "assemblyid" : "GRCh37.p13"
-  },
-  "human_9606_b150_GRCh38p7" : {
-    "vcf" : "ftp://ftp.ncbi.nih.gov/snp/organisms/human_9606_b150_GRCh38p7/VCF/All_20170710.vcf.gz",
-    "tbi" : "ftp://ftp.ncbi.nih.gov/snp/organisms/human_9606_b150_GRCh38p7/VCF/All_20170710.vcf.gz.tbi",
-    "assemblyid" : "GRCh38.p7"
-  }
-}
-
-def urlFileIndex(version):
-  files = {}
-  files["vcf"] = (versions[version]["vcf"], "all_snps.vcf.bgz", {})
-  files["tbi"] = (versions[version]["tbi"], "all_snps.vcf.bgz.tbi", {})
-  files["info"] = (None, "info_dict.sqldict.sqlite", {})
-  return { k : (u, 'dbSNP_%s/%s' % (version, l), o) for (k, (u, l, o)) in files.items() }
-#edef
-
-def listVersions():
-  print("Available versions:")
-  for genome in versions:
-    print(" * %s" % genome)
-  #efor
-#edef
-
 ###############################################################################
 
-class DBSNP(fm.FileManager):
+class DBSNP(Dataset):
 
   version = None
   where    = None
   fileIndex = None
 
-  def __init__(self, version=list(versions.keys())[0], **kwargs):
-    fm.FileManager.__init__(self, urlFileIndex(version), objects=["vcf", "info"], **kwargs)
+  versions = {
+    "human_9606_b150_GRCh37p13" : {
+      "vcf" : "ftp://ftp.ncbi.nih.gov/snp/organisms/human_9606_b150_GRCh37p13/VCF/All_20170710.vcf.gz",
+      "tbi" : "ftp://ftp.ncbi.nih.gov/snp/organisms/human_9606_b150_GRCh37p13/VCF/All_20170710.vcf.gz.tbi",
+      "assemblyid" : "GRCh37.p13"
+    },
+    "human_9606_b150_GRCh38p7" : {
+      "vcf" : "ftp://ftp.ncbi.nih.gov/snp/organisms/human_9606_b150_GRCh38p7/VCF/All_20170710.vcf.gz",
+      "tbi" : "ftp://ftp.ncbi.nih.gov/snp/organisms/human_9606_b150_GRCh38p7/VCF/All_20170710.vcf.gz.tbi",
+      "assemblyid" : "GRCh38.p7"
+    }
+  }
+
+  def __init__(self, version=list(versions.keys())[0], where=None):
+    fileIndex = self.__genFileIndex(version)
+    Dataset.__init__(self, fileIndex)
     self.version = version
 
-    self.addStrFunction( lambda s: "Version : %s" % s.version )
-    self.vcf = rm.VCFResourceManager(self, "vcf", "tbi")
-    self.info = rm.SQLDictResourceManager(self, "info")
+    self._addStrFunction( lambda s: "Version : %s" % s.version )
+    self._registerObject("_vcf", formats.VCF, [ "vcf", "tbi" ], fileIndex["vcf"].path, tabix=True, )
+    self._registerObject("_info", formats.SQLDict, [ "info"], fileIndex["info"].path)
 
+  #edef
+
+  def __genFileIndex(self, version, where=None):
+     finalPath = '%s/dbSNP_%s' % ( (settings.getWhere() if where is None else where), version)
+     vData = self.versions[version]
+     files = {}
+     files['vcf'] = utils.Acquire(where=where).curl(vData["vcf"]).finalize('%s/all_snps.vcf.bgz' % finalPath)
+     files['tbi'] = utils.Acquire(where=where).curl(vData["tbi"]).finalize('%s/all_snps.vcf.bgz.tbi' % finalPath)
+     files['info'] = utils.Acquire(where=where).touch("%s/info_dict.sqldict.sqlite" % finalPath)
+     return files
   #edef
 
   ###############################################################################
 
   def query(self, *pargs, **kwargs):
-    return self.vcf.query(*pargs, **kwargs)
+    return self._vcf.query(*pargs, **kwargs)
   #edef
 
   def queryRegions(self, *pargs, **kwargs):
-    return self.vcf.queryRegions(*pargs, **kwargs)
+    return self._vcf.queryRegions(*pargs, **kwargs)
   #edef
 
   def __getitem__(self, c):
@@ -133,8 +128,8 @@ class DBSNP(fm.FileManager):
   #edef
 
   def idLookup(self, ID):
-    if ID in self.info:
-      res = self.info[ID]
+    if ID in self._info:
+      res = self._info[ID]
       if res == -1:
         return (None, None)
       #fi
@@ -144,10 +139,10 @@ class DBSNP(fm.FileManager):
       pos = self.__getAssemblyPosition(ID)
       if pos is None:
         utils.dbm("Pos is None!")
-        self.info[ID] = -1
+        self._info[ID] = -1
         return (None, None)
       #fi
-      self.info[ID] = pos
+      self._info[ID] = pos
       return pos
     #fi
 

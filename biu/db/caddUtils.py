@@ -1,7 +1,9 @@
 
-from ..structures import fileManager as fm
-from ..structures import resourceManager as rm
+from ..structures import Dataset
+from .. import formats
 from ..config import settings as settings
+
+from .. import utils
 
 import numpy as np
 
@@ -30,25 +32,41 @@ def listVersions():
 
 ###############################################################################
 
-class CADD(fm.FileManager):
+class CADD(Dataset):
+
+  versions = { "GRCh37" : {
+    "caddURL"      : "http://krishna.gs.washington.edu/download/CADD/v1.3/whole_genome_SNVs.tsv.gz",
+    "caddTabixURL" : "http://krishna.gs.washington.edu/download/CADD/v1.3/whole_genome_SNVs.tsv.gz.tbi"
+    }
+  }
 
   version = None
 
-  def __init__(self, version=list(versions.keys())[0], **kwargs):
-    fm.FileManager.__init__(self, urlFileIndex(version), objects=["scores"], **kwargs)
+  def __init__(self, version=list(versions.keys())[0], where=None):
+    fileIndex = self.__genFileIndex(version)
+    Dataset.__init__(self, fileIndex)
+    
+    self._registerObject("_scores", formats.Tabix, [ "tsv", "tsv_tbi" ], fileIndex["tsv"].path, fieldNames=self.__caddFields)
     self.version = version
 
-    self.scores = rm.TabixTSVResourceManager(self, "tsv", "tsv_tbi", fieldNames=self._caddFields, **kwargs)
+    self._addStrFunction(lambda s: "Version: %s" % self.version)
+  #edef
 
-    self.addStrFunction(lambda s: "Version: %s" % self.version)
+  def __genFileIndex(self, version, where=None):
+     finalPath = '%s/cadd_%s' % ( (settings.getWhere() if where is None else where), version)
+     vData = self.versions[version]
+     files = {}
+     files['tsv'] = utils.Acquire(where=where).curl(vData["caddURL"]).finalize('%s/scores.tsv.bgz' % finalPath)
+     files['tsv_tbi'] = utils.Acquire(where=where).curl(vData["caddTabixURL"]).finalize('%s/scores.tsv.bgz.tbi' % finalPath)
+     return files
   #edef
 
   #############################################################################
 
-  _caddFields = [ "chrom", "pos", "ref", "alt", "rawscore", "phred" ]
+  __caddFields = [ "chrom", "pos", "ref", "alt", "rawscore", "phred" ]
 
   def query(self, chromosome, start, end=None, alt=None):
-    qres = self.scores.query(chromosome, start, (start if (end is None) else end), namedtuple=True)
+    qres = self._scores.query(chromosome, start, (start if (end is None) else end), namedtuple=True)
     if (alt is None) and (end is None):
       resPhred = {}
       for res in qres:
@@ -83,7 +101,7 @@ class CADD(fm.FileManager):
   def queryRegions(self, regions):
     resPhred = {}
     for (c,s,e) in regions:
-      qres = self.scores.query(c, s, e, namedtuple=True) 
+      qres = self._scores.query(c, s, e, namedtuple=True) 
       for res in qres:
         resPhred[(int(res.pos),res.alt)] = float(res.phred)
       #efor

@@ -40,8 +40,8 @@ class Acquire(object):
   #############################################################################
 
   @property
-  def exists():
-    return (os.path.exists(self.__finalName) and os.path.exists(self.__finalName + '__exists__'))
+  def exists(self):
+    return (os.path.exists(self.__finalName) and self.__checkExistsTag(self.__finalName))
   #edef
 
   @property
@@ -52,6 +52,10 @@ class Acquire(object):
   #############################################################################
 
   def acquire(self):
+    if self.exists and not self.__redo:
+      return self.__finalName
+    #fi
+
     for step in self.__steps:
       oldFileName = self.__fileName
       status = getattr(self, '_' + step.step)(*step.pargs, **step.kwargs)
@@ -77,9 +81,12 @@ class Acquire(object):
 
   #############################################################################
 
-  def __addStep(self, step):
+  def __addStep(self, step, finalName=None):
     newSteps = self.__steps + [step]
-    return Acquire(fileName=self.__fileName, finalName=self.__finalName, steps=newSteps, redo=self.__redo, where=self.__dlDir)
+    if finalName is None:
+      finalName = self.__finalName
+    #fi
+    return Acquire(fileName=self.__fileName, finalName=finalName, steps=newSteps, redo=self.__redo, where=self.__dlDir)
   #edef
 
   def curl(self, *pargs, **kwargs):
@@ -87,8 +94,13 @@ class Acquire(object):
   def lftp(self, *pargs, **kwargs):
     return self.__addStep(acquireStep("lftp", pargs, kwargs))
   def local(self, fileName, *pargs, **kwargs):
-    self.__finalName = fileName # Just in case it is the final name also
-    return self.__addStep(acquireStep("local", tuple([fileName]) + pargs, kwargs))
+    return self.__addStep(acquireStep("local", tuple([fileName]) + pargs, kwargs), finalName=fileName)
+  def touch(self, fileName=None, *pargs, **kwargs):
+    if fileName is None:
+      from datetime import datetime
+      fileName = self.__dlDir + '/touchedFile.' + str(self.__downloadHash(str(datetime.now())))
+    #fi
+    return self.__addStep(acquireStep("touch", tuple([fileName]) + pargs, kwargs), finalName=fileName)
   def cmd(self, *pargs, **kwargs):
     return self.__addStep(acquireStep("cmd", pargs, kwargs))
   def call(self, *pargs, **kwargs):
@@ -118,8 +130,7 @@ class Acquire(object):
   def bzip(self, *pargs, **kwargs):
     return self.__addStep(acquireStep("bzip", pargs, kwargs))
   def finalize(self, finalName, *pargs, **kwargs):
-    self.__finalName = finalName
-    return self.__addStep(acquireStep("finalize", tuple([finalName]) + pargs, kwargs))
+    return self.__addStep(acquireStep("finalize", tuple([finalName]) + pargs, kwargs), finalName=finalName)
 
   #############################################################################  
 
@@ -199,6 +210,12 @@ class Acquire(object):
     else:
       return 1
     #fi
+  #edef
+
+  def _touch(self, fileName):
+    self.__fileName = fileName
+    return fs.touchFile(fileName)
+  #edef
 
   def _call(self, cmd):
     if '%s' in cmd:

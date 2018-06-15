@@ -4,6 +4,7 @@ import os
 import gzip
 
 from . import exeUtils as exe
+from . import msgUtils as msg
 
 ###############################################################################
 
@@ -35,6 +36,22 @@ def touchFile(fileName):
   p = exe.runCommand("touch '%s'" % fileName)
   return p
 #edef
+
+###############################################################################
+
+def isEmpty(fileName):
+  if not os.path.exists(fileName):
+    msg.warning("isEmpty: The file '%s' does not exist." % fileName)
+    return True
+  elif os.path.isfile(fileName):
+    return os.stat(fileName).st_size == 0
+  elif os.path.isdir(fileName):
+    return len(os.listdir(fileName)) == 0
+  else:
+    return False
+  #fi
+#edef
+  
 
 ###############################################################################
 

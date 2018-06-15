@@ -1,12 +1,16 @@
+import pandas as pd
 import tabix
+
 from .. import utils
+
+from collections import namedtuple
 
 class Tabix(object):
 
   def __init__(self, fileName, fieldNames=None):
     self.__fieldNames = fieldNames
     self.__fileName   = fileName
-    self.__resource   = tabix.open(self._fmObject.getFileName(tsvFile))
+    self.__resource   = tabix.open(fileName)
     if self.__fieldNames is not None:
       self.__namedtuple = namedtuple("tabixTsv", fieldNames)
     #fi
@@ -39,8 +43,8 @@ class Tabix(object):
     res = [ elem for (seq, start, end) in regions for elem in self.__safeTabixWrapper(seq, start, end) ]
     if pandas:
       return pd.DataFrame(res)
-    elif namedtuple and (self._fieldNames is not None):
-      return [ self._namedtuple(*r) for r in res ]
+    elif namedtuple and (self.__fieldNames is not None):
+      return [ self.__namedtuple(*r) for r in res ]
     else:
       return res
     #fi
