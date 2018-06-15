@@ -1,23 +1,13 @@
 from collections import namedtuple as namedtuple
 
-
-from ..structures import fileManager as fm
-from ..structures import resourceManager as rm
-
-###############################################################################
-
-def urlFileIndex():
-  files = {}
-  files["geneid2ensemblgene"] = ("ftp://ftp.ncbi.nlm.nih.gov/gene/DATA/gene2ensembl.gz", "geneid2ensembl.tsv", {})
-  files["gene2refseq"]  = ("ftp://ftp.ncbi.nlm.nih.gov/gene/DATA/gene2refseq.gz", "gene2refseq.tsv", {})
-  files["geneid2genesymbol"]     = ("ftp://ftp.ncbi.nlm.nih.gov/refseq/H_sapiens/Homo_sapiens.gene_info.gz", "geneinfo.tsv", {})
-  files["uniprotmap"]   = ("ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/idmapping/by_organism/HUMAN_9606_idmapping_selected.tab.gz", "uniprotmap.tsv", {})
-  return { k : (u, 'humanMappings_%s' % (l), o) for (k, (u, l, o)) in files.items() }
-#edef
+from ..config import settings
+from ..structures import Dataset
+from .. import formats
+from .. import utils
 
 ###############################################################################
 
-class HumanMapping(fm.FileManager):
+class HumanMapping(Dataset):
 
   geneid2ensemblgene = None
   #gene2refseq  = None
@@ -25,19 +15,43 @@ class HumanMapping(fm.FileManager):
   uniprotmap   = None
 
   def __init__(self, **kwargs):
-    fm.FileManager.__init__(self, urlFileIndex(), objects=["geneid2ensemblgene", "geneid2genesymbol"], **kwargs)
+    fileIndex = self.__genFileIndex()
+    Dataset.__init__(self, fileIndex)
 
-    self.geneid2ensemblgene = rm.TSVMapResourceManager(self, "geneid2ensemblgene", 1, 2, **kwargs)
-    self.geneid2genesymbol = rm.TSVMapResourceManager(self, "geneid2genesymbol", 1, 2, **kwargs)
+    self._registerObject("geneid2ensemblgene", formats.TSVMap, ["geneid2ensemblgene"], fileIndex["geneid2ensemblgene"].path, 1, 2, delimiter='\t')
+    self._registerObject("geneid2genesymbol", formats.TSVMap, ["geneid2genesymbol"], fileIndex["geneid2genesymbol"].path, 1, 2, delimiter='\t')
 
-    uniprotFieldNames = ('UniProtKB_AC', 'UniProtKB_ID', 'GeneID', 'RefSeq', 'GI', 'PDB', 'GO', 'UniRef100', 'UniRef90', 'UniRef50', 'UniParc', 'PIR', 
+    uniprotFieldNames = ('UniProtKB_AC', 'UniProtKB_ID', 'GeneID', 'RefSeq', 'GI', 'PDB', 'GO', 'UniRef100', 'UniRef90', 'UniRef50', 'UniParc', 'PIR',
                          'NCBI-taxon', 'MIM', 'UniGene', 'PubMed', 'EMBL', 'EMBL_CDS', 'Ensembl', 'Ensembl_TRS', 'Ensembl_PRO', 'PubMed_more')
-    #self.ensembltranscript2ensemblgene = rm.TSVMapResourceManager(self, "uniprotmap", 19, 18, fieldNames=uniprotFieldNames, **kwargs)
-    #self.ensembltranscript2uniprot     = rm.TSVMapResourceManager(self, "uniprotmap", 19, 1, fieldNames=uniprotFieldNames, **kwargs)
-    self.geneid2uniprot = rm.TSVMapResourceManager(self, "uniprotmap", 2, 0, fieldNames=uniprotFieldNames, **kwargs)
+
+    self._registerObject("geneid2uniprot", formats.TSVMap, ["uniprotmap"], fileIndex["uniprotmap"].path, 1, 2, names=uniprotFieldNames)
+
+  #edef
+
+  def __genFileIndex(self, where=None):
+    files = {}
+    finalPath = '%s/humanMappings' % (settings.getWhere() if where is None else where)
+
+    files["geneid2ensemblgene"] = utils.Acquire(where=where).curl("ftp://ftp.ncbi.nlm.nih.gov/gene/DATA/gene2ensembl.gz").gunzip().finalize('%s/geneid2ensembl.tsv' % finalPath)
+    files["gene2refseq"]        = utils.Acquire(where=where).curl("ftp://ftp.ncbi.nlm.nih.gov/gene/DATA/gene2refseq.gz").gunzip().finalize('%s/gene2refseq.tsv' % finalPath)
+    files["geneid2genesymbol"]  = utils.Acquire(where=where).curl("ftp://ftp.ncbi.nlm.nih.gov/refseq/H_sapiens/Homo_sapiens.gene_info.gz").gunzip().finalize('%s/geneinfo.tsv' % finalPath)
+    files["uniprotmap"]         = utils.Acquire(where=where).curl("ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/idmapping/by_organism/HUMAN_9606_idmapping_selected.tab.gz").gunzip().finalize('%s/uniprotmap.tsv' % finalPath)
+    return files
   #edef
 
   ############################################################################### 
+
+  @property
+  def __geneid2ensemblgene(self):
+    return self._getObject("geneid2ensemblgene")
+  #edef
+
+  @property
+  def __geneid2genesymbol(self):
+    return self._getObject("geneid2genesymbol")
+  #edef
+
+  ###############################################################################
 
   def getEnsemblUniprot(self, ensemblID):
     geneIDs = self.getEnsemblGeneID(ensemblID)
@@ -59,42 +73,42 @@ class HumanMapping(fm.FileManager):
     
 
   def getEnsemblSymbol(self, ensemblID):
-    geneIDs = self.geneid2ensemblgene.inverse(ensemblID)
+    geneIDs = self.__geneid2ensemblgene.inverse(ensemblID)
     if len(geneIDs) == 0:
       return []
     #fi
-    symbols = set.union(*[ set(self.geneid2genesymbol.lookup(g)) for g in geneIDs ])
+    symbols = set.union(*[ set(self.__geneid2genesymbol.lookup(g)) for g in geneIDs ])
     return list(symbols)
   #edef
 
   def getSymbolEnsembl(self, geneSymbol):
-    geneIDs = self.geneid2genesymbol.inverse(geneSymbol)
+    geneIDs = self.__geneid2genesymbol.inverse(geneSymbol)
     if len(geneIDs) == 0:
       return []
     #fi
-    ensembl = set.union(*[ set(self.geneid2ensemblgene.lookup(gid)) for gid in geneIDs ])
+    ensembl = set.union(*[ set(self.__geneid2ensemblgene.lookup(gid)) for gid in geneIDs ])
     return list(ensembl)
   #edef
 
   def getEnsemblGeneID(self, ensemblID):
-    geneIDs = self.geneid2ensemblgene.inverse(ensemblID)
+    geneIDs = self.__geneid2ensemblgene.inverse(ensemblID)
     return list(set(geneIDs))
   #edef
 
   def getGeneIDEnsembl(self, geneID):
-    ensemblIDs = self.geneid2ensemblgene.lookup(str(geneID))
+    ensemblIDs = self.__geneid2ensemblgene.lookup(str(geneID))
     return list(set(ensemblIDs))
 
   def getSymbolGeneID(self, symbol):
-    geneIDs = self.geneid2genesymbol.inverse(symbol)
+    geneIDs = self.__geneid2genesymbol.inverse(symbol)
     return list(set(geneIDs))
   #edef
 
   def getGeneIDSymbol(self, geneID, other=False):
-    geneNameLookup = self.geneid2genesymbol.lookup(str(geneID), withEntry=other)
+    geneNameLookup = self.__geneid2genesymbol.lookup(str(geneID), withEntry=other)
     if other:
       geneNames = [ r[0] for r in geneNameLookup ]
-      otherEntries = [ n for r in geneNameLookup for n in self.geneid2ensemblgene[r[1]][5].split('|') if n != '-' ]
+      otherEntries = [ n for r in geneNameLookup for n in self.__geneid2ensemblgene[r[1]][5].split('|') if n != '-' ]
       return list(set(geneNames + otherEntries))
     else:
       return list(set(geneNameLookup))
@@ -125,7 +139,7 @@ class HumanMapping(fm.FileManager):
     geneID = self.getSymbolGeneID(symbol)
     geneID = None if len(geneID) == 0 else geneID[0]
     ensemblID = self.getSymbolEnsembl(symbol)
-    ensemblID = None if len(ensemblID) == 0 else symbol[0]
+    ensemblID = None if len(ensemblID) == 0 else ensemblID[0]
 
     return self.__allIDs(geneID, ensemblID, symbol)
   #edef

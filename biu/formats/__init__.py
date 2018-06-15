@@ -11,3 +11,6 @@ from .newickUtils import Newick as Newick
 
 from .sqliteUtils import SQLite as SQLite
 from .sqlDictUtils import SQLDict as SQLDict
+
+from .tabixUtils import Tabix as Tabix
+from .tsvMapUtils import TSVMap as TSVMap

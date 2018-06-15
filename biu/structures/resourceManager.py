@@ -244,91 +244,15 @@ class GAFResourceManager(ResourceManager, formats.GAF):
 
 ###############################################################################
 
-class TSVMapResourceManager(TSVResourceManager):
-  _mapping = None
-  _mappingR = None
+class TSVMapResourceManager(ResourceManager, formats.TSVMap):
   def __init__(self, fmObject, tsvFile, mapFrom=0, mapTo=1, pickle=True, overwritePickle=False, **kwargs):
-    TSVResourceManager.__init__(self, fmObject, tsvFile, index_col=False, **kwargs)
+    ResourceManager.__init__(self, fmObject, [tsvFile], **kwargs)
     if self._initialized:
-      self._mapping = {}
-      self._mappingR = {}
-
-      mapPickleFile  = self._fmObject.getFileName(tsvFile) + '.pkl'
-      mapRPickleFile = self._fmObject.getFileName(tsvFile) + '.r.pkl'
-
-      if pickle and not(overwritePickle) and os.path.exists(mapPickleFile) and os.path.exists(mapRPickleFile):
-        utils.dbm("Loading the index from pickle")
-        with open(mapPickleFile, 'r') as ifd:
-          self._mapping  = json.load(ifd)
-        with open(mapRPickleFile, 'r') as ifd:
-          self._mappingR = json.load(ifd)
-      else:
-        utils.dbm("Generating the index")
-        for row in self._resource.itertuples():
-          i = row.Index
-          fromValue = str(row[mapFrom+1])
-          toValue   = str(row[mapTo+1])
-          if fromValue not in self._mapping:
-            self._mapping[fromValue] = []
-          #fi
-          if toValue not in self._mappingR:
-            self._mappingR[toValue] = []
-          #fi
-          self._mapping[fromValue].append((toValue, i))
-          self._mappingR[toValue].append((fromValue, i))
-        #efor
-        if pickle:
-          utils.dbm("Pickling the index")
-          with open(mapPickleFile, 'w') as ofd:
-            json.dump(self._mapping, ofd)
-          #ewith
-          with open(mapRPickleFile, 'w') as ofd:
-            json.dump(self._mappingR, ofd)
-          #ewith
-        #fi
-      #fi
+      formats.TSVMap.__init__(self, self._fmObject.getFileName(tsvFile), **kwargs)
     #fi
   #edef
 
-  def _lookup(self, key, inverse, withEntry):
-    mapping = self._mappingR if inverse else self._mapping
-    if key not in mapping:
-      utils.error("'%s' not in map" % key)
-      return []
-    else:
-      if withEntry:
-        return mapping[key]
-      else:
-        return [ v[0] for v in mapping[key] ]
-      #fi
-    #fi
-  #edef
-
-  #def __getitem__(self, key, withEntry=False):
-  #  return self._lookup(key, False, withEntry=withEntry)
-  #edef
-
-  def lookup(self, key, withEntry=False):
-    return self._lookup(key, False, withEntry=withEntry)
-
-  def inverse(self, key, withEntry=False):
-    return self._lookup(key, True, withEntry=withEntry)
-  #edef
-
-  def lookupKeys(self):
-    return list(self._mapping.keys())
-  #edef
-
-  def inverseKeys(self):
-    return list(self._mappingR.keys())
-  #edef
-
-  def invert(self):
-    mapping = self._mapping
-    self.mapping = self._mappingR
-    self.mappingR = mapping
-  #edef
-      
+#eclass
 
 ###############################################################################
 

@@ -97,6 +97,13 @@ class Dataset(object):
     return dstr
   #edef 
 
+  def __getattr__(self, oname):
+    if not self._objectExists(oname):
+      raise NameError
+    #fi
+    return self._getObject(oname)
+  #edef
+
   #############################################################################
 
 #############################################################################

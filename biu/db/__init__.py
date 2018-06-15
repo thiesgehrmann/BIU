@@ -19,7 +19,6 @@ from .uniprotUtils import listVersions as listUniProtVersions
 from .cosmicUtils import Cosmic as Cosmic
 
 from .hagrUtils import HAGR as HAGR
-from .hagrUtils import listVersions as listHagrVersions
 
 from .reactomeUtils import Reactome as Reactome
 from .reactomeUtils import listVersions as listReactomeVersions
@@ -47,7 +46,7 @@ from .rvisUtils import RVIS as RVIS
 from .gdiUtils import GDI as GDI
 from .dneUtils import DNE as DNE
 
-__datasets = [ GO, LLS, Cosmic ]
+__datasets = [ GO, LLS, Cosmic, HAGR ]
 
 def versions(db = None):
   if db is None:
@@ -56,8 +55,8 @@ def versions(db = None):
     db = [ db ]
   #fi
 
-  for d in db:
-    print(type(d))
+  for d in sorted(db, key=lambda x: x.__name__):
+    print(d.__name__)
     for version in d.versions:
       print(" * %s" % version)
     #efor
