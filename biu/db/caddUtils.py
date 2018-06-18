@@ -9,29 +9,6 @@ import numpy as np
 
 ###############################################################################
 
-versions = { "GRCh37" : {
-  "caddURL"      : "http://krishna.gs.washington.edu/download/CADD/v1.3/whole_genome_SNVs.tsv.gz",
-  "caddTabixURL" : "http://krishna.gs.washington.edu/download/CADD/v1.3/whole_genome_SNVs.tsv.gz.tbi"
-  }
-}
-
-def urlFileIndex(version):
-  files = {}
-
-  files["tsv"] = (versions[version]["caddURL"], 'cadd.tsv.bgz', {})
-  files["tsv_tbi"] = (versions[version]["caddTabixURL"], 'cadd.tsv.bgz.tbi', {})
-
-  return files
-#edef
-
-def listVersions():
-  print("Available versions:")
-  for v in versions:
-    print(" * %s" % v)
-#edef
-
-###############################################################################
-
 class CADD(Dataset):
 
   versions = { "GRCh37" : {

@@ -44,7 +44,7 @@ class Tabix(object):
     if pandas:
       return pd.DataFrame(res)
     elif namedtuple and (self.__fieldNames is not None):
-      return [ self.__namedtuple(*r) for r in res ]
+      return [ self.__namedtuple(*r[:len(self.__fieldNames)]) for r in res ]
     else:
       return res
     #fi

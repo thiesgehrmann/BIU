@@ -1,8 +1,6 @@
 from .caddUtils import CADD as CADD
-from .caddUtils import listVersions as listCADDVersions
 
 from .clinVarUtils import ClinVar as ClinVar
-from .clinVarUtils import listVersions as listClinVarVersions
 
 from .gnomadUtils import Gnomad as Gnomad
 from .gnomadUtils import listVersions as listGnomadVersions
@@ -44,7 +42,7 @@ from .rvisUtils import RVIS as RVIS
 from .gdiUtils import GDI as GDI
 from .dneUtils import DNE as DNE
 
-__datasets = [ GO, LLS, Cosmic, HAGR, KEGG, DBSNP, BBMRI ]
+__datasets = [ GO, LLS, Cosmic, HAGR, KEGG, DBSNP, BBMRI, CADD, ClinVar ]
 
 def versions(db = None):
   if db is None:

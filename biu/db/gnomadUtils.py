@@ -1,8 +1,7 @@
-from .. import formats
-from ..structures import fileManager as fm
-from ..structures import resourceManager as rm
+from ..structures import Dataset
 from ..config import settings as settings
 from .. import formats
+from .. import utils
 
 import pandas as pd
 
@@ -45,24 +44,49 @@ def listVersions():
 
 ###############################################################################
 
-class Gnomad(fm.FileManager):
+class Gnomad(Dataset):
+
+  versions = { "GRCh37" : {
+    "vcf"           : "https://storage.googleapis.com/gnomad-public/release/2.0.2/vcf/exomes/gnomad.exomes.r2.0.2.sites.vcf.bgz",
+    "tbi"           : "https://storage.googleapis.com/gnomad-public/release/2.0.2/vcf/exomes/gnomad.exomes.r2.0.2.sites.vcf.bgz.tbi",
+    "covURLProto"   : "https://storage.googleapis.com/gnomad-public/release/2.0.2/coverage/exomes/gnomad.exomes.r2.0.2.chr%s.coverage.txt.gz",
+    "chr"           : [ "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "X", "Y" ],
+    "covSeqField"   : 1,
+    "covBeginField" : 2,
+    "covEndField"    : 2
+    }
+  }
 
   version = None
 
-  def __init__(self, version=list(versions.keys())[0], **kwargs):
-    fm.FileManager.__init__(self, urlFileIndex(version), objects=["vcf"] + [ ("cov", chrID) for chrID in versions[version]["chr" ] ], **kwargs)
+  def __init__(self, version=list(versions.keys())[0], where=None):
+    fileIndex = self.__genFileIndex(version, where)
+    Dataset.__init__(self, fileIndex)
     self.version = version
 
-    self.vcf = rm.VCFResourceManager(self, "vcf", "vcf_tbi")
-    self.cov = { chrID : rm.TabixTSVResourceManager(self, "chr_%s_cov" % chrID, "chr_%s_cov_tbi" % chrID, fieldNames=self._covEntryFields)
-                 for chrID in versions[self.version]["chr" ] }
+    self._registerObject("_vcf", formats.VCF, [ "vcf", "tbi" ], fileIndex["vcf"].path, tabix=True)
+    covEntryFields = [ "chrom", "pos", "mean", "median", "q1", "q5", "q10", "q15", "q20", "q25", "q30", "q50", "q100" ]
+    for chrID in self.versions[self.version]["chr"]:
+      self._registerObject("_cov_%s" % chrID, formats.Tabix, [ "cov_%s" % chrID, "cov_%s_tbi" % chrID ], fileIndex["cov_%s" % chrID].path, fieldNames = covEntryFields)
+    #efor
 
-    self.addStrFunction(lambda s: "Version: %s" % self.version)
+    self._addStrFunction(lambda s: "Version: %s" % self.version)
+  #edef
+
+  def __genFileIndex(self, version, where=None):
+     finalPath = '%s/gnomad_%s' % ( (settings.getWhere() if where is None else where), version)
+     vData = self.versions[version]
+     files = {}
+     files['vcf'] = utils.Acquire(where=where).curl(vData["vcf"]).finalize('%s/gnomad.vcf.bgz' % finalPath)
+     files['tbi'] = utils.Acquire(where=where).curl(vData["tbi"]).finalize('%s/gnomad.vcf.bgz.tbi' % finalPath)
+     for chrID in vData["chr"]:
+       covTXT = utils.Acquire(where=where).curl(vData["covURLProto"] % chrID).gunzip().bgzip()
+       files['cov_%s' % chrID] = covTXT.finalize('%s/gnomad.coverage.chr.%s.tsv.bgz' % (finalPath, chrID))
+       files['cov_%s_tbi' % chrID] = covTXT.tabix(seq=vData["covSeqField"], begin=vData["covBeginField"], end=vData["covEndField"]).finalize('%s/gnomad.coverage.chr.%s.tsv.bgz.tbi' % (finalPath, chrID))
+     return files
   #edef
 
   #############################################################################
-
-  _covEntryFields = [ "chrom", "pos", "mean", "median", "q1", "q5", "q10", "q15", "q20", "q25", "q30", "q50", "q100" ]
 
   def queryVCF(self, *args, **kwargs):
     return self.query(*args, **kwargs)
@@ -73,7 +97,7 @@ class Gnomad(fm.FileManager):
   #edef
 
   def queryRegions(self, *args, extract=None, sub=None, **kwargs):
-    res = list(self.vcf.queryRegions(*args, extract=None, **kwargs))
+    res = self._vcf.queryRegions(*args, extract="raw", **kwargs)
 
     #see http://gnomad.broadinstitute.org/faq for the different subpopulations
     if extract  == "summary":
@@ -141,7 +165,8 @@ class Gnomad(fm.FileManager):
 
   def queryCov(self, chromosome, start, end, **kwargs):
     chromosome = str(chromosome)
-    return self.cov[chromosome].query(chromosome, start, end, **kwargs)
+    oname = "_cov_%s" % chromosome
+    return self._getObject(oname).query(chromosome, start, end, **kwargs)
   #edef
 
   def queryCovRegions(self, regions, **kwargs):
@@ -156,11 +181,11 @@ class Gnomad(fm.FileManager):
     
 
   def getVar(self, *pargs, **kwargs):
-    return self.vcf.getVar(*pargs, **kwargs)
+    return self._vcf.getVar(*pargs, **kwargs)
   #edef
 
   def whoHas(self, *pargs, **kwargs):
-    return self.vcf.whoHas(*pargs, **kwargs)
+    return self._vcf.whoHas(*pargs, **kwargs)
   #edef
 
 #eclass
