@@ -52,6 +52,11 @@ class Acquire(object):
     return self.__finalName
   #edef
 
+  @property
+  def steps(self):
+    return self.__steps
+  #edef
+
   #############################################################################
 
   def acquire(self):
@@ -106,6 +111,8 @@ class Acquire(object):
       fileName = self.__dlDir + '/touchedFile.' + str(self.__downloadHash(str(datetime.now())))
     #fi
     return self.__addStep(acquireStep("touch", tuple([fileName]) + pargs, kwargs), finalName=fileName)
+  def merge(self, *pargs, **kwargs):
+    return self.__addStep(acquireStep("merge", pargs, kwargs))
   def cmd(self, *pargs, **kwargs):
     return self.__addStep(acquireStep("cmd", pargs, kwargs))
   def call(self, *pargs, **kwargs):
@@ -231,6 +238,27 @@ class Acquire(object):
   def _touch(self, fileName):
     self.__fileName = fileName
     return fs.touchFile(fileName)
+  #edef
+
+  def _merge(self, acquireObjects, method='cat'):
+    fileNames = [ ao.acquire() for ao in acquireObjects ]
+    if None in fileNames:
+      return 1
+    #fi
+
+    curlHash = self.__downloadHash(fileNames)
+    self.__fileName = self.__dlDir + '/' + curlHash + '.' + method
+
+    if method == 'cat':
+      cmd = "cat '%s' > '%s'" % ("' '".join(fileNames), self.__fileName)
+    elif method == 'zcat':
+      cmd = "zcat '%s' > '%s'" % ("' '".join(fileNames), self.__fileName)
+    else:
+      msg.warning("Method '%s' not defined. Using cat." % method)
+      cmd = "cat '%s' > '%s'" % ("' '".join(fileNames), self.__fileName)
+    #fi
+    p = exe.runCommand(cmd, verbose=True, shell=True)
+    return p
   #edef
 
   def _call(self, cmd):

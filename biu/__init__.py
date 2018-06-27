@@ -1,4 +1,5 @@
 
+from . import genomes as genomes
 from . import db as db
 from . import maps as maps
 from . import formats as formats
