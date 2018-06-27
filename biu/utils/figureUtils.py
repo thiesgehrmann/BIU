@@ -1,5 +1,7 @@
 import matplotlib.pylab as plt
 
+###############################################################################
+
 def subplots(dpi=300, **kwargs):
   fig, axes = plt.subplots(**kwargs)
   if hasattr(axes, '__len__'):
@@ -8,4 +10,16 @@ def subplots(dpi=300, **kwargs):
     axes = [axes]
   return fig, axes
 #edef
-  
+
+###############################################################################
+
+def venn(*sets, ax=None, names=None):
+  import  matplotlib_venn as pltvenn
+  if len(sets) == 2:
+    return pltvenn.venn2(sets, ax=ax, set_labels=names)
+  elif len(sets) == 3:
+    return pltvenn.venn3(sets, ax=ax, set_labels=names)
+  else:
+    return
+  #fi
+#edef

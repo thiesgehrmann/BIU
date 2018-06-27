@@ -41,6 +41,9 @@ class Acquire(object):
 
   @property
   def exists(self):
+    if self.__finalName is None:
+      return False
+    #fi
     return (os.path.exists(self.__finalName) and self.__checkExistsTag(self.__finalName))
   #edef
 
@@ -95,6 +98,8 @@ class Acquire(object):
     return self.__addStep(acquireStep("lftp", pargs, kwargs))
   def local(self, fileName, *pargs, **kwargs):
     return self.__addStep(acquireStep("local", tuple([fileName]) + pargs, kwargs), finalName=fileName)
+  def wget(self, *pargs, **kwargs):
+    return self.__addStep(acquireStep("wget", pargs, kwargs))
   def touch(self, fileName=None, *pargs, **kwargs):
     if fileName is None:
       from datetime import datetime
@@ -163,9 +168,6 @@ class Acquire(object):
   def _curl(self, url, cookieURL=None, username=None, password=None, ext=None):
     ext = self.__getExtension(url) if ext is None else ('.' + ext)
     curlHash = self.__downloadHash([ url, cookieURL, username, password ])
-    msg.dbm(self.__dlDir)
-    msg.dbm( curlHash)
-    msg.dbm( ext)
     self.__fileName = self.__dlDir + '/' + curlHash +  ext
     print(self.__fileName)
 
@@ -200,6 +202,20 @@ class Acquire(object):
     fs.mkdirname(self.__fileName)
     cmd = "echo -en  'open \"%s\"\\nuser \"%s\" \"%s\"\\ncat \"%s\"' | lftp > '%s'" % (server, username, password, location, self.__fileName)
     p = exe.runCommand(cmd, shell=True, verbose=True)
+    return p
+  #edefi
+
+  def _wget(self, url, ext=None):
+    ext = self.__getExtension(url) if ext is None else ('.' + ext)
+    curlHash = self.__downloadHash([ url ])
+    self.__fileName = self.__dlDir + '/' + curlHash +  ext
+
+    if self.__checkExistsTag(self.__fileName) and (not self.__redo):
+      return 0
+    #fi
+
+    cmd = "wget -O '%s' '%s'" % ( self.__fileName, url )
+    p = exe.runCommand(cmd, verbose=True)
     return p
   #edef
 

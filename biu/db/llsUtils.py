@@ -41,7 +41,6 @@ class LLS(Dataset):
 
      files['phen'] = utils.Acquire("/dev/null")
 
-     print(files)
      return files
   #edef
 

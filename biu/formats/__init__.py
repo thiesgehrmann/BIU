@@ -14,3 +14,4 @@ from .sqlDictUtils import SQLDict as SQLDict
 
 from .tabixUtils import Tabix as Tabix
 from .tsvMapUtils import TSVMap as TSVMap
+from .tsvIndex import TSVIndex as TSVIndex

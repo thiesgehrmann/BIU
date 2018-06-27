@@ -32,13 +32,13 @@ class VEP(Pipeline):
       data = [ record for record in data ]
     #fi
 
-    smConfig["vcf_file"] = self._writeTemporaryFile(data)
+    smConfig["vcf_file"] = self.__writeTemporaryFile(data)
 
     self.setConfig(smConfig)
     self.run(["output"])
   #edef
 
-  def _writeTemporaryFile(self, vcfArray, hashName=True):
+  def __writeTemporaryFile(self, vcfArray, hashName=True):
     fileName, exists = self._generateInputFileName(vcfArray)
 
     if not(exists):
