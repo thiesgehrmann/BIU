@@ -1,19 +1,21 @@
 from .. import utils
 import os
 
-import pandas as pd
+import csv
 import json
 
 class TSVMap(object):
   __mapping = None
   __mappingR = None
   def __init__(self, tsvFile, mapFrom=0, mapTo=1, pickle=True, overwritePickle=False, **kwargs):
-    self.__mapping = {}
+    self.__mapping  = {}
     self.__mappingR = {}
+    self.__fileName = tsvFile
+    self.__mapFrom  = mapFrom
+    self.__mapTo    = mapTo
+    self.__pickle   = pickle
 
     print(tsvFile)
-    self.__resource = pd.read_csv(tsvFile, **kwargs)
-
     mapPickleFile  = tsvFile + '.tsvMap.pkl'
     mapRPickleFile = tsvFile + '.tsvMap.r.pkl'
 
@@ -25,19 +27,21 @@ class TSVMap(object):
         self.__mappingR = json.load(ifd)
     else:
       utils.msg.dbm("Generating the index")
-      for row in self.__resource.itertuples():
-        i = row.Index
-        fromValue = str(row[mapFrom+1])
-        toValue   = str(row[mapTo+1])
-        if fromValue not in self.__mapping:
-          self.__mapping[fromValue] = []
-        #fi
-        if toValue not in self.__mappingR:
-          self.__mappingR[toValue] = []
-        #fi
-        self.__mapping[fromValue].append((toValue, i))
-        self.__mappingR[toValue].append((fromValue, i))
-      #efor
+      with open(tsvFile, 'r') as ifd:
+        for i, row in enumerate(csv.reader(ifd, **kwargs)):
+          fromValue = str(row[mapFrom])
+          toValue   = str(row[mapTo])
+          print(fromValue, toValue)
+          if fromValue not in self.__mapping:
+            self.__mapping[fromValue] = []
+          #fi
+          if toValue not in self.__mappingR:
+            self.__mappingR[toValue] = []
+          #fi
+          self.__mapping[fromValue].append((toValue, i))
+          self.__mappingR[toValue].append((fromValue, i))
+        #efor
+      #ewith
       if pickle:
         utils.msg.dbm("Pickling the index")
         with open(mapPickleFile, 'w') as ofd:
@@ -48,6 +52,16 @@ class TSVMap(object):
         #ewith
       #fi
     #fi
+  #edef
+
+  def __str__(self):
+    dstr = "TSV Map object\n"
+    dstr += " Filename: %s\n" % self.__fileName
+    dstr += " %d -> %d\n" % (self.__mapFrom, self.__mapTo)
+    dstr += " Pickled: %s\n" % ('Yes' if self.__pickle else 'No')
+    dstr += " From entries: %d\n" % len(self.fromKeys)
+    dstr += " To entries: %d\n" % len(self.toKeys)
+    return dstr
   #edef
 
   def __lookup(self, key, inverse, withEntry):

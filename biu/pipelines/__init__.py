@@ -3,5 +3,5 @@ from .pipeline import Pipeline as Pipeline
 from .vep import VEP as VEP
 from .liftOver import LiftOver as LiftOver
 
-#from .rbhMap import RBHMap as RBHMap
+from .rbhMap import RBHMap as RBHMap
 

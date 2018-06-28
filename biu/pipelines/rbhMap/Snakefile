@@ -1,0 +1,96 @@
+
+import inspect, os
+__INSTALL_DIR__ = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+
+__OUTDIR__ = config["outdir"]
+
+###############################################################################
+
+  # Generate blast databases for each genome
+rule mappingBlastDB:
+  input:
+    fa = lambda wildcards: config["genomes"][wildcards.genome]["fasta"]
+  output:
+    db = "%s/blastdb.{genome}.db"% __OUTDIR__
+  params:
+    dbtype = lambda wildcards: 'prot' if config["genomes"][wildcards.genome]["is_prot"] else "nucl"
+  conda: "conda.yaml"
+  shell: """
+    makeblastdb -in "{input.fa}" -dbtype {params.dbtype} -out "{output.db}"
+    touch "{output.db}"
+  """
+
+def determineBlastType(protA, protB):
+  if protA and protB:
+    return "blastp"
+  if protA and (not protB):
+    return "blastx"
+  if (not protA) and protB:
+    return "tblastn"
+  if not (protA or protB):
+    return "blastn"
+  #fi
+#edef
+
+  # Blast genome_1 vs genome_2 and vice-versa
+rule mappingBlastQuery:
+  input:
+    db    = lambda wildcards: expand("%s/blastdb.{genome}.db" % (__OUTDIR__), genome=[wildcards.genome_1]),
+    trans = lambda wildcards: config["genomes"][wildcards.genome_2]["fasta"]
+  output:
+    res = "%s/result.{genome_1}.{genome_2}.tsv"% __OUTDIR__
+  conda: "conda.yaml"
+  params:
+    blast_fields = config["blast_fields"],
+    blast_type   = lambda wildcards: determineBlastType(config["genomes"][wildcards.genome_1]["is_prot"], config["genomes"][wildcards.genome_2]["is_prot"]),
+    evalue       = config["e_threshold"]
+  threads: 5
+  shell: """
+    {params.blast_type} -num_threads "{threads}" -outfmt "6 {params.blast_fields}" -evalue {params.evalue} -query "{input.trans}" -db "{input.db}" -out "{output.res}"
+  """
+
+  # Perform a reciprocal best blast hit to identify karyollele pairs
+rule mapping:
+  input:
+    g1v2 = expand("%s/result.{genome_2}.{genome_1}.tsv" % __OUTDIR__, genome_1=["A"], genome_2=["B"]),
+    g2v1 = expand("%s/result.{genome_1}.{genome_2}.tsv" % __OUTDIR__, genome_1=["A"], genome_2=["B"]),
+    g1fa = config["genomes"]["A"]["fasta"],
+    g2fa = config["genomes"]["B"]["fasta"]
+  output:
+    mapping  = '%s/mappingFile.tsv' % __OUTDIR__
+  params:
+    blast_fields = config["blast_fields"]
+  run:
+    print("Importing utils.")
+    import utils as utils
+    print("Imported utils.")
+
+      # Load the blast hits
+    g12Hits = utils.indexListBy(utils.readBlastFile(input.g1v2[0], params.blast_fields), lambda x: x.qseqid)
+    g21Hits = utils.indexListBy(utils.readBlastFile(input.g2v1[0], params.blast_fields), lambda x: x.qseqid)
+    print("Loaded hits.")
+
+      # For each gene, select the best hit in the other genome
+    bestg12Hits = dict([ (qseqid, max(L, key=lambda x: x.bitscore)) for (qseqid,L) in g12Hits.items() ])
+    bestg21Hits = dict([ (qseqid, max(L, key=lambda x: x.bitscore)) for (qseqid,L) in g21Hits.items() ])
+    print("found best hits.")
+
+      # Match the best hits to identify reciprocal best hits, and write the mappings to file
+    matches = []
+    with open(output.mapping, "w") as ofd:
+      for key in bestg12Hits.keys():
+        besthit = bestg12Hits[key].sseqid
+        if (besthit in bestg21Hits) and (key == bestg21Hits[besthit].sseqid):
+          ofd.write("%s\t%s\t%f\t%f\n" % (key, besthit, bestg12Hits[besthit].evalue, bestg12Hits[besthit].bitscore))
+        #fi
+      #efor
+    #ewith
+
+rule output:
+  input:
+    mapping = rules.mapping.output.mapping
+  output:
+    res = "%s/%s" % (config["outdir"], config["output_file_name"])
+  shell: """
+    ln -s "{input.mapping}" "{output.res}"
+  """

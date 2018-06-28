@@ -40,6 +40,7 @@ class Pipeline(object):
   def __init__(self, snakefile, rewriteHashedInputFiles=False, **kwargs):
     self.snakefile = snakefile
     self._rewriteHashedInputFiles = rewriteHashedInputFiles
+    self.configFile = None
   #edef
 
   def setConfig(self, config=None, configFile=None, **kwargs):
@@ -75,7 +76,7 @@ class Pipeline(object):
     snakemakeOptions.update(kwargs)
 
     #smCommand = "snakemake --config '%s' %s" % (self.configFile, ' '.join([ '--%s' % k if 
-    self.success = snakemake(snakefile=self.snakefile, config=self.config, targets=targets, **snakemakeOptions)
+    self.success = snakemake(snakefile=self.snakefile, configfile=self.configFile, targets=targets, **snakemakeOptions)
   #edef
 
   def _configHash(self):
