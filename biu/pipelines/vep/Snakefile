@@ -1,6 +1,9 @@
 ###############################################################################
 # VEP PIPELINE                                                                #
 ###############################################################################
+
+localrules: vep_prepare, output
+
 rule vep_prepare:
   output:
     outdir = '%s/vep_genomes/%s_%s' % (config["common_dir"], config["install_species"], config["install_assembly"])

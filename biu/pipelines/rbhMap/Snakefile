@@ -6,6 +6,8 @@ __OUTDIR__ = config["outdir"]
 
 ###############################################################################
 
+localrules: mappingBlastDB, mapping, output
+
   # Generate blast databases for each genome
 rule mappingBlastDB:
   input:
