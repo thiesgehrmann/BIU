@@ -13,25 +13,21 @@ class RBHMap(Pipeline):
     "blast_fields" : "qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore slen qlen",
     "output_file_name" : "mapping.tsv"
   }
-  __output = None
-  __outputMap = None
+  __output = {}
 
-  def __init__(self, fasta1, fasta2, config=None, **kwargs):
-    Pipeline.__init__(self, snakemakeFile, **kwargs)
-
-    smConfig = self.__defaultConfig
-    if isinstance(config, dict):
-      smConfig.update(config)
-    #fi
+  def __init__(self, fasta1, fasta2, config={}, **kwargs):
+    Pipeline.__init__(self, snakemakeFile, {**self.__defaultConfig, **config}, **kwargs)
 
     fileName1 = self.__writeTemporaryFile(fasta1)
     fileName2 = self.__writeTemporaryFile(fasta2)
 
-    smConfig["genomes"] = { "A" : { "fasta" : fileName1, "is_prot" : 1 if (fasta1.primaryType == formats.Sequence.PROTTYPE) else 0 },
-                            "B" : { "fasta" : fileName2, "is_prot" : 1 if (fasta2.primaryType == formats.Sequence.PROTTYPE) else 0 } }
+    genomes = { "A" : { "fasta" : fileName1, "is_prot" : 1 if (fasta1.primaryType == formats.Sequence.PROTTYPE) else 0 },
+                "B" : { "fasta" : fileName2, "is_prot" : 1 if (fasta2.primaryType == formats.Sequence.PROTTYPE) else 0 } }
 
-    self.setConfig(smConfig)
-    self.run(["output"])
+    self.setConfig(genomes=genomes)
+    if self.autorun:
+      self.run(["output"])
+    #fi
   #edef
 
   def __writeTemporaryFile(self, fasta, hashName=True):
@@ -53,10 +49,10 @@ class RBHMap(Pipeline):
       return None
     #fi
 
-    if self.__outputMap is None:
-      self.__outputMap = formats.TSVMap(self.__getOutputFileName(), 0, 1, delimiter='\t', **kwargs)
+    if "map" not in self.__output:
+      self.__output["map"] = formats.TSVMap(self.__getOutputFileName(), 0, 1, delimiter='\t', **kwargs)
     #fi
-    return self.__outputMap
+    return self.__output["map"]
   #edef
 
   def getMappingDetails(self):
@@ -64,10 +60,10 @@ class RBHMap(Pipeline):
       return None
     #fi
 
-    if self.__output is None:
-      self.__output = pd.read_csv(self.__getOutputFileName(), sep='\t', names=["from", "to", "evalue", "bitscore" ])
+    if "tbl" not in self.__output:
+      self.__output["tbl"] = pd.read_csv(self.__getOutputFileName(), sep='\t', names=["from", "to", "evalue", "bitscore" ])
     #fi
-    return self.__output
+    return self.__output["tbl"]
   #edef
 
 #eclass

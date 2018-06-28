@@ -15,7 +15,6 @@ class TSVMap(object):
     self.__mapTo    = mapTo
     self.__pickle   = pickle
 
-    print(tsvFile)
     mapPickleFile  = tsvFile + '.tsvMap.pkl'
     mapRPickleFile = tsvFile + '.tsvMap.r.pkl'
 
@@ -31,7 +30,6 @@ class TSVMap(object):
         for i, row in enumerate(csv.reader(ifd, **kwargs)):
           fromValue = str(row[mapFrom])
           toValue   = str(row[mapTo])
-          print(fromValue, toValue)
           if fromValue not in self.__mapping:
             self.__mapping[fromValue] = []
           #fi

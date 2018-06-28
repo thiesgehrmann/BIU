@@ -10,7 +10,7 @@ snakemakeFile  = os.path.dirname(os.path.abspath(inspect.getfile(inspect.current
 
 class VEP(Pipeline):
 
-  _defaultConfig = {
+  __defaultConfig = {
     "install_species" : "homo_sapiens",
     "install_assembly" : "GRCh38",
     "vep_options" : "",
@@ -21,21 +21,12 @@ class VEP(Pipeline):
 
   def __init__(self, data, config=None, **kwargs):
 
-    Pipeline.__init__(self, snakemakeFile, **kwargs)
+    Pipeline.__init__(self, snakemakeFile, {**self.__defaultConfig, **config}, **kwargs)
 
-    smConfig = self._defaultConfig
-    if isinstance(config, dict):
-      smConfig.update(config)
+    self.setConfig(vcf_file=self.__writeTemporaryFile(data))
+    if self.autorun:
+      self.run(["output"])
     #fi
-
-    if isinstance(data, formats.VCF):
-      data = [ record for record in data ]
-    #fi
-
-    smConfig["vcf_file"] = self.__writeTemporaryFile(data)
-
-    self.setConfig(smConfig)
-    self.run(["output"])
   #edef
 
   def __writeTemporaryFile(self, vcfArray, hashName=True):

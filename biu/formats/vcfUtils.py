@@ -92,6 +92,10 @@ class VCF(object):
     return self.__reader.__next__()
   #edef
 
+  def __len__(self):
+    return len(self.__reader)
+  #edef
+
   @property
   def records(self):
     return [ r for r in self.__reader ]

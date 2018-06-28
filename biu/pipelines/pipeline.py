@@ -31,56 +31,53 @@ def defaultSnakemakeConfig(name):
 
 class Pipeline(object):
   
-  wf = None # Workflow
-  config = None
-  snakefile = None
-  success = False
-  configFile = None
+  __config     = None
+  __snakefile  = None
+  __success    = False
+  __configFile = None
+  __autorun    = True
+  __snakemakeOptions = None
 
-  def __init__(self, snakefile, rewriteHashedInputFiles=False, **kwargs):
-    self.snakefile = snakefile
+  def __init__(self, snakefile, config={}, rewriteHashedInputFiles=False, autorun=True, **snakemakeOptions):
+    self.__snakefile = snakefile
     self._rewriteHashedInputFiles = rewriteHashedInputFiles
-    self.configFile = None
+    self.__configFile = None
+    self.__autorun = autorun
+    self.__snakemakeOptions = defaultSnakemakeOptions().copy()
+    self.__snakemakeOptions.update(snakemakeOptions)
+    self.__config = defaultSnakemakeConfig(type(self).__name__)
+    self.setConfig(config)
   #edef
 
-  def setConfig(self, config=None, configFile=None, **kwargs):
-
-    if configFile is not None:
-      self.configFile = configFile
-      with open(configFile, "r") as ifd:
-        self.config = json.load(ifd)
-      #ewith
-    elif config is not None:
-      self.config = defaultSnakemakeConfig(type(self).__name__)
-      self.config.update(config)
-
-      if "outdir" not in self.config:
-        hashString = self._configHash()
-        self.config["hash"] = hashString
-        self.config["outdir"] = "%s/%s/%s" % (settings.getPipelineOutdir(), type(self).__name__, hashString)
-      #fi
-
-      self.configFile = self.config["outdir"] + "/config.json"
-      utils.mkdirname(self.configFile)
-      with open(self.config["outdir"] + "/config.json", "w") as ofd:
-        json.dump(self.config, ofd, indent=2)
-      #ewith
-    else:
-      utils.error("You must specify either a config or a configFile.")
-      return None
+  def setConfig(self, config=None, **kwargs):
+    if config is not None:
+      self.__config.update(config)
     #fi
+    for (k,v) in kwargs.items():
+      self.__config[k] = v
+    #fi 
+
+    # Update the hash of the current config
+    hashString = self.__configHash()
+    self.__config["hash"] = hashString
+    self.__config["outdir"] = "%s/%s/%s" % (settings.getPipelineOutdir(), type(self).__name__, hashString)
   #edef
 
-  def run(self, targets=["output"], **kwargs):
-    snakemakeOptions = defaultSnakemakeOptions()
-    snakemakeOptions.update(kwargs)
-
-    #smCommand = "snakemake --config '%s' %s" % (self.configFile, ' '.join([ '--%s' % k if 
-    self.success = snakemake(snakefile=self.snakefile, configfile=self.configFile, targets=targets, **snakemakeOptions)
+  def __writeConfigFile(self):
+    self.__configFile = self.__config["outdir"] + "/config.json"
+    utils.mkdirname(self.__configFile)
+    with open(self.__config["outdir"] + "/config.json", "w") as ofd:
+      json.dump(self.__config, ofd, indent=2)
+    #ewith
   #edef
 
-  def _configHash(self):
-    c = sorted([ (k, self.config[k]) for k in self.config if k not in ['outdir'] ], key=lambda x: x[0])
+  def run(self, targets=["output"]):
+    self.__writeConfigFile()
+    self.__success = snakemake(snakefile=self.__snakefile, configfile=self.__configFile, targets=targets, **self.__snakemakeOptions)
+  #edef
+
+  def __configHash(self):
+    c = sorted([ (k, self.__config[k]) for k in self.__config if k not in ['outdir', 'hash'] ], key=lambda x: x[0])
     c = json.dumps(c)
     return hashlib.md5(c.encode()).hexdigest()
   #edef
@@ -105,11 +102,27 @@ class Pipeline(object):
     return fileName, exists
   #edef
 
+  @property
+  def success(self):
+    return self.__success
+  #edef
+
+  @property
+  def autorun(self):
+    return self.__autorun
+  #edef
+
+  @property
+  def config(self):
+    return self.__config
+
   def __str__(self):
-    dstr  = "Pipeline object for %s\n" % type(self).__name__
-    dstr += " Where: %s\n" % self.snakefile
-    dstr += " Output: %s\n" % self.config["outdir"]
-    dstr += " Config: %s/config.json\n" % self.config["outdir"]
+    dstr  = "%s Pipeline object\n" % type(self).__name__
+    dstr += " Where: %s\n" % self.__snakefile
+    dstr += " Output: %s\n" % self.__config["outdir"]
+    dstr += " Config: %s/config.json\n" % self.__config["outdir"]
+    dstr += " Hash: %s\n" % self.__config["hash"]
+    dstr += " Completed: %s\n" % ("Yes" if self.__success else "No")
     return dstr
   #edef
 #eclass
