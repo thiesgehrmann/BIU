@@ -1,36 +1,44 @@
-from .pipeline import Pipeline
+from ..structures import Pipeline
 from .. import formats
 
 import inspect, os
 import pandas as pd
 
-snakemakeFile = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) + '/rbhMap/Snakefile'
+snakemakeFile = { False: os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) + '/rbhMap/Snakefile',
+                  True: os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) + '/rbhMap/diamond.Snakefile'}
 
 class RBHMap(Pipeline):
 
   __defaultConfig = {
     "e_threshold" : 10e-10,
     "blast_fields" : "qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore slen qlen",
+    "max_target_seqs" : 10,
     "output_file_name" : "mapping.tsv"
   }
   __output = {}
 
-  def __init__(self, fasta1, fasta2, config={}, **kwargs):
-    Pipeline.__init__(self, snakemakeFile, {**self.__defaultConfig, **config}, **kwargs)
+  def __init__(self, fasta1, fasta2, config={}, diamond=False, **kwargs):
+    Pipeline.__init__(self, snakemakeFile[diamond], {**self.__defaultConfig, **config}, **kwargs)
 
-    fileName1 = self.__writeTemporaryFile(fasta1)
-    fileName2 = self.__writeTemporaryFile(fasta2)
+    fileName1 = fileName2 = None
+    if diamond:
+      fileName1 = self.__writeTemporaryFile(formats.Fasta([ fasta1[s].translate() if (fasta1[s].seqType == formats.Sequence.DNATYPE ) else fasta1[s] for s in fasta1 ]))
+      fileName2 = self.__writeTemporaryFile(formats.Fasta([ fasta2[s].translate() if (fasta2[s].seqType == formats.Sequence.DNATYPE ) else fasta2[s] for s in fasta2 ]))
+    else:
+      fileName1 = self.__writeTemporaryFile(fasta1)
+      fileName2 = self.__writeTemporaryFile(fasta2)
+    #fi
 
     genomes = { "A" : { "fasta" : fileName1, "is_prot" : 1 if (fasta1.primaryType == formats.Sequence.PROTTYPE) else 0 },
                 "B" : { "fasta" : fileName2, "is_prot" : 1 if (fasta2.primaryType == formats.Sequence.PROTTYPE) else 0 } }
 
-    self.setConfig(genomes=genomes)
+    self.setConfig(genomes=genomes, diamond=(1 if diamond else 0))
     if self.autorun:
       self.run(["output"])
     #fi
   #edef
 
-  def __writeTemporaryFile(self, fasta, hashName=True):
+  def __writeTemporaryFile(self, fasta):
     fileName, exists = self._generateInputFileName([ fasta[s].seq for s in fasta ])
 
     if not(exists):

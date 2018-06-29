@@ -10,19 +10,24 @@ from ..config import settings
 class BioMart(Dataset):
 
   versions = {
-    "grch37_gene_trans_prot_geneid_hgnc" : {
-      "url" : "http://grch37.ensembl.org/biomart/martservice?query=",
+    "hsapiens_gene_trans_prot_geneid_hgnc" : {
       "database" : "hsapiens_gene_ensembl",
-      "attributes" : [ 'ensembl_gene_id', 'ensembl_transcript_id', 'ensembl_peptide_id', 'entrezgene', 'ucsc' ]
+      "attributes" : [ 'ensembl_gene_id', 'ensembl_transcript_id', 'ensembl_peptide_id', 'entrezgene', 'ucsc', 'hgnc_symbol' ]
     },
-    "grch38_gene_trans_prot_geneid_hgnc" : {
-      "url" : "http://www.ensembl.org/biomart/martservice?query=",
+    "mmusculus_gene_trans_prot_hgnc" : {
       "database" : "hsapiens_gene_ensembl",
-      "attributes" : [ 'ensembl_gene_id', 'ensembl_transcript_id', 'ensembl_peptide_id', 'entrezgene', 'ucsc' ]
+      "attributes" : [ 'ensembl_gene_id', 'ensembl_transcript_id', 'ensembl_peptide_id', 'hgnc_symbol' ]
     }
+
+    
   }
 
-  def __init__(self, version=list(versions.keys())[0], url=None, database=None, attributes=None, where=None, **kwargs):
+  def __init__(self, version=None, database=None, attributes=None, where=None, grch37=False, **kwargs):
+    self.__grch37 = grch37
+    url = "http://grch37.ensembl.org/biomart/martservice?query=" if grch37 else 'http://www.ensembl.org/biomart/martservice?query='
+
+    if (version is None) and (database is not None) and (attributes is not None):
+      version = list(self.versions.keys())[0]
     if (version is None) and (database is not None) and (attributes is not None):
       url = url if (url is not None) else 'http://www.ensembl.org/biomart/martservice?query='
       version = "%s.%s.%s" % ([ p for p in url.split('/') if '.org' in p ][0], database, '_'.join(attributes))

@@ -14,25 +14,11 @@ rule mappingBlastDB:
     fa = lambda wildcards: config["genomes"][wildcards.genome]["fasta"]
   output:
     db = "%s/blastdb.{genome}.db"% __OUTDIR__
-  params:
-    dbtype = lambda wildcards: 'prot' if config["genomes"][wildcards.genome]["is_prot"] else "nucl"
   conda: "conda.yaml"
   shell: """
-    makeblastdb -in "{input.fa}" -dbtype {params.dbtype} -out "{output.db}"
+    diamond makedb --in "{input.fa}" -d "{output.db}"
     touch "{output.db}"
   """
-
-def determineBlastType(protA, protB):
-  if protA and protB:
-    return "blastp"
-  if protA and (not protB):
-    return "blastx"
-  if (not protA) and protB:
-    return "tblastn"
-  if not (protA or protB):
-    return "blastn"
-  #fi
-#edef
 
   # Blast genome_1 vs genome_2 and vice-versa
 rule mappingBlastQuery:
@@ -44,12 +30,11 @@ rule mappingBlastQuery:
   conda: "conda.yaml"
   params:
     blast_fields = config["blast_fields"],
-    blast_type   = lambda wildcards: determineBlastType(config["genomes"][wildcards.genome_1]["is_prot"], config["genomes"][wildcards.genome_2]["is_prot"]),
     evalue       = config["e_threshold"],
     max_target_seqs = config["max_target_seqs"]
   threads: 5
   shell: """
-    {params.blast_type} -num_threads "{threads}" -outfmt "6 {params.blast_fields}" -max_target_seqs "{params.max_target_seqs}" -evalue {params.evalue} -query "{input.trans}" -db "{input.db}" -out "{output.res}"
+    diamond blastp -p "{threads}" -f "6" {params.blast_fields} --max-target-seqs "{params.max_target_seqs}" -e "{params.evalue}" -d "{input.db}" -q "{input.trans}" -o "{output.res}"
   """
 
   # Perform a reciprocal best blast hit to identify karyollele pairs
@@ -80,7 +65,7 @@ rule mapping:
       for key in bestg12Hits.keys():
         besthit = bestg12Hits[key].sseqid
         if (besthit in bestg21Hits) and (key == bestg21Hits[besthit].sseqid):
-          ofd.write("%s\t%s\t%f\t%f\n" % (key, besthit, bestg12Hits[besthit].evalue, bestg12Hits[besthit].bitscore))
+          ofd.write("%s\t%s\t%f\t%f\n" % (key, besthit, bestg21Hits[besthit].evalue, bestg21Hits[besthit].bitscore))
         #fi
       #efor
     #ewith

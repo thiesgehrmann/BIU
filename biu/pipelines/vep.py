@@ -1,4 +1,4 @@
-from . import Pipeline
+from ..structures import Pipeline
 from .. import formats
 
 import pandas as pd

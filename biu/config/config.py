@@ -5,38 +5,43 @@ class globalSettings(object):
 
   __FILE_DIR__ = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 
-  _settingsFile = '%s/config.json' % __FILE_DIR__
+  __settingsFile = '%s/config.json' % __FILE_DIR__
 
-  _settings = None
+  __settings = None
 
 ###############################################################################
 
   def __init__(self):
-    self._settings = json.load(open(self._settingsFile, "r"))
+    self.__settings = json.load(open(self.__settingsFile, "r"))
 
   def loadSettings(self, fileName):
-    self._settings.update(json.load(open(fileName, "r")))
+    self.__settings.update(json.load(open(fileName, "r")))
   #edef
   
   def setSettings(self, **kwargs):
-    self._settings.update(kwargs)
+    self.__settings.update(kwargs)
   #edef
   
   def dumps(self):
-    return json.dumps(self._settings)
+    return json.dumps(self.__settings)
   #edef
   
   def getSetting(self, settingID):
-    if settingID not in self._settings:
+    if settingID not in self.__settings:
       return None
     else:
-      return self._settings[settingID]
+      return self.__settings[settingID]
     #fi
   #edef
 
   @property
   def settings(self):
-    return self._settings
+    return self.__settings
+  #edef
+
+  @property
+  def biuLocation(self):
+    return os.path.dirname(os.path.abspath(self.__FILE_DIR__ + '../../'))
   #edef
 
   ###############################################################################
@@ -121,7 +126,7 @@ class globalSettings(object):
 
   def __str__(self):
     dstr = "Configuration:\n"
-    for settingID in self._settings:
+    for settingID in self.__settings:
       dstr += " %s : '%s'\n" % (settingID, self.getSetting(settingID))
     #efor
     return dstr

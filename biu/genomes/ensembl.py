@@ -9,7 +9,8 @@ import ftplib
 class Ensembl(Genome):
 
   @staticmethod
-  def organisms(release=92, basedir='/pub'):
+  def organisms(release=92, grch37=False):
+    basedir = '/pub/grch37' if grch37 else '/pub'
     conn      = ftplib.FTP("ftp.ensembl.org")
     conn.login()
     organisms = [ line.split('/')[-1] for line in conn.nlst("%s/release-%d/gff3" % (basedir, release)) ]
@@ -19,9 +20,10 @@ class Ensembl(Genome):
     #efor
   #edef
 
-  def __init__(self, release=92, organism="homo_sapiens", basedir='/pub', where=None):
-    isgrch37 = 'grch37' in basedir
-    version = "ensembl_%s%s.%s" % ('grch37.' if isgrch37 else '', str(release), organism)
+  def __init__(self, release=92, organism="homo_sapiens", grch37=False, where=None):
+    self.__grch37 = grch37
+    basedir = '/pub/grch37' if grch37 else '/pub'
+    version = "ensembl_%s%s.%s" % ('grch37.' if self.__grch37 else '', str(release), organism)
     fileIndex = self.__genFileIndex(version, basedir, release, organism, where=where)
     Genome.__init__(self, version, fileIndex)
   #edef
@@ -87,15 +89,3 @@ class Ensembl(Genome):
     return files
   #edef
 #eclass
-
-class GRCH37Ensembl(Ensembl):
-  @staticmethod
-  def organisms(release=92):
-    Ensembl.organisms(release=92, basedir='/pub/grch37')
-  #edef
-
-  def __init__(self, **kwargs):
-    Ensembl.__init__(self, basedir='/pub/grch37', **kwargs)
-  #edef
-#eclass
-    

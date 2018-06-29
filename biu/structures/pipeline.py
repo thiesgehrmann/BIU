@@ -23,7 +23,10 @@ def defaultSnakemakeOptions():
 def defaultSnakemakeConfig(name):
   return {
     "common_dir" : "%s/%s" % (settings.getPipelineCommonDir(), name),
-    "tmp_dir" : "%s/%s" % (settings.getPipelineTemporaryInputDir(), name)
+    "tmp_dir" : "%s/%s" % (settings.getPipelineTemporaryInputDir(), name),
+    "biu_settings" : settings.settings,
+    "biu_location" : settings.biuLocation,
+    "outdir" : None
   }
 #edef
 
@@ -77,7 +80,7 @@ class Pipeline(object):
   #edef
 
   def __configHash(self):
-    c = sorted([ (k, self.__config[k]) for k in self.__config if k not in ['outdir', 'hash'] ], key=lambda x: x[0])
+    c = sorted([ (k, self.__config[k]) for k in self.__config if k not in defaultSnakemakeConfig("").keys() ], key=lambda x: x[0])
     c = json.dumps(c)
     return hashlib.md5(c.encode()).hexdigest()
   #edef

@@ -1,3 +1,5 @@
+import hashlib
+
 def freq(lst):
   """
     Count the number of occurances in a list.
@@ -21,7 +23,24 @@ def group(lst, key=lambda x: x[0]):
   F = {}
   for item in lst:
     k = key(item)
-    F[k] = F.get(k, []) + [append(item)]
+    F[k] = F.get(k, []) + [item]
   #efor
   return F
+#edef
+
+def hash(arr, strategy="tmb", f=hashlib.md5):
+  h = f()
+
+  if strategy == 'tmb': # Top Middle Bottom
+    middle = int(len(arr) / 2)
+    for o in arr[:10] + arr[middle:middle+10] + arr[:-10]:
+      h.update(str(o).encode())
+    #efor
+  elif strategy == 'all':
+    for o in arr:
+      h.update(str(o).encode())
+    #efor
+  #fi
+
+  return h.hexdigest()
 #edef

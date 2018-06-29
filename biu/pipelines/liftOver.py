@@ -1,4 +1,4 @@
-from . import Pipeline
+from ..structures import Pipeline
 from .. import utils
 
 import vcf
@@ -31,13 +31,9 @@ class LiftOver(Pipeline):
 
   def __init__(self, data, fromAssembly="hg19", toAssembly="hg38", config=None, where=None, **kwargs):
 
-    Pipeline.__init__(self, snakemakeFile, **kwargs)
+    Pipeline.__init__(self, snakemakeFile[diamond], {**self.__defaultConfig, **config}, **kwargs)
 
-    smConfig = self._defaultConfig
-    if isinstance(config, dict):
-      smConfig.update(config)
-    #fi
-
+    smConfig = {}
     smConfig["fromAssembly"] = fromAssembly.lower()
     smConfig["toAssembly"]   = toAssembly.lower()
     smConfig["chainURL"]     = chainFiles[(smConfig["fromAssembly"], smConfig["toAssembly"])]
@@ -48,7 +44,9 @@ class LiftOver(Pipeline):
     #fi
 
     self.setConfig(smConfig)
-    self.run(["output"])
+    if self.autorun:
+      self.run(["output"])
+    #fi
   #edef
 
   def _writeTemporaryFile(self, data):
