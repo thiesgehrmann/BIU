@@ -29,6 +29,14 @@ class Genome(Dataset):
     if "aa" in fileIndex:
       self._registerObject("aa", formats.Fasta, ["aa"], fileIndex["aa"].path, seqType=formats.Sequence.PROTTYPE)
     #fi
+
+    if 'ids' in fileIndex:
+      self._registerObject('ids', formats.Map, ['ids'], fileIndex["ids"].path, delimiter='\t')
+    #fi
+
+    if 'orthology' in fileIndex:
+      self._registerObject('orthology', formats.Map, ['orthology'], fileIndex['orthology'].path, delimiter='\t')
+    #fi
   #edef
 
   ###############################################################################

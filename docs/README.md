@@ -21,6 +21,8 @@ The BIU toolkit contains many many utilities that help my analysis. Here I provi
  * Additional formats
   * SQLite Databases :  [biu.formats.SQLite](biu.formats.SQLite.ipynb)
   * SQLite Dictionary : [biu.formats.SQLDict](biu.formats.SQLDict.ipynb)
+  * TSVMap: [biu.formats.TSVMap](biu.formats.TSVMap.ipynb)
+  * TSVIndex: [biu.formats.TSVIndex](biu.formats.TSVIndex.ipynb)
 
 ## Databases
 
@@ -38,14 +40,14 @@ The BIU toolkit contains many many utilities that help my analysis. Here I provi
  Usually they can be retrieved by BIU, but for some, such as GTeX, you must provide the files yourself.
 
  * CADD : [biu.db.CADD](biu.db.CADD.ipynb) 
- * Clinvar : biu.db.ClinVar
+ * Clinvar : [biu.db.ClinVar](biu.db.ClinVar.ipynb)
  * Cosmic : [biu.db.COSMIC](biu.db.COSMIC.ipynb)
  * dbSNP: [biu.db.DBSNP](biu.db.DBSNP.ipynb)
  * Genomes : [biu.db.Genome](biu.db.Genome.ipynb)
  * GnomAD : [biu.db.Gnomad](biu.db.Gnomad.ipynb)
  * Gene Ontology : [biu.db.GO](biu.db.GO.ipynb)
- * GTeX : biu.db.GTeX
- * HAGR : biu.db.HAGR
+ * GTeX : [biu.db.GTeX](biu.db.GTeX.ipynb)
+ * HAGR : [biu.db.HAGR](biu.db.HAGR)
  * KEGG : [biu.db.KEGG](biu.db.KEGG.ipynb)
  * MiRmine : biu.db.MiRmine
  * Neo4jDB : biu.db.Neo4jDB
@@ -57,16 +59,26 @@ The BIU toolkit contains many many utilities that help my analysis. Here I provi
   * Gene Damage Index (GDI): biu.db.GDI
   * De Novo Excess (DNE): biu.db.DNE
 
+### Genomes
+ * Genomes: [biu.genomes](biu.genomes.ipynb)
+  * Ensembl
+  * Flybase
+  * wormBase
+
 ## Mapping utilities
 
  * Human mappings
   * Dictionary maps: [biu.maps.Human](biu.maps.Human.ipynb)
   * SQLite maps: biu.maps.HumanS
+  * HGNC maps: [biu.maps.HGNC](biu.maps.HGNC.ipynb)
+ * General Mappings:
+  * BioMart mappings: [biu.maps.BioMart](biu.maps.BioMart.ipynb)
 
 ## Pipelines
 
  * Simple pipelines
   * VEP: [biu.pipelines.VEP](biu.pipelines.VEP.ipynb)
+  * Reciprocal Best Blast Mapping: [biu.pipelines.RBHMap](biu.pipelines.RBHMap.ipynb)
   * LiftOver: biu.pipelines.LiftOver
 
 ## Statistical functions
@@ -76,19 +88,24 @@ The BIU toolkit contains many many utilities that help my analysis. Here I provi
 ## Data processing
 
  * Matrix operations: [biu.processing.matrix](biu.processing.matrix.ipynb)
+ * List operations: [biu.processing.lst](biu.processing.lst.ipynb)
 
 ## Additional utilities
  * Utils : biu.utils
   * Filesystem utilities: [biu.utils.fs](biu.utils.fs.ipynb)
   * Executable utilities: [biu.utils.exe](biu.utils.exe.ipynb)
   * Message utilities: [biu.utils.msg](biu.utils.msg.ipynb)
-  * Figure utilities [biu.utils.figure](biu.utils.figure.ipynb)
-  * Python utilities [biu.utils.py](biu.utils.py.ipynb)
+  * Figure utilities: [biu.utils.figure](biu.utils.figure.ipynb)
+  * HTML utilities: [biu.utils.html](biu.utils.html.ipynb)
+  * Python utilities: [biu.utils.py](biu.utils.py.ipynb)
 
 
 ## Internals
 
+ * Dataset: biu.structures.Dataset
+ * Pipeline: [biu.structures.Pipeline](biu.structures.Pipeline.ipynb)
+
+Deprecated structures:
  * FileManager : biu.structures.FileManager
  * ResourceManager : biu.structures.ResourceManager
  * LazyObject : biu.structures.LazyObject
- * Pipeline: biu.pipelines.Pipeline

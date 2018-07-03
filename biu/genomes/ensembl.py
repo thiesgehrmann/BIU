@@ -1,6 +1,7 @@
 from .genomeUtils import Genome
 
 from .. import utils
+from .. import formats
 from ..config import settings
 
 
@@ -20,12 +21,12 @@ class Ensembl(Genome):
     #efor
   #edef
 
-  def __init__(self, release=92, organism="homo_sapiens", grch37=False, where=None):
+  def __init__(self, release=92, organism="homo_sapiens", grch37=False, where=None, **kwargs):
     self.__grch37 = grch37
     basedir = '/pub/grch37' if grch37 else '/pub'
     version = "ensembl_%s%s.%s" % ('grch37.' if self.__grch37 else '', str(release), organism)
     fileIndex = self.__genFileIndex(version, basedir, release, organism, where=where)
-    Genome.__init__(self, version, fileIndex)
+    Genome.__init__(self, version, fileIndex, **kwargs)
   #edef
 
   def __genFileIndex(self, version, basedir, release, organism, where):
@@ -74,10 +75,32 @@ class Ensembl(Genome):
       return None
     #edef
 
+    def genIDS():
+      def idMapFunc(inFile, outFile):
+        fasta = formats.Fasta(inFile)
+        with open(outFile, 'w') as ofd:
+          ofd.write('\t'.join(['gene', 'transcript', 'protein', 'symbol']) + '\n')
+          for seq in fasta:
+            fullName = fasta[seq].fullName
+            data = dict([(p.split(':')[0], ':'.join(p.split(':')[1:])) for p in fullName.split(' ') if p.split(':')[0] in ['chromosome', 'gene', 'transcript', 'gene_symbol'] ])
+            ofd.write('\t'.join([ data.get('gene', ''), data.get('transcript', ''), seq, data.get('gene_symbol', '') ]))
+            ofd.write('\n')
+          #efor
+        #ewith
+        return 0
+      #edef
+      uri = [ line for line in conn.nlst("%s/release-%d/fasta/%s/pep" % (basedir, release, organism)) if 'all.fa.gz' in line ]
+      if len(uri) > 0:
+        return utils.Acquire(where=where).curl("ftp://ftp.ensembl.org/%s" % uri[0]).gunzip().func(idMapFunc).finalize('%s/ids.tsv' % finalPath)
+      #fi
+      return None
+    #edef
+
     files["gff"]    = genGFF3()
     files["genome"] = genGenome()
     files["cds"]    = genCDS()
     files["aa"]     = genAA()
+    files["ids"]    = genIDS()
 
     for f in files:
       if f is None:

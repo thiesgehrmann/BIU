@@ -15,7 +15,7 @@ class RBHMap(Pipeline):
     "max_target_seqs" : 10,
     "output_file_name" : "mapping.tsv"
   }
-  __output = {}
+  __output = None
 
   def __init__(self, fasta1, fasta2, config={}, diamond=False, **kwargs):
     Pipeline.__init__(self, snakemakeFile[diamond], {**self.__defaultConfig, **config}, **kwargs)
@@ -36,6 +36,7 @@ class RBHMap(Pipeline):
     if self.autorun:
       self.run(["output"])
     #fi
+    self.__output = {}
   #edef
 
   def __writeTemporaryFile(self, fasta):
@@ -49,6 +50,7 @@ class RBHMap(Pipeline):
   #edef 
 
   def __getOutputFileName(self):
+    print((self.config["outdir"], self.config["output_file_name"]))
     return '%s/%s' % (self.config["outdir"], self.config["output_file_name"]) 
   #edef
 

@@ -64,6 +64,8 @@ class Acquire(object):
       return self.__finalName
     #fi
 
+    fs.mkdirp(self.__dlDir)
+
     for step in self.__steps:
       oldFileName = self.__fileName
       status = getattr(self, '_' + step.step)(*step.pargs, **step.kwargs)
@@ -115,6 +117,8 @@ class Acquire(object):
     return self.__addStep(acquireStep("merge", pargs, kwargs))
   def cmd(self, *pargs, **kwargs):
     return self.__addStep(acquireStep("cmd", pargs, kwargs))
+  def func(self, *pargs, **kwargs):
+    return self.__addStep(acquireStep("func", pargs, kwargs))
   def call(self, *pargs, **kwargs):
     return self.__addStep(acquireStep("call", pargs, kwargs))
   def cat(self, *pargs, **kwargs):
@@ -285,6 +289,12 @@ class Acquire(object):
     #fi
     p = exe.runCommand("%s > '%s'" % (cmd, self.__fileName), shell=True, verbose=True)
     return p
+  #edef
+
+  def _func(self, function):
+    oldFile = self.__fileName
+    self.__fileName = self.__fileName + '.func'
+    return function(oldFile, self.__fileName)
   #edef
 
   def _cat(self):

@@ -6,31 +6,40 @@ import pandas as pd
 
 class TSVIndex(object):
 
-  __slots__ = [ '__idx', '__lst', '__key', '__fileName', '__tbl', '__names' ]
+  __slots__ = [ '__idx', '__lst', '__key', '__fileName', '__tbl', '__names', '__emptyResult' ]
 
-  def __init__(self, fileName, key=0, names=None, **kwargs):
+  def __init__(self, fileName, key=0, names=None, header=False, **kwargs):
     self.__idx = {}
     self.__lst = []
     self.__fileName = fileName
     self.__tbl = None
     self.__names = names
-
+    self.__emptyResult = None
     if isinstance(key, int):
       self.__key = tuple([key])
     #fi
 
+    
     if names is not None:
       namedTupleObject = namedtuple('TSVIndexRow', names)
+      self.__emptyResult = namedTupleObject(*([None] * len(names)))
     #fi
 
     itemKey = lambda item: ','.join([ item[i] for i in self.__key])
 
     with open(fileName, 'r') as csvfile:
       reader = csv.reader(csvfile, **kwargs)
-      for i, row in enumerate(reader):  
-         self.__lst.append( namedTupleObject(*row) if names is not None else row )
+      if header: # If there was a header, we can skip it.
+        next(reader)
+      #fi
+      for i, row in enumerate(reader):
+         noneRow = [ value if (value != '') else None for value in row ]
+         self.__lst.append( namedTupleObject(*noneRow) if names is not None else noneRow )
          self.__idx[itemKey(row)] = self.__idx.get(itemKey(row), []) + [ i ]
       #efor
+      if self.__emptyResult is None:
+        self.__emptyResult = [None] * len(row)
+      #fi
     #ewith
   #edef
 
@@ -45,7 +54,7 @@ class TSVIndex(object):
   def lookup(self, key, singleton=False):
     if key not in self.__idx:
       utils.msg.error("Item '%s' not in map." % key)
-      return None
+      return self.__emptyResult
     #fi
 
     if singleton:

@@ -23,10 +23,10 @@ class Flybase(Genome):
     return organisms
   #edef
 
-  def __init__(self, release='FB2018_03', organism="dmel_r6.22", where=None):
+  def __init__(self, release='FB2018_03', organism="dmel_r6.22", where=None, **kwargs):
     version = "flybase_%s.%s" % (release, organism)
     fileIndex = self.__genFileIndex(version, release, organism, where=where)
-    Genome.__init__(self, version, fileIndex)
+    Genome.__init__(self, version, fileIndex, **kwargs)
   #edef
 
   def __genFileIndex(self, version, release, organism, where):
@@ -73,6 +73,26 @@ class Flybase(Genome):
       #fi
       return None
     #edef
+
+    def genIDS():
+      def idMapFunc(inFile, outFile):
+        fasta = formats.Fasta(inFile)
+        with open(outFile, 'w') as ofd:
+          ofd.write('\t'.join([ 'gene', 'protein', 'peptide', 'uniprot', 'insdc' ]) + '\n')
+          for seq in fasta:
+            data = dict([ (s[0], s[1]) for s in  [ p.split('=') for p in fasta[seq].fullName.split(' ') if '=' in p ] if s[0] in ['wormpep', 'gene', 'uniprot', 'insdc'] ])
+            ofd.write('\t'.join([data.get('gene', ''), seq, data.get('peptide', ''), data.get('uniprot', ''), data.get('insdc', '') ]))
+          #efor
+        #ewith
+      #edef
+      uri = [ line for line in conn.nlst("/releases/%s/%s/fasta" % (release, organism)) if 'all-translation' in line ]
+      if len(uri) > 0:
+        return utils.Acquire(where=where).curl("ftp://ftp.flybase.net/%s" % uri[0]).gunzip().func(idMapFunc).finalize('%s/ids.tsv' % finalPath)
+      #fi
+      return None
+    #edef
+
+  
 
     files["gff"]    = genGFF3()
     files["genome"] = genGenome()
