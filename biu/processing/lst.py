@@ -28,6 +28,10 @@ def group(lst, key=lambda x: x[0]):
   return F
 #edef
 
+def flatten(lst):
+  return [ item for group in lst for item in group ]
+#edef
+
 def hash(arr, strategy="tmb", f=hashlib.md5):
   h = f()
 

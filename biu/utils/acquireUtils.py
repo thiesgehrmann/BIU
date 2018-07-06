@@ -180,7 +180,6 @@ class Acquire(object):
     ext = self.__getExtension(url) if ext is None else ('.' + ext)
     curlHash = self.__downloadHash([ url, cookieURL, username, password ])
     self.__fileName = self.__dlDir + '/' + curlHash +  ext
-    print(self.__fileName)
 
     if self.__checkExistsTag(self.__fileName) and (not self.__redo):
       return 0
@@ -204,7 +203,6 @@ class Acquire(object):
     ext = self.__getExtension(location) if ext is None else ('.' + ext)
     curlHash = self.__downloadHash([ server, location, username, password ])
     self.__fileName = self.__dlDir + '/' + curlHash
-    print(self.__fileName)
 
     if self.__checkExistsTag(self.__fileName) and (not self.__redo):
       return 0

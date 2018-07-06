@@ -4,16 +4,28 @@ import pandas as pd
 
 class Map(object):
 
-  __slots__ = [ '__idxs', '__fileName', '__names', '__nameIndex', '__header', '__kwargs', '__tbl' ]
+  __slots__ = [ '__idxs', '__fileName', '__names', '__nameIndex', '__onlyIndex', '__header', '__kwargs', '__tbl' ]
 
-  def __init__(self, fileName, names=None, header=True, **kwargs):
+  def __init__(self, fileName, names=None, onlyIndex=None, header=True, **kwargs):
     origNames = names
-    if (origNames is None) and header:
+    if (origNames is None):
       with open(fileName, 'r') as ifd:
         line = ifd.readline()
-        names = line.strip().split(kwargs.get('delimiter', '\t'))
+        lineValues = line.strip().split(kwargs.get('delimiter', '\t'))
       #ewith
+      if header:
+        names = lineValues
+      else:
+        names = [ 'f%d' % f for f in range(len(lineValues)) ]
+      #fi
     #fi
+
+    if onlyIndex is None:
+      self.__onlyIndex = names
+    else:
+      self.__onlyIndex = list(set(onlyIndex) & set(names))
+    #fi
+
     self.__header    = header and (origNames is None)
     self.__fileName  = fileName
     self.__names     = names
@@ -39,7 +51,7 @@ class Map(object):
     dstr = "Indexed TSV Object\n"
     dstr += " Filename: %s\n" % self.__fileName
     dstr += " Indexes:\n"
-    for name in self.__names:
+    for name in self.__onlyIndex:
       dstr += '  * [%s] %s\n' % ('X' if name in self.__idxs else ' ', name)
     #efor
     

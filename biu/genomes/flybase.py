@@ -1,6 +1,7 @@
 from .genomeUtils import Genome
 
 from .. import utils
+from .. import formats
 from ..config import settings
 
 import ftplib
@@ -78,12 +79,13 @@ class Flybase(Genome):
       def idMapFunc(inFile, outFile):
         fasta = formats.Fasta(inFile)
         with open(outFile, 'w') as ofd:
-          ofd.write('\t'.join([ 'gene', 'protein', 'peptide', 'uniprot', 'insdc' ]) + '\n')
+          ofd.write('\t'.join([ 'gene', 'transcript', 'protein', 'symbol' ]) + '\n')
           for seq in fasta:
-            data = dict([ (s[0], s[1]) for s in  [ p.split('=') for p in fasta[seq].fullName.split(' ') if '=' in p ] if s[0] in ['wormpep', 'gene', 'uniprot', 'insdc'] ])
-            ofd.write('\t'.join([data.get('gene', ''), seq, data.get('peptide', ''), data.get('uniprot', ''), data.get('insdc', '') ]))
+            data = dict([ (s[0], s[1]) for s in  [ p.split('=') for p in fasta[seq].fullName.split(' ') if '=' in p ] if s[0] in ['name', 'parent'] ])
+            ofd.write('\t'.join([data.get('parent', ',').split(',')[0], data.get('parent', ',').split(',')[1].replace(';', ''), seq, data.get('name', '') ]) + '\n')
           #efor
         #ewith
+        return 0
       #edef
       uri = [ line for line in conn.nlst("/releases/%s/%s/fasta" % (release, organism)) if 'all-translation' in line ]
       if len(uri) > 0:
@@ -98,6 +100,7 @@ class Flybase(Genome):
     files["genome"] = genGenome()
     files["cds"]    = genCDS()
     files["aa"]     = genAA()
+    files['ids']    = genIDS()
 
     for f in files:
       if f is None:
