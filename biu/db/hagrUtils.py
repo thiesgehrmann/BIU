@@ -3,7 +3,8 @@ from .. import formats
 from ..config import settings as settings
 from .. import utils as utils
 
-import pandas as pd
+pd = utils.py.loadExternalModule("pandas")
+
 import os
 
 ###############################################################################

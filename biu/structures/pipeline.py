@@ -4,10 +4,10 @@ import tempfile
 import json
 import os
 
-from snakemake import snakemake
-
 from ..config import settings as settings
 from .. import utils
+
+snakemake = utils.py.loadExternalModule('snakemake.snakemake')
 
 ###############################################################################
 

@@ -1,7 +1,7 @@
-import openpyxl as xl
-import pandas as pd
-
 from .. import utils
+
+pd = utils.py.loadExternalModule("pandas")
+xl = utils.py.loadExternalModule('openpyxl')
 
 class XLSX(object):
 

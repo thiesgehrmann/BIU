@@ -1,7 +1,7 @@
 from .. import utils
 
-import sqlite3
-import pandas as pd
+sqlite3 = utils.py.loadExternalModule('sqlite3')
+pd      = utils.py.loadExternalModule("pandas")
 
 class SQLite(object):
   _diskloc = None

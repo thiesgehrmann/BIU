@@ -1,5 +1,6 @@
 from .. import utils
-import numpy as np
+
+pd = utils.py.loadExternalModule("pandas")
 
 ###############################################################################
 

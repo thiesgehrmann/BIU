@@ -4,13 +4,19 @@ from .. import utils
 
 class Dataset(object):
 
-  def __init__(self, fileIndex, localCopy={}, overwrite=False):
+  def __init__(self, fileIndex, where=None, localCopy={}, overwrite=False):
 
     self.__fileIndex = fileIndex
     for what in localCopy:
       fileName = localCopy[what]
       self.__fileIndex[what] = utils.Acquire(fileName)
     #efor
+
+    if where is not None:
+      for what in self.__fileIndex:
+        self.__fileIndex[what] = self.__fileIndex[what].where(where)
+      #efor
+    #fi
 
     if overwrite:
       for what in self.__fileIndex:
@@ -81,6 +87,9 @@ class Dataset(object):
 
     dstr += ' Objects:\n'
     for oname in self.__registeredObjects:
+      if oname[0] == '_':
+        continue
+      #fi
       loaded = oname in self.__loadedObjects
       dstr += '  * [%s] %s\n' % (('X' if loaded else ' '), oname)
     #efor

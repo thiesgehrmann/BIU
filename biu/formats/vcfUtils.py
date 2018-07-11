@@ -1,9 +1,8 @@
-import pandas as pd
-
-import vcf
-import intervaltree
-
 from .. import utils
+
+pd           = utils.py.loadExternalModule("pandas")
+vcf          = utils.py.loadExternalModule("vcf")
+intervaltree = utils.py.loadExternalModule("intervaltree")
 
 ###############################################################################
 

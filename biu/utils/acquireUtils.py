@@ -8,6 +8,7 @@ from ..config import settings
 import os
 from collections import namedtuple
 import hashlib
+import ftplib
 
 ## Tdo
 
@@ -89,6 +90,11 @@ class Acquire(object):
     return self
   #edef
 
+  def where(self, where):
+    self.__dlDir = where
+    return self
+  #edef
+
   #############################################################################
 
   def __addStep(self, step, finalName=None):
@@ -101,6 +107,8 @@ class Acquire(object):
 
   def curl(self, *pargs, **kwargs):
     return self.__addStep(acquireStep("curl", pargs, kwargs))
+  def ftp(self, *pargs, **kwargs):
+    return self.__addStep(acquireStep("ftp", pargs, kwargs))
   def lftp(self, *pargs, **kwargs):
     return self.__addStep(acquireStep("lftp", pargs, kwargs))
   def local(self, fileName, *pargs, **kwargs):
@@ -199,7 +207,8 @@ class Acquire(object):
     return p
   #edef
 
-  def _lftp(self, server, location, username, password, ext=None):
+  def _ftp(self, server, location, username=None, password=None, ext=None):
+    # Currently not working...
     ext = self.__getExtension(location) if ext is None else ('.' + ext)
     curlHash = self.__downloadHash([ server, location, username, password ])
     self.__fileName = self.__dlDir + '/' + curlHash
@@ -209,10 +218,41 @@ class Acquire(object):
     #fi
 
     fs.mkdirname(self.__fileName)
+
+    conn = ftplib.FTP(server)
+    if (username is not None) and (password is not None):
+      conn.login(username, password)
+    else:
+      conn.login()
+    #fi
+    p = conn.retrbinary(location, open(self.__fileName, 'wb').write)
+    p = int(result.split(' ')[0])
+    if p == 226:
+      return 0
+    #fi
+    return p
+  #edef
+
+  def _lftp(self, server, location, username, password, ext=None):
+    ext = self.__getExtension(location) if ext is None else ('.' + ext)
+    curlHash = self.__downloadHash([ server, location, username, password ])
+    self.__fileName = self.__dlDir + '/' + curlHash
+
+    if self.__checkExistsTag(self.__fileName) and (not self.__redo):
+      return 0
+    #fi
+
+    if not exe.exists('lftp'):
+      msg.error("'lftp' is not installed. Please install in order to continue.")
+      return 1
+    #fi
+
+    fs.mkdirname(self.__fileName)
     cmd = "echo -en  'open \"%s\"\\nuser \"%s\" \"%s\"\\ncat \"%s\"' | lftp > '%s'" % (server, username, password, location, self.__fileName)
     p = exe.runCommand(cmd, shell=True, verbose=True)
     return p
-  #edefi
+  #edef
+
 
   def _wget(self, url, ext=None):
     ext = self.__getExtension(url) if ext is None else ('.' + ext)

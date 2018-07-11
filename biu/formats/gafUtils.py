@@ -1,7 +1,7 @@
 from .. import utils
 from .. import stats
 
-import pandas as pd
+pd = utils.py.loadExternalModule("pandas")
 
 class GAF(object):
 

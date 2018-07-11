@@ -5,15 +5,16 @@ dependencies:
  - pyvcf
  - tabix
  - pytabix
- - snakemake
  - pysam
- - neo4j-python-driver
- - fastcluster
  - numpy
  - pandas
- - lftp 
  - sqlite
- - xlrd
- - openpyxl
  - scikit-learn
  - intervaltree
+
+ - snakemake
+ - matplotlib
+ - lftp
+ - xlrd
+ - openpyxl
+ - fastcluster 

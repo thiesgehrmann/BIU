@@ -69,7 +69,7 @@ class SQLDict:
     #fi
   #edef
 
-  def _delete(self, key):
+  def __delete(self, key):
     return self._sqlDict.execute("DELETE FROM data WHERE id IS ?;", [key])
   #edef
 
@@ -98,8 +98,12 @@ class SQLDict:
   #edef
 
   def __delitem__(self, key):
-    del self._cache[key]
-    return self._delete(key)
+    if key in self:
+      del self._cache[key]
+      return self.__delete(key)
+    else:
+      return None
+    #fi
   #edef
 
   def __contains__(self, key):

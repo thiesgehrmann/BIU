@@ -1,4 +1,7 @@
-import scipy.stats as sstats
+from .. import utils
+
+sstats = utils.py.loadExternalModule("scipy.stats")
+
 from collections import namedtuple
 
 def setEnrichment(yourSet, otherSet, allAnnotatedObjects):

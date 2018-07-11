@@ -1,7 +1,7 @@
-import pandas as pd
-import tabix
-
 from .. import utils
+
+pd    = utils.py.loadExternalModule("pandas")
+tabix = utils.py.loadExternalModule("tabix")
 
 from collections import namedtuple
 

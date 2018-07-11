@@ -9,10 +9,14 @@ class globalSettings(object):
 
   __settings = None
 
+  __missingDependencies = None
+
 ###############################################################################
 
   def __init__(self):
     self.__settings = json.load(open(self.__settingsFile, "r"))
+    self.__missingDependencies = []
+  #edef
 
   def loadSettings(self, fileName):
     self.__settings.update(json.load(open(fileName, "r")))
@@ -57,8 +61,8 @@ class globalSettings(object):
   ###############################################################################
 
   def getDownloadDir(self):
-    dldir = self.getSetting("download_dir")
-    if self.getSetting("download_dir") is None:
+    dldir = self.getSetting("download_where")
+    if self.getSetting("download_where") is '':
       return self.getWhere() + '/_downloads'
     else:
       return os.path.abspath(dldir)
@@ -66,13 +70,17 @@ class globalSettings(object):
   #edef
 
   def setDownloadDir(self, dirName):
-    self.setSetting(download_dir=dirName)
+    self.setSettings(download_where=dirName)
   #edef
 
   ###############################################################################
 
   def getPipelineOutdir(self):
-    return os.path.abspath(self.getSetting("pipelines_base"))
+    path = self.getSetting("pipeline_where")
+    if path == '':
+      path = self.getWhere()
+    #fi
+    return '%s/%s' % (os.path.abspath(path), self.getSetting('pipeline_base'))
   #edef
 
   def setPipelineOutdir(self, outdir):
@@ -93,12 +101,6 @@ class globalSettings(object):
 
   ###############################################################################
   
-  def getNeo4jDir(self):
-    return os.path.abspath(self.getSetting("neo4j_install_dir"))
-  #edef
-
-  ###############################################################################
-
   def getDebugState(self):
     return self.getSetting("debug_messages")
   #edef
@@ -123,6 +125,23 @@ class globalSettings(object):
     #fi
     return self.setSettings(debug_stream=stream)
   #edef
+
+  ###############################################################################
+
+  def registerMissingDependency(self, module):
+    self.__missingDependencies.append(module)
+  #edef
+    
+  def missingDependencies(self):
+    topLevelModules = set([ m.split('.')[0] for m in self.__missingDependencies ])
+    required = set(self.getSetting("dependencies")) & topLevelModules
+    optional = set(self.getSetting("dependencies_optional")) & topLevelModules
+    other    = topLevelModules - (required | optional)
+
+    return required, optional, other
+  #edef
+
+  ###############################################################################
 
   def __str__(self):
     dstr = "Configuration:\n"

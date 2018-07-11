@@ -1,8 +1,10 @@
 from ..structures import Pipeline
 from .. import formats
+from .. import utils
 
 import inspect, os
-import pandas as pd
+
+pd = utils.py.loadExternalModule("pandas")
 
 snakemakeFile = { False: os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) + '/rbhMap/Snakefile',
                   True: os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) + '/rbhMap/diamond.Snakefile'}

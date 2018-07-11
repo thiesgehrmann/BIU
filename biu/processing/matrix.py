@@ -1,6 +1,9 @@
 import numpy as np
-import fastcluster
 import scipy.spatial.distance as ssdist
+
+from .. import utils
+
+fastcluster = utils.py.loadExternalModule('fastcluster')
 
 def order(M, distance="correlation", method="single"):
   '''

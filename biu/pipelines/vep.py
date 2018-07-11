@@ -1,7 +1,8 @@
 from ..structures import Pipeline
 from .. import formats
+from .. import utils
 
-import pandas as pd
+pd = utils.py.loadExternalModule("pandas")
 
 import inspect, os
 snakemakeFile  = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) + '/vep/Snakefile'

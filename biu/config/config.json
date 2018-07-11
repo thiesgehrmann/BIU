@@ -1,14 +1,19 @@
 {
 
-  "where" : ".",
+  "where" : "./biu",
 
-  "neo4j_install_dir" : "/exports/molepi/tgehrmann/src/neo4j",
+  "download_where" : "",
+
   "debug_messages" : true,
   "debug_stream" : "stderr",
 
-  "pipelines_base" : "/exports/molepi/tgehrmann/pipeline_runs",
+  "pipeline_where" : "",
+  "pipelines_base" : "pipelines",
   "pipelines_common_name" : "common",
   "pipelines_temporary_indir_name" : "temporary_input",
-  "pipelines_conda_prefix_name" : "conda"
+  "pipelines_conda_prefix_name" : "conda",
+
+  "dependencies" : [ "numpy", "scipy", "pandas", "intervaltree", "vcf", "tabix", "sqlite" ],
+  "dependencies_optional" : [ "snakemake", "matplotlib", "matplotlib_venn", "xlrd", "openpyxl", "scikit-learn", "fastcluster"  ]
  
 }

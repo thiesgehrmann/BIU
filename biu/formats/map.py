@@ -1,6 +1,8 @@
+from .. import utils
+
 from . import TSVIndex
 
-import pandas as pd
+pd = utils.py.loadExternalModule("pandas")
 
 class Map(object):
 
@@ -39,16 +41,16 @@ class Map(object):
   def table(self):
     if self.__tbl is None:
       if len(self.__idxs) == 0:
-        self.__tbl = self.__getattr__(self.__names[0]).table
+        self.__tbl = getattr(self, self.__onlyIndex[0]).table
       else:
-        self.__tbl = self.__idxs.values()[0].table
+        self.__tbl = list(self.__idxs.values())[0].table
       #fi
     #fi
     return self.__tbl
   #edef
 
   def __str__(self):
-    dstr = "Indexed TSV Object\n"
+    dstr = "Indexed TSV Map Object\n"
     dstr += " Filename: %s\n" % self.__fileName
     dstr += " Indexes:\n"
     for name in self.__onlyIndex:

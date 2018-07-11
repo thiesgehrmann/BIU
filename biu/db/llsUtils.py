@@ -2,9 +2,10 @@ from ..structures import Dataset
 from ..config import settings as settings
 from .. import formats
 from .. import utils
-import pandas as pd
 
 import itertools
+
+pd = utils.py.loadExternalModule("pandas")
 
 ###############################################################################
 

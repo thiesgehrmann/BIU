@@ -3,8 +3,8 @@ from ..structures import resourceManager as rm
 from ..config import settings as settings
 from .. import utils as utils
 
-import numpy as np
-import pandas as pd
+pd = utils.py.loadExternalModule("pandas")
+np = utils.py.loadExternalModule("numpy")
 
 import os
 

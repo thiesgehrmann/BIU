@@ -6,8 +6,10 @@ from ..config import settings as settings
 from .. import utils
 
 import csv
-import pandas as pd
-import numpy as np
+
+pd = utils.py.loadExternalModule("pandas")
+np = utils.py.loadExternalModule("numpy")
+
 ###############################################################################
 
 versions = {

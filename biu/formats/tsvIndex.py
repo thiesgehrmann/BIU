@@ -2,7 +2,8 @@ from .. import utils
 
 import csv
 from collections import namedtuple
-import pandas as pd
+
+pd = utils.py.loadExternalModule("pandas")
 
 class TSVIndex(object):
 

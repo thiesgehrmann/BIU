@@ -1,4 +1,7 @@
-import matplotlib.pylab as plt
+from . import pyUtils as py
+
+plt = py.loadExternalModule('matplotlib.pylab')
+pltvenn = py.loadExternalModule('matplotlib_venn')
 
 ###############################################################################
 

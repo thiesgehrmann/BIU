@@ -75,9 +75,9 @@ class BioMart(Dataset):
       return url + query
     #edef
 
-    finalPath = '%s/bioMart_%s' % ( (settings.getWhere() if where is None else where), version)
+    finalPath = '%s/bioMart/%s' % ( (settings.getWhere() if where is None else where), version)
     files = {}
-    files['db'] = utils.Acquire(where=where).wget(genQuery()).finalize('%s/%s/data.tsv' % (finalPath))
+    files['db'] = utils.Acquire(where=where).wget(genQuery()).finalize('%s/data.tsv' % (finalPath))
     return files
   #edef
 

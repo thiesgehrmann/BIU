@@ -1,8 +1,8 @@
 from ..structures import Pipeline
 from .. import utils
 
-import vcf
-import pandas as pd
+pd = utils.py.loadExternalModule("pandas")
+vcf = utils.py.loadExternalModule("vcf")
 
 import inspect, os
 snakemakeFile  = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) + '/liftOver/Snakefile'
@@ -31,7 +31,7 @@ class LiftOver(Pipeline):
 
   def __init__(self, data, fromAssembly="hg19", toAssembly="hg38", config=None, where=None, **kwargs):
 
-    Pipeline.__init__(self, snakemakeFile[diamond], {**self.__defaultConfig, **config}, **kwargs)
+    Pipeline.__init__(self, snakemakeFile, {**self.__defaultConfig, **config}, **kwargs)
 
     smConfig = {}
     smConfig["fromAssembly"] = fromAssembly.lower()

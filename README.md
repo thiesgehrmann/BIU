@@ -2,6 +2,10 @@
 
 Toolkit I developed to manage biological datatypes/datasets/pipelines/analysis
 
+## Installation
+
+
+
 ## Documentation
 
 See [Documentation](docs#biu-documentation) for documentation.

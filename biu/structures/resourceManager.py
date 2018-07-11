@@ -13,11 +13,10 @@ from ..config import settings as settings
 from .lazyObject import LazyObject
 
 # External modules
-import pandas as pd
-import numpy as np
-import tabix
-import vcf
-#from neo4j.v1 import GraphDatabase
+pd = utils.py.loadExternalModule("pandas")
+np = utils.py.loadExternalModule("numpy")
+vcf = utils.py.loadExternalModule("vcf")
+tabix = utils.py.loadExternalModule("tabix")
 
 ###############################################################################
 

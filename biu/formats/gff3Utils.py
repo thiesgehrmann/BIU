@@ -6,9 +6,8 @@ import csv
 import gzip
 from collections import namedtuple
 
-import intervaltree
-
-import gzip
+intervaltree = utils.py.loadExternalModule('intervaltree')
+pd = utils.py.loadExternalModule("pandas")
 
 ###############################################################################
 
@@ -371,7 +370,6 @@ class GFF3(object):
 
   @property
   def dataFrame(self):
-    import pandas as pd
     return pd.DataFrame([ (e.seqid, e.source, e.feature, e.start, e.end, e.score, e.phase, e.attr) for e in self.entries ],
                         columns=("seqid", "source", "feature", "start", "end", "score", "phase", "attr") )
   #edef

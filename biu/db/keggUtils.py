@@ -4,7 +4,7 @@ from .. import utils
 from .. import stats
 from ..config import settings
 
-import pandas as pd
+pd = utils.py.loadExternalModule("pandas")
 
 import os
 
