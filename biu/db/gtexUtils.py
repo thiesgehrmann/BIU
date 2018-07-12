@@ -1,8 +1,6 @@
-
-from ..structures import fileManager as fm
-from ..structures import resourceManager as rm
+from ..structures import Dataset
+from .. import formats
 from ..config import settings as settings
-
 from .. import utils
 
 import csv
@@ -12,59 +10,53 @@ np = utils.py.loadExternalModule("numpy")
 
 ###############################################################################
 
-versions = {
-  "v7" : {
-    "gTPM" : None,
-    "tTPM" : None,
-    "sAttr" : None,
-    "sPheno" : None
+class GTeX(Dataset):
+
+  __sAttrFieldNames  = [ "SAMPID", "SMATSSCR", "SMCENTER", "SMPTHNTS", "SMRIN", "SMTS", "SMTSD", "SMUBRID", "SMTSISCH", "SMTSPAX", "SMNABTCH", "SMNABTCHT", "SMNABTCHD", "SMGEBTCH", "SMGEBTCHD", "SMGEBTCHT", "SMAFRZE", "SMGTC", "SME2MPRT", "SMCHMPRS", "SMNTRART", "SMNUMGPS", "SMMAPRT", "SMEXNCRT", "SM550NRM", "SMGNSDTC", "SMUNMPRT", "SM350NRM", "SMRDLGTH", "SMMNCPB", "SME1MMRT", "SMSFLGTH", "SMESTLBS", "SMMPPD", "SMNTERRT", "SMRRNANM", "SMRDTTL", "SMVQCFL", "SMMNCV", "SMTRSCPT", "SMMPPDPR", "SMCGLGTH", "SMGAPPCT", "SMUNPDRD", "SMNTRNRT", "SMMPUNRT", "SMEXPEFF", "SMMPPDUN", "SME2MMRT", "SME2ANTI", "SMALTALG", "SME2SNSE", "SMMFLGTH", "SME1ANTI", "SMSPLTRD", "SMBSMMRT", "SME1SNSE", "SME1PCTS", "SMRRNART", "SME1MPRT", "SMNUM5CD", "SMDPMPRT", "SME2PCTS" ]
+  __sPhenoFieldNames = [ "SUBJID", "SEX", "AGE", "DTHHRDY" ]
+
+  versions = {
+    "v7" : {
+      "gTPM" : 'GTEx_Analysis_2016-01-15_v7_RNASeQCv1.1.8_gene_tpm.gct.gz',
+      "tTPM" : 'GTEx_Analysis_2016-01-15_v7_RSEMv1.2.22_transcript_tpm.txt.gz',
+      "sAttr" : 'GTEx_v7_Annotations_SampleAttributesDS.txt',
+      "sPheno" : 'GTEx_v7_Annotations_SubjectPhenotypesDS.txt'
+    }
   }
 
-}
-
-def urlFileIndex(version):
-  # We don't add anything to the filenames for GTeX, because it is behind this ugly google login.
-  # We don't want people to have to rename the files or figure out the correct filenames
-  files = {}
-  files["g_tpm"] = (versions[version]["gTPM"], 'GTEx_Analysis_2016-01-15_v7_RNASeQCv1.1.8_gene_tpm.gct.gz', {})
-  files["t_tpm"] = (versions[version]["tTPM"], 'GTEx_Analysis_2016-01-15_v7_RSEMv1.2.22_transcript_tpm.txt.gz', {})
-  files["s_attr"] = (versions[version]["sAttr"], 'GTEx_v7_Annotations_SampleAttributesDS.txt', {})
-  files["s_pheno"] = (versions[version]["sPheno"], 'GTEx_v7_Annotations_SubjectPhenotypesDS.txt', {})
-  return files
-#edef
-
-def listVersions():
-  print("Available versions:")
-  for v in versions:
-    print(" * %s" % v)
-#edef
-
-###############################################################################
-
-class GTeX(fm.FileManager):
-
-  def __init__(self, version=list(versions.keys())[0], **kwargs):
-    fm.FileManager.__init__(self, urlFileIndex(version), objects=["sAttr", "sPheno"], **kwargs)
+  def __init__(self, version=list(versions.keys())[0], where=None, **kwargs):
+    fileIndex = self.__genFileIndex(version, where)
+    fm.FileManager.__init__(self, fileIndex, where=where, **kwargs)
     self.version = version
-    self.addStrFunction(lambda s: "Note: You must provide your own local copies using the 'localCopy' option!")
-    self.addStrFunction(lambda s: "Version: %s" % self.version)
+    self._addStrFunction(lambda s: "Note: You must provide your own local copies using the 'localCopy' option!")
+    self._addStrFunction(lambda s: "Version: %s" % self.version)
 
-    self.sAttr  = rm.TSVResourceManager(self, "s_attr", fieldNames = self._sAttrFieldNames, skiprows=1)
-    self.sPheno = rm.TSVResourceManager(self, "s_pheno", fieldNames = self._sPhenoFieldNames, skiprows=1)
-
+    self._registerObject("_sAttr", pd.read_csv, ["s_attr"], fileIndex["g_tpm"].path, fieldNames=self.__sAttrFieldNames, skiprows=1, delimiter='\t')
+    self._registerObject("_sPheno", pd.read_csv, ["s_pheno"], fileIndex["s_pheno"].path, fieldNames=self.__sPhenoFieldNames, skiprows=1, delimiter='\t')
   #edef
 
-  _sAttrFieldNames  = [ "SAMPID", "SMATSSCR", "SMCENTER", "SMPTHNTS", "SMRIN", "SMTS", "SMTSD", "SMUBRID", "SMTSISCH", "SMTSPAX", "SMNABTCH", "SMNABTCHT", "SMNABTCHD", "SMGEBTCH", "SMGEBTCHD", "SMGEBTCHT", "SMAFRZE", "SMGTC", "SME2MPRT", "SMCHMPRS", "SMNTRART", "SMNUMGPS", "SMMAPRT", "SMEXNCRT", "SM550NRM", "SMGNSDTC", "SMUNMPRT", "SM350NRM", "SMRDLGTH", "SMMNCPB", "SME1MMRT", "SMSFLGTH", "SMESTLBS", "SMMPPD", "SMNTERRT", "SMRRNANM", "SMRDTTL", "SMVQCFL", "SMMNCV", "SMTRSCPT", "SMMPPDPR", "SMCGLGTH", "SMGAPPCT", "SMUNPDRD", "SMNTRNRT", "SMMPUNRT", "SMEXPEFF", "SMMPPDUN", "SME2MMRT", "SME2ANTI", "SMALTALG", "SME2SNSE", "SMMFLGTH", "SME1ANTI", "SMSPLTRD", "SMBSMMRT", "SME1SNSE", "SME1PCTS", "SMRRNART", "SME1MPRT", "SMNUM5CD", "SMDPMPRT", "SME2PCTS" ]
-  _sPhenoFieldNames = [ "SUBJID", "SEX", "AGE", "DTHHRDY" ]
+  def __genFileIndex(self, version, where=None):
+    files = {}
+    if where is None:
+      where = settings.getDataDir()
+    #fi
+
+    files["g_tpm"]   = utils.Acquire('%s/%s' % (where, versions[version]["gTPM"])) 
+    files["t_tpm"]   = utils.Acquire('%s/%s' % (where, versions[version]["tTPM"]))
+    files["s_attr"]  = utils.Acquire('%s/%s' % (where, versions[version]["sAttr"])) 
+    files["s_pheno"] = utils.Acquire('%s/%s' % (where, versions[version]["sPheno"])) 
+
+    return files
+  #edef
 
   ###############################################################################
 
   def getPersonIDs(self):
-    return np.unique(self.sAttr['SAMPID'].apply(lambda x: x.split('-')[1]).values)
+    return np.unique(self._sAttr['SAMPID'].apply(lambda x: x.split('-')[1]).values)
   #edef
 
   def getPersonIDAttrRows(self, personID):
-    return self.sAttr[self.sAttr['SAMPID'].apply(lambda x: x.split('-')[1] == personID)]
+    return self._sAttr[self._sAttr['SAMPID'].apply(lambda x: x.split('-')[1] == personID)]
   #edef
 
   def getPersonIDSamples(self, personID, smafrze="RNASEQ"):
@@ -78,10 +70,10 @@ class GTeX(fm.FileManager):
   #edef
 
   def getSampleIDs(self):
-    return np.unique(self.sAttr['SAMPID'])
+    return np.unique(self._sAttr['SAMPID'])
 
   def getTissueTypes(self):
-    return np.unique(self.sAttr['SMTSD'].values)
+    return np.unique(self._sAttr['SMTSD'].values)
   #edef
 
   ###############################################################################

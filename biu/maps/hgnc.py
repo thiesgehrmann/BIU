@@ -27,7 +27,7 @@ class HGNC(Dataset):
   #edef
 
   def __genFileIndex(self, where=None):
-    finalPath = '%s/hgnc' % ( (settings.getWhere() if where is None else where), version)
+    finalPath = '%s/maps/hgnc' % ( (settings.getDataDir() if where is None else where), version)
     files = {}
     files["hgnc_db"]  = utils.Acquire().curl("ftp://ftp.ebi.ac.uk/pub/databases/genenames/new/tsv/hgnc_complete_set.txt").finalize('%s/hgnc_complete_set.tsv' % finalPath)
     return files

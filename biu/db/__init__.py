@@ -3,13 +3,11 @@ from .caddUtils import CADD as CADD
 from .clinVarUtils import ClinVar as ClinVar
 
 from .gnomadUtils import Gnomad as Gnomad
-from .gnomadUtils import listVersions as listGnomadVersions
 
 from .genomeUtils import Genome as Genome
 from .genomeUtils import listGenomes as listGenomes
 
 from .gtexUtils import GTeX as GTeX
-from .gtexUtils import listVersions as listGTeXVersions
 
 from .uniprotUtils import UniProt as UniProt
 from .uniprotUtils import listVersions as listUniProtVersions

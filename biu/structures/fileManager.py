@@ -24,7 +24,7 @@ class FileManager(object):
 
   def __init__(self, fileIndex, where=None, objects=None, downloadOnDemand=True, localCopy=None, **kwargs):
     if where is None:
-      where = settings.getWhere()
+      where = settings.getDataDir()
     #fi
     self._where = os.path.abspath(where)
     self._fileIndex = fileIndex

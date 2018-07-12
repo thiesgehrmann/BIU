@@ -40,7 +40,7 @@ class DBSNP(Dataset):
   #edef
 
   def __genFileIndex(self, version, where=None):
-     finalPath = '%s/dbSNP_%s' % ( (settings.getWhere() if where is None else where), version)
+     finalPath = '%s/dbSNP/%s' % ( (settings.getDataDir() if where is None else where), version)
      vData = self.versions[version]
      files = {}
      files['vcf'] = utils.Acquire(where=where).curl(vData["vcf"]).finalize('%s/all_snps.vcf.bgz' % finalPath)
@@ -86,6 +86,10 @@ class DBSNP(Dataset):
   __assemblySeqIDChromosomes = {}
 
   def __getAssemblyPosition(self, ID):
+    if not(isinstance(ID, int)):
+      utils.msg.error("DBSNP queries must be Integers, not Strings, returning None.")
+      return None
+    #fi
     utils.dbm("Querying for rs%d via REST." % ID)
     assemblyid = versions[self.version]["assemblyid"]
 

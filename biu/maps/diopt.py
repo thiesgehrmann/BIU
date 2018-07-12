@@ -35,7 +35,7 @@ class DIOPT(Dataset):
   __namedtupleObject = namedtuple('DIOPTResult', __fields)
   
   def __init__(self, genome=list(__speciesIDS.keys())[0], where=None, **kwargs):
-    finalPath = '%s/diopt' % (settings.getWhere() if where is None else where)
+    finalPath = '%s/maps/diopt' % (settings.getDataDir() if where is None else where)
     files = {}
     files['data'] = utils.Acquire(where=where).touch().finalize('%s/%s.data.sqlite' % (finalPath, genome))
     

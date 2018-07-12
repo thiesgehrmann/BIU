@@ -33,7 +33,6 @@ class LLS(Dataset):
   #edef
 
   def __genFileIndex(self, version, where=None):
-     finalPath = '%s/geneOntology_%s' % ( (settings.getWhere() if where is None else where), version)
      files = {}
      for chrID in self.versions[version]["chrs"]:
        files['vcf_%s' % chrID] = utils.Acquire("%s/tbx/merged.chr%s.vcf.bgz" % (where, chrID), where=where)

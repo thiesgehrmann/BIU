@@ -7,7 +7,7 @@ import os
 from ..config import settings as settings
 from .. import utils
 
-snakemake = utils.py.loadExternalModule('snakemake.snakemake')
+snakemake = utils.py.loadExternalModule('snakemake', attr='snakemake')
 
 ###############################################################################
 

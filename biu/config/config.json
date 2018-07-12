@@ -2,7 +2,11 @@
 
   "where" : "./biu",
 
+  "data_where" : "",
+  "data_base" : "data",
+
   "download_where" : "",
+  "download_base" : "downloads",
 
   "debug_messages" : true,
   "debug_stream" : "stderr",

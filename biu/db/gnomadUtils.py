@@ -7,43 +7,6 @@ pd = utils.py.loadExternalModule("pandas")
 
 ###############################################################################
 
-versions = { "GRCh37" : {
-  "vcfURL" : "https://storage.googleapis.com/gnomad-public/release/2.0.2/vcf/exomes/gnomad.exomes.r2.0.2.sites.vcf.bgz",
-  "vcfTabixURL"   : "https://storage.googleapis.com/gnomad-public/release/2.0.2/vcf/exomes/gnomad.exomes.r2.0.2.sites.vcf.bgz.tbi",
-  "covURLProto"   : "https://storage.googleapis.com/gnomad-public/release/2.0.2/coverage/exomes/gnomad.exomes.r2.0.2.chr%s.coverage.txt.gz",
-  "chr"           : [ "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "X", "Y" ],
-  "covSeqField"   : 1,
-  "covBeginField" : 2,
-  "covEndField"    : 2
-  }
-}
-
-def urlFileIndex(version):
-  files = {}
-
-  files["vcf"] = (versions[version]["vcfURL"], 'gnomad.vcf.bgz', {})
-  files["vcf_tbi"] = (versions[version]["vcfTabixURL"], 'gnomad.vcf.bgz.tbi', {})
-  for chrID in versions[version]["chr"]:
-    files["chr_%s_cov" % chrID] = (versions[version]["covURLProto"] % chrID, 'gnomad.coverage.chr.%s.tsv.bgz' % chrID, {"tabix": True,
-        "bgzip": True,
-        "urlIsGzipped":True,
-        "seqField" : versions[version]["covSeqField"],
-        "beginField" : versions[version]["covBeginField"],
-        "endField" : versions[version]["covEndField"]} )
-    files["chr_%s_cov_tbi" % chrID] = (None, 'gnomad.coverage.chr.%s.tsv.bgz.tbi' % chrID, {})
-  #efor
-
-  return { k : (u, 'gnomad_%s/%s' % (version, l), o) for (k, (u, l, o)) in files.items() }
-#edef
-
-def listVersions():
-  print("Available versions:")
-  for v in versions:
-    print(" * %s" % v)
-#edef
-
-###############################################################################
-
 class Gnomad(Dataset):
 
   versions = { "GRCh37" : {
@@ -74,7 +37,7 @@ class Gnomad(Dataset):
   #edef
 
   def __genFileIndex(self, version, where=None):
-     finalPath = '%s/gnomad_%s' % ( (settings.getWhere() if where is None else where), version)
+     finalPath = '%s/gnomad/%s' % ( (settings.getDataDir() if where is None else where), version)
      vData = self.versions[version]
      files = {}
      files['vcf'] = utils.Acquire(where=where).curl(vData["vcf"]).finalize('%s/gnomad.vcf.bgz' % finalPath)

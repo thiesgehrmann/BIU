@@ -48,7 +48,7 @@ class Individual(object):
     indivID = str(row[1])
     father  = None if row[2] == '0' else row[2]
     mother  = None if row[3] == '0' else row[3]
-    gender  = 'm' if int(row[4]) == 1 else 'f'
+    gender  = 'm' if (row[4] in [ '1', 'm' ]) else 'f'
 
     features = PhenoGenotype(row[5:], datFormat)
     return Individual(famID, indivID, father, mother, gender, features)
@@ -490,6 +490,10 @@ class DAT(object):
     return self.__fields.__iter__()
   #edef
 
+  def keys(self):
+    return self.__names
+  #edef
+
   def __contains__(self, field):
     return field in self.__names
   #edef
@@ -565,7 +569,7 @@ class DAT(object):
     with open(fileName, "w") as ofd:
       for i, (fieldType, fieldName) in enumerate(self.__fields):
         fieldType = 'S' if self.__mask[i] else fieldType.upper()
-        ofd.write("%s\t%s\n" % (fieldType, fieldName))
+        ofd.write("%s %s\n" % (fieldType, fieldName))
       #efor
       ofd.write("E\tEND-OF-DATA\n")
       self.__fileName = fileName
@@ -667,6 +671,10 @@ class PED(object):
         self[famID][memberID].setFeature(featureName, emptyValue)
       #efor
     #efor
+  #edef
+
+  def features(self):
+    return self.__datFormat.keys()
   #edef
 
   def getFeature(self, featureName):

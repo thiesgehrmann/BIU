@@ -45,6 +45,9 @@ class Acquire(object):
     if self.__finalName is None:
       return False
     #fi
+    if len(self.__steps) == 0: # The file specified was local
+      return os.path.exists(self.__finalName)
+    #fi
     return (os.path.exists(self.__finalName) and self.__checkExistsTag(self.__finalName))
   #edef
 

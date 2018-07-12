@@ -23,7 +23,7 @@ class GO(Dataset):
   #edef
 
   def __genFileIndex(self, version, where=None):
-     finalPath = '%s/geneOntology_%s' % ( (settings.getWhere() if where is None else where), version)
+     finalPath = '%s/geneOntology/%s' % ( (settings.getDataDir() if where is None else where), version)
      url = self.versions[version]
      files = {}
      files['gaf'] = utils.Acquire(where=where).curl(url).gunzip().finalize('%s/annots.gaf' % finalPath)

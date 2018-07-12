@@ -59,7 +59,7 @@ class Wormbase(Genome):
     #fi
     species = organisms[organism]
     files = {}
-    finalPath = '%s/wormbase_%s' % ( (settings.getWhere() if where is None else where), organism)
+    finalPath = '%s/genomes/wormbase/%s' % ( (settings.getDataDir() if where is None else where), organism)
 
     files["gff"]    = utils.Acquire(where=where).curl(species.gff3).gunzip().finalize('%s/genes.gff3' % finalPath)
     files["genome"] = utils.Acquire(where=where).curl(species.genome).gunzip().finalize('%s/genome.fasta' % finalPath)

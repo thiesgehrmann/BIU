@@ -30,7 +30,7 @@ class HumanMapping(Dataset):
 
   def __genFileIndex(self, where=None):
     files = {}
-    finalPath = '%s/humanMappings' % (settings.getWhere() if where is None else where)
+    finalPath = '%s/maps/humanMappings' % (settings.getDataDir() if where is None else where)
 
     files["geneid2ensemblgene"] = utils.Acquire(where=where).curl("ftp://ftp.ncbi.nlm.nih.gov/gene/DATA/gene2ensembl.gz").gunzip().finalize('%s/geneid2ensembl.tsv' % finalPath)
     files["gene2refseq"]        = utils.Acquire(where=where).curl("ftp://ftp.ncbi.nlm.nih.gov/gene/DATA/gene2refseq.gz").gunzip().finalize('%s/gene2refseq.tsv' % finalPath)

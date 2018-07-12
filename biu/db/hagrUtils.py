@@ -33,7 +33,7 @@ class HAGR(Dataset):
   #edef
 
   def __genFileIndex(self, version, where=None):
-     finalPath = '%s/HAGR_%s' % ( (settings.getWhere() if where is None else where), version)
+     finalPath = '%s/HAGR/%s' % ( (settings.getDataDir() if where is None else where), version)
      files = {}
      for oname in self.versions[version]:
        url, selFileName, delim = self.versions[version][oname]

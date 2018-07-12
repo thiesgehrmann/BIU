@@ -30,7 +30,7 @@ class CADD(Dataset):
   #edef
 
   def __genFileIndex(self, version, where=None):
-     finalPath = '%s/cadd_%s' % ( (settings.getWhere() if where is None else where), version)
+     finalPath = '%s/cadd/%s' % ( (settings.getDataDir() if where is None else where), version)
      vData = self.versions[version]
      files = {}
      files['tsv'] = utils.Acquire(where=where).curl(vData["caddURL"]).finalize('%s/scores.tsv.bgz' % finalPath)

@@ -60,13 +60,26 @@ class globalSettings(object):
 
   ###############################################################################
 
-  def getDownloadDir(self):
-    dldir = self.getSetting("download_where")
-    if self.getSetting("download_where") is '':
-      return self.getWhere() + '/_downloads'
-    else:
-      return os.path.abspath(dldir)
+  def getDataDir(self):
+    path = self.getSetting("data_where")
+    if path == '':
+      path = self.getWhere()
     #fi
+    return '%s/%s' % (os.path.abspath(path), self.getSetting('data_base')) 
+  #edef
+
+  def setDataDir(self, path):
+    self.setSettings(data_where=path)
+  #edef
+
+  ###############################################################################
+
+  def getDownloadDir(self):
+    path = self.getSetting("download_where")
+    if path == '':
+      path = self.getWhere()
+    #fi
+    return '%s/%s' % (os.path.abspath(path), self.getSetting('download_base'))
   #edef
 
   def setDownloadDir(self, dirName):
@@ -80,7 +93,7 @@ class globalSettings(object):
     if path == '':
       path = self.getWhere()
     #fi
-    return '%s/%s' % (os.path.abspath(path), self.getSetting('pipeline_base'))
+    return '%s/%s' % (os.path.abspath(path), self.getSetting('pipelines_base'))
   #edef
 
   def setPipelineOutdir(self, outdir):

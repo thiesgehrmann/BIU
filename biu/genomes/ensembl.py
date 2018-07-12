@@ -31,7 +31,7 @@ class Ensembl(Genome):
 
   def __genFileIndex(self, version, basedir, release, organism, where):
     files = {}
-    finalPath = '%s/%s' % ( (settings.getWhere() if where is None else where), version)
+    finalPath = '%s/genomes/%s' % ( (settings.getDataDir() if where is None else where), version)
     conn      = ftplib.FTP("ftp.ensembl.org")
     conn.login()
     organisms = [ line.split('/')[-1] for line in conn.nlst("%s/release-%d/gff3" % (basedir, release)) ]

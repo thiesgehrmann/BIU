@@ -42,7 +42,7 @@ class Cosmic(Dataset):
   #edef
 
   def __genFileIndex(self, version, username, password, where=None):
-     finalPath = '%s/cosmic_%s' % ( (settings.getWhere() if where is None else where), version)
+     finalPath = '%s/cosmic/%s' % ( (settings.getDataDir() if where is None else where), version)
      files = {}
      vcfCoding = utils.Acquire(where=where).lftp("sftp://sftp-cancer.sanger.ac.uk",
                                                  self.versions[version]["vcfCodingURL"],

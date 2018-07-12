@@ -20,7 +20,7 @@ def loadModuleFromFile(fileName, moduleName=None):
 ###############################################################################
 
 import importlib
-def loadExternalModule(module):
+def loadExternalModule(module, attr=None):
   class AbsentModule(object):
     def __init__(self, module, exception):
       self.__module = module
@@ -34,11 +34,15 @@ def loadExternalModule(module):
     
     __getattr__ = __re__
     __getitem__ = __re__
+    __call__    = __re__
   #eclass
 
   lmod = None
   try:
     lmod = importlib.import_module(module)
+    if attr is not None:
+      lmod = getattr(lmod, attr)
+    #fi
   except ModuleNotFoundError as e:
     settings.registerMissingDependency(module)
     lmod = AbsentModule(module, e)

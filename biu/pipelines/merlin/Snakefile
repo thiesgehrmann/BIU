@@ -1,0 +1,46 @@
+import inspect, os
+__INSTALL_DIR__ = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+
+__OUTDIR__ = config["outdir"]
+
+def outputFiles(config):
+  files = {}
+  files["linkage"] = '%s/linkage-nonparametric.tbl' % __OUTDIR__
+  files["ibd"] = '%s/linkage.ibd' % __OUTDIR__
+  files["perfamlod"] = '%s/linkage.lod' % __OUTDIR__
+  return files
+
+rule merlin:
+  input:
+    ped = config["pedfile"],
+    dat = config["datfile"],
+    map = config["mapfile"]
+  output:
+    results = outputFiles(config).values(),
+    log     = '%s/merlin.stdout' % __OUTDIR__
+  params:
+    prefix       = __OUTDIR__ + '/linkage',
+    ibd          = '--ibd' if config['ibd'] == 1 else '',
+    pairs        = '--pairs' if config['pairs'] == 1 else '',
+    npl          = '--npl' if config['npl'] == 1 else '',
+    perfam       = '--perFamily' if config['perfam'] == 1 else '',
+    heritability = '--heritability' if config['heritability'] == 1 else '',
+    merlinOpts   = config['merlinOptions']
+  conda: "conda.yaml"
+  shell: """
+    merlin -p "{input.ped}" \
+           -d "{input.dat}" \
+           -m "{input.map}" \
+           --prefix {params.prefix} \
+           {params.ibd} \
+           {params.pairs} \
+           {params.npl} \
+           {params.perfam} \
+           {params.heritability} \
+           {params.merlinOpts} \
+           --tabulate --markerNames | tee "{output.log}"
+  """
+
+rule output:
+  input:
+    results = rules.merlin.output.results

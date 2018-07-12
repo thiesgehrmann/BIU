@@ -35,7 +35,7 @@ class KEGG(Dataset):
 
 
   def __genFileIndex(self, version, where=None):
-     finalPath = '%s/kegg_%s' % ( (settings.getWhere() if where is None else where), version)
+     finalPath = '%s/kegg/%s' % ( (settings.getDataDir() if where is None else where), version)
      orgKey = self.versions[version]
      files = {}
      files['org_map'] = utils.Acquire(where=where).curl("http://rest.kegg.jp/link/%s/pathway" % orgKey).finalize('%s/org_map.tsv' % finalPath)

@@ -32,7 +32,7 @@ class Flybase(Genome):
 
   def __genFileIndex(self, version, release, organism, where):
     files = {}
-    finalPath = '%s/%s' % ( (settings.getWhere() if where is None else where), version)
+    finalPath = '%s/genomes/flybase/%s' % ( (settings.getDataDir() if where is None else where), version)
 
     conn = ftplib.FTP("ftp.flybase.net")
     conn.login()

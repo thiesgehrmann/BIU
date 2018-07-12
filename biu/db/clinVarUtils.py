@@ -72,7 +72,7 @@ class ClinVar(Dataset):
   #edef
 
   def __genFileIndex(self, version, where=None):
-     finalPath = '%s/clinvar_%s' % ( (settings.getWhere() if where is None else where), version)
+     finalPath = '%s/clinvar/%s' % ( (settings.getDataDir() if where is None else where), version)
      vData = self.versions[version]
      files = {}
      files['vcf']     = utils.Acquire(where=where).curl(vData["vcfURL"]).finalize('%s/clinVar.vcf.bgz' % finalPath)
