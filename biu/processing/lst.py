@@ -48,3 +48,14 @@ def hash(arr, strategy="tmb", f=hashlib.md5):
 
   return h.hexdigest()
 #edef
+
+def uniq(lst, key=lambda x: x):
+  U = {}
+  for item in lst:
+    k = key(item)
+    if k not in U:
+      U[k] = item
+    #fi
+  #efor
+  return list(U.values())
+#edef

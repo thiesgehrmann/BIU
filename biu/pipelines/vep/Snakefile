@@ -6,7 +6,8 @@ localrules: vep_prepare, output
 
 rule vep_prepare:
   output:
-    outdir = '%s/vep_genomes/%s_%s' % (config["common_dir"], config["install_species"], config["install_assembly"])
+    outdir = directory('%s/vep_genomes/%s_%s' % (config["common_dir"], config["install_species"], config["install_assembly"])),
+    completed = '%s/vep_genomes/%s_%s.installed' % (config["common_dir"], config["install_species"], config["install_assembly"])
   conda: "conda.yaml"
   params:
     species=config["install_species"],
@@ -14,13 +15,15 @@ rule vep_prepare:
   shell: """
     echo "Producing the VEP cache. This WILL take a while..."
     mkdir -p "{output.outdir}"
-    PERL5LIB="" vep_install -a cf -s "{params.species}" -y "{params.assembly}" -c "{output.outdir}"
+    PERL5LIB="" vep_install -n -a cf -s "{params.species}" -y "{params.assembly}" -c "{output.outdir}"
+    touch "{output.completed}"
   """
 
 rule vep:
   input:
     vcf = config["vcf_file"],
-    cachedir = rules.vep_prepare.output.outdir
+    cachedir = rules.vep_prepare.output.outdir,
+    cachedir_completed = rules.vep_prepare.output.completed
   output:
     res = "%s/result.txt" % config["outdir"]
   params:

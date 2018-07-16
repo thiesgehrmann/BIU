@@ -15,20 +15,36 @@ class Merlin(Pipeline):
 
   __defaultConfig = {}
 
-  def __init__(self, pedObject, mapfile, ibd=True, npl=True, pairs=False, perFamily=True, heritability=True, merlinOptions="",
+  def __init__(self, pedObject=None, mapFile=None, pedFile=None, datFile=None, ibd=True, npl=True, pairs=False, perFamily=True, heritability=True, merlinOptions="",
                config={}, dbsnp=db.DBSNP(), lodThresh=3.0, lodDrop=1.0, **kwargs):
 
     Pipeline.__init__(self, snakemakeFile, {**self.__defaultConfig, **config}, **kwargs)
-    pedFileName, exists = self._generateInputFileName([ str(id(pedObject)), datetime.datetime.now().strftime("%I:%M%p on %B %d, %Y"), 'ped' ])
-    datFileName, exists = self._generateInputFileName([ str(id(pedObject)), datetime.datetime.now().strftime("%I:%M%p on %B %d, %Y"), 'dat' ])
-    pedObject.write(pedFileName, datFileName)
 
+    pedFileName = None
+    datFileName = None
+    if (pedFile is not None) and (datFile is not None):
+      pedFileName = os.path.abspath(pedFile)
+      datFileName = os.path.abspath(datFile)
+    elif pedObject is not None:
+      pedFileName, exists = self._generateInputFileName([ str(id(pedObject)), datetime.datetime.now().strftime("%I:%M%p on %B %d, %Y"), 'ped' ])
+      datFileName, exists = self._generateInputFileName([ str(id(pedObject)), datetime.datetime.now().strftime("%I:%M%p on %B %d, %Y"), 'dat' ])
+      pedObject.write(pedFileName, datFileName)
+    else:
+      utils.msg.error("You must specify a PED object, or PED and DAT files")
+      return self
+    #fi
+
+    if mapFile is None:
+      utils.msg.error("You must specify a MAP file.")
+      return self
+    #fi
+      
     if (pairs and npl) or not(pairs or npl):
       utils.msg.error("You must choose either --npl or --pairs")
       return self
     #fi
 
-    self.setConfig(pedfile=pedFileName, datfile=datFileName, mapfile=mapfile,
+    self.setConfig(pedfile=pedFileName, datfile=datFileName, mapfile=mapFile,
                    ibd=(1 if ibd else 0),
                    npl=(1 if npl else 0),
                    pairs=(1 if pairs else 0),
@@ -95,11 +111,12 @@ class Merlin(Pipeline):
 
     if 'perfamlod' not in self.__output:
       res = pd.read_csv(self._outputFileNames()['perfamlod'], delim_whitespace=True,
-                        skiprows=1, header=None, names=fileHeader)
+                        skiprows=1, header=None,
+                        names=("family", "trait", "analysis", "location", "zscore", "plod", "delta", "lod"))
       self.__output['perfamlod'] = res
     #fi
 
-    return self.__outut['perfamlod']
+    return self.__output['perfamlod']
   #edef
 
   #############################################################################
@@ -229,7 +246,7 @@ class IBDStatus(object):
     sibs = [ s for s in self.families[famID]['__familymembers'] if s != person ]
     return { sib : self.families[famID][self.__lookupkey(person, sib)].get(marker, 0) for sib in sibs}
   #edef
-  
+ 
   def neighboringMarkers(self, chromosome, pos):
     chromosome = str(chromosome)
     beforeMarker = None
@@ -246,7 +263,7 @@ class IBDStatus(object):
 
   def personIBDAtPos(self, famID, person, chromosome, pos):
     beforeMarker, afterMarker = self.neighboringMarkers(chromosome, pos)
-    return self.personIBDAtMarker(self, famID, person, beforeMarker, afterMarker)
+    return self.personIBDAtMarker(famID, person, beforeMarker, afterMarker)
   #edef
 
   def personIBDAtMarker(self, famID, person, marker1, marker2):
