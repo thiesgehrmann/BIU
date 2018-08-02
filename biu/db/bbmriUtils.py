@@ -7,26 +7,6 @@ import itertools
 
 ###############################################################################
 
-def urlFileIndex(version):
-  files = {}
-
-  chrs = versions[version]["chrs"]
-  for chrID in chrs:
-    files["vcf_%s" % chrID] = (None, "tbx/merged.bbmri.chr%s.vcf.bgz" % chrID, {})
-    files["vcf_%s_tbi" % chrID] = (None, "tbx/merged.bbmri.chr%s.vcf.bgz.tbi" % chrID, {})
-  #efor
-
-  return files
-#edef
-
-def listVersions():
-  print("Available versions:")
-  for v in versions:
-    print(" * %s" % v)
-#edef
-
-###############################################################################
-
 class BBMRI(Dataset):
 
   versions = { "current":

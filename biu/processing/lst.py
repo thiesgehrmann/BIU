@@ -59,3 +59,13 @@ def uniq(lst, key=lambda x: x):
   #efor
   return list(U.values())
 #edef
+
+def which(L, fn=lambda x: x, complement=False):
+    """ Find the index of all elements in L that satisfy a certain criteria fn (identity by default). Complement returns all that satisfy opposite criteria. """
+    if complement:
+        wfn = lambda v: not(fn(v))
+    else:
+        wfn = fn
+    #fi
+    return [ idx for (idx, value) in enumerate(lst) if wfn(value) ]
+#edef

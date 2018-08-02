@@ -45,6 +45,10 @@ class Dataset(object):
     return oname in self.__registeredObjects
   #edef
 
+  def _objectLoaded(self, oname):
+    return oname in self.__loadedObjects
+  #edef
+
   def __loadObject(self, oname):
     if oname not in self.__registeredObjects:
       utils.msg.error("Object '%s' not in dataset." % oname)

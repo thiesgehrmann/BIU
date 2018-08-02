@@ -10,14 +10,13 @@ from .genomeUtils import listGenomes as listGenomes
 from .gtexUtils import GTeX as GTeX
 
 from .uniprotUtils import UniProt as UniProt
-from .uniprotUtils import listVersions as listUniProtVersions
 
 from .cosmicUtils import Cosmic as Cosmic
 
 from .hagrUtils import HAGR as HAGR
 
-from .reactomeUtils import Reactome as Reactome
-from .reactomeUtils import listVersions as listReactomeVersions
+#from .reactomeUtils import Reactome as Reactome
+#from .reactomeUtils import listVersions as listReactomeVersions
 
 #from .neo4j import Neo4jDB as Neo4jDB
 #from .neo4j import listVersions as listNeo4jVersions
@@ -25,7 +24,6 @@ from .reactomeUtils import listVersions as listReactomeVersions
 from .llsUtils import LLS as LLS
 
 from .bbmriUtils import BBMRI as BBMRI
-from .bbmriUtils import listVersions as listBBMRIVersions
 
 from .goUtils import GO as GO
 
@@ -40,7 +38,7 @@ from .rvisUtils import RVIS as RVIS
 from .gdiUtils import GDI as GDI
 from .dneUtils import DNE as DNE
 
-__datasets = [ GO, LLS, Cosmic, HAGR, KEGG, DBSNP, BBMRI, CADD, ClinVar ]
+__datasets = [ GO, LLS, Cosmic, HAGR, KEGG, DBSNP, BBMRI, CADD, ClinVar, UniProt, Gnomad ]
 
 def versions(db = None):
   if db is None:

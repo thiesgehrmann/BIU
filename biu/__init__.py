@@ -8,6 +8,7 @@ from . import utils as utils
 from . import stats as stats
 
 from . import processing as processing
+from . import analysis as analysis
 
 from .config import config
 from .config import settings

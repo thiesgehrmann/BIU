@@ -1,6 +1,7 @@
 import types
 import importlib
 import importlib.machinery
+import inspect
 
 from . import msgUtils as msg
 from ..config import settings
@@ -19,7 +20,6 @@ def loadModuleFromFile(fileName, moduleName=None):
 
 ###############################################################################
 
-import importlib
 def loadExternalModule(module, attr=None):
   class AbsentModule(object):
     def __init__(self, module, exception):
@@ -48,4 +48,13 @@ def loadExternalModule(module, attr=None):
     lmod = AbsentModule(module, e)
   #etry
   return lmod
+#edef
+
+def source(obj):
+  if isinstance(obj, str):
+    msg.error("Not implemented")
+    return None
+  else:
+    return inspect.getsource(obj)
+  #fi
 #edef

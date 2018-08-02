@@ -70,8 +70,8 @@ class LLS(Dataset):
 
   def getVar(self, chromosome, *pargs, **kwargs):
     chromosome = str(chromosome)
-    oname = "vcf_%s" % chrID
-    if self._objectExists(oname):
+    oname = "vcf_%s" % chromosome
+    if not self._objectExists(oname):
       utils.error("Could not find chromosome '%s'" % chromosome)
       return None
     #fi
