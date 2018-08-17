@@ -41,7 +41,8 @@ class BioMart(Dataset):
       database = self.__versions[version]["database"]
       attributes = self.__versions[version]["attributes"]
     elif (version is None) and (database is not None) and (attributes is not None):
-      version = "%s.%s%s" % (database, 'grch37.' if self.__grch37 else '', '_'.join(attributes))
+      pass
+      #version = "%s.%s%s" % (database, 'grch37.' if self.__grch37 else '', '_'.join(attributes))
     elif version is not None:
       database = self.__versions[version]["database"]
       attributes = self.__versions[version]["attributes"]
@@ -49,6 +50,8 @@ class BioMart(Dataset):
       utils.msg.error('You must either specify a version, or a dataset and attributes.')
       return None
     #fi
+    # rename the version if we have grch37
+    version = "%s.%s%s" % (database, 'grch37.' if self.__grch37 else '', ','.join(attributes))
 
     fileIndex = self.__genFileIndex(version, url, database, attributes, where)
     Dataset.__init__(self, fileIndex, **kwargs)

@@ -23,7 +23,7 @@ class TSVIndex(object):
     
     if names is not None:
       namedTupleObject = namedtuple('TSVIndexRow', names)
-      self.__emptyResult = namedTupleObject(*([None] * len(names)))
+      self.__emptyResult = [namedTupleObject(*([None] * len(names)))]
     #fi
 
     itemKey = lambda item: ','.join([ item[i] for i in self.__key])
@@ -46,6 +46,9 @@ class TSVIndex(object):
 
   @property
   def table(self):
+    """
+    table: Get a pandas dataframe of the rows
+    """
     if self.__tbl is None:
       self.__tbl = pd.DataFrame(self.__lst, columns=self.__names)
     #fi
@@ -53,6 +56,11 @@ class TSVIndex(object):
   #edef
 
   def lookup(self, key, singleton=False):
+    """
+    lookup: Lookup the value of a key
+    Inputs: key :      [str] index value to retrieve
+            singleton: [bool] Only return one value (the first we find)
+    """
     if key not in self.__idx:
       utils.msg.error("Item '%s' not in map." % key)
       return self.__emptyResult
@@ -65,6 +73,10 @@ class TSVIndex(object):
     return [ self.__lst[i] for i in self.__idx[key] ]
   #edef
 
+  def __contains__(self, key):
+    return key in self.__idx
+  #edef
+
   def __getitem__(self, key):
     return self.lookup(key)
   #edef
@@ -74,10 +86,16 @@ class TSVIndex(object):
   #edef
 
   def keys(self):
+    """
+    keys: Return a list of keys of the index
+    """
     return self.__idx.keys()
   #edef
 
   def values(self):
+    """
+    values: Return a list of values of the index
+    """
     return self.__lst()
   #edef
 

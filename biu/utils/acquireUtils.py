@@ -42,6 +42,9 @@ class Acquire(object):
 
   @property
   def exists(self):
+    """
+    exists: True if the final file exists. False otherwise
+    """
     if self.__finalName is None:
       return False
     #fi
@@ -53,17 +56,26 @@ class Acquire(object):
 
   @property
   def path(self):
+    """
+    path: The path to the final file. Only exists if finalize() exists in the pipeline
+    """
     return self.__finalName
   #edef
 
   @property
   def steps(self):
+    """
+    steps: The steps in the pipeline
+    """
     return self.__steps
   #edef
 
   #############################################################################
 
   def acquire(self):
+    """
+    acquire: Execute the acquire pipeline
+    """
     if self.exists and not self.__redo:
       return self.__finalName
     #fi
@@ -73,7 +85,6 @@ class Acquire(object):
     for step in self.__steps:
       oldFileName = self.__fileName
       status = getattr(self, '_' + step.step)(*step.pargs, **step.kwargs)
-      print(status)
       if status != 0:
         msg.error("Could not complete step '%s'" % step.step)
         self.__rmExistsTag(self.__fileName)
@@ -89,11 +100,18 @@ class Acquire(object):
   #############################################################################
 
   def redo(self, redo=True):
+    """
+    redo: Set the redo flag
+    Inputs: redo : Boolean, redo the whole pipeline or not. (default True) """
     self.__redo = redo
     return self
   #edef
 
   def where(self, where):
+    """
+    where: Set the download directory
+    Inputs: where : Path to download directory
+    """
     self.__dlDir = where
     return self
   #edef
@@ -109,54 +127,77 @@ class Acquire(object):
   #edef
 
   def curl(self, *pargs, **kwargs):
+    """ See help for _curl """
     return self.__addStep(acquireStep("curl", pargs, kwargs))
   def ftp(self, *pargs, **kwargs):
+    """ See help for _ftp """
     return self.__addStep(acquireStep("ftp", pargs, kwargs))
   def lftp(self, *pargs, **kwargs):
+    """ See help for _lftp """
     return self.__addStep(acquireStep("lftp", pargs, kwargs))
   def local(self, fileName, *pargs, **kwargs):
+    """ See help for _local """
     return self.__addStep(acquireStep("local", tuple([fileName]) + pargs, kwargs), finalName=fileName)
   def wget(self, *pargs, **kwargs):
+    """ See help for _wget """
     return self.__addStep(acquireStep("wget", pargs, kwargs))
   def touch(self, fileName=None, *pargs, **kwargs):
+    """ See help for _touch """
     if fileName is None:
       from datetime import datetime
       fileName = self.__dlDir + '/touchedFile.' + str(self.__downloadHash(str(datetime.now())))
     #fi
     return self.__addStep(acquireStep("touch", tuple([fileName]) + pargs, kwargs), finalName=fileName)
   def merge(self, *pargs, **kwargs):
+    """ See help for _merge """
     return self.__addStep(acquireStep("merge", pargs, kwargs))
   def cmd(self, *pargs, **kwargs):
+    """ See help for _cmd """
     return self.__addStep(acquireStep("cmd", pargs, kwargs))
   def func(self, *pargs, **kwargs):
+    """ See help for _func """
     return self.__addStep(acquireStep("func", pargs, kwargs))
   def call(self, *pargs, **kwargs):
+    """ See help for _call """
     return self.__addStep(acquireStep("call", pargs, kwargs))
   def cat(self, *pargs, **kwargs):
+    """ See help for _cat """
     return self.__addStep(acquireStep("cat", pargs, kwargs))
   def ls(self, *pargs, **kwargs):
+    """ See help for _ls """
     return self.__addStep(acquireStep("ls", pargs, kwargs))
   def unzip(self, *pargs, **kwargs):
+    """ See help for _unzip """
     return self.__addStep(acquireStep("unzip", pargs, kwargs))
   def bunzip(self, *pargs, **kwargs):
+    """ See help for _bunzip """
     return self.__addStep(acquireStep("bunzip", pargs, kwargs))
   def gunzip(self, *pargs, **kwargs):
+    """ See help for _gunzip """
     return self.__addStep(acquireStep("gunzip", pargs, kwargs))
   def untar(self, *pargs, **kwargs):
+    """ See help for _untar """
     return self.__addStep(acquireStep("untar", pargs, kwargs))
   def select(self, *pargs, **kwargs):
+    """ See help for _select """
     return self.__addStep(acquireStep("select", pargs, kwargs))
   def sort(self, *pargs, **kwargs):
+    """ See help for _sort """
     return self.__addStep(acquireStep("sort", pargs, kwargs))
   def tabix(self, *pargs, **kwargs):
+    """ See help for _tabix """
     return self.__addStep(acquireStep("tabix", pargs, kwargs))
   def gzip(self, *pargs, **kwargs):
+    """ See help for _gzip """
     return self.__addStep(acquireStep("gzip", pargs, kwargs))
   def bgzip(self, *pargs, **kwargs):
+    """ See help for _bgzip """
     return self.__addStep(acquireStep("bgzip", pargs, kwargs))
   def bzip(self, *pargs, **kwargs):
+    """ See help for _bzip """
     return self.__addStep(acquireStep("bzip", pargs, kwargs))
   def finalize(self, finalName, *pargs, **kwargs):
+    """ See help for _finalize """
     return self.__addStep(acquireStep("finalize", tuple([finalName]) + pargs, kwargs), finalName=finalName)
 
   #############################################################################  
@@ -188,6 +229,15 @@ class Acquire(object):
   #edef
 
   def _curl(self, url, cookieURL=None, username=None, password=None, ext=None):
+    """
+    curl: Download a file using curl
+    Inputs: url: The URL to retrieve
+            cookieURL : The URL of a login page
+            username: If logging in, the username
+            password: If logging in, the password
+            ext: Optionally specify a file extension
+    Output: Acquire object
+    """
     ext = self.__getExtension(url) if ext is None else ('.' + ext)
     curlHash = self.__downloadHash([ url, cookieURL, username, password ])
     self.__fileName = self.__dlDir + '/' + curlHash +  ext
@@ -211,6 +261,15 @@ class Acquire(object):
   #edef
 
   def _ftp(self, server, location, username=None, password=None, ext=None):
+    """
+    ftp: Download a file with FTP
+    Inputs: server: The server to access
+            location: The path to the file on the server
+            username: The username to access the server (if None, default is used)
+            password: The password to access the erver
+            ext: Optionally specify a file extension
+    Output: Acquire object
+    """
     # Currently not working...
     ext = self.__getExtension(location) if ext is None else ('.' + ext)
     curlHash = self.__downloadHash([ server, location, username, password ])
@@ -237,6 +296,15 @@ class Acquire(object):
   #edef
 
   def _lftp(self, server, location, username, password, ext=None):
+    """
+    lft: Download a file from an ftp server (but for example with sftp access)
+    Inputs: server: The server to access
+            location: The path to the file on the server
+            username: The username to access the server (if None, default is used)
+            password: The password to access the erver
+            ext: Optionally specify a file extension
+    Output: Acquire object
+    """
     ext = self.__getExtension(location) if ext is None else ('.' + ext)
     curlHash = self.__downloadHash([ server, location, username, password ])
     self.__fileName = self.__dlDir + '/' + curlHash
@@ -258,6 +326,12 @@ class Acquire(object):
 
 
   def _wget(self, url, ext=None):
+    """
+    wget: Download a file with wget
+    Inputs: url: URL to retrieve
+            ext: Optionally specify a file extension
+    Output: Acquire object
+    """
     ext = self.__getExtension(url) if ext is None else ('.' + ext)
     curlHash = self.__downloadHash([ url ])
     self.__fileName = self.__dlDir + '/' + curlHash +  ext
@@ -272,6 +346,11 @@ class Acquire(object):
   #edef
 
   def _local(self, fileName):
+    """
+    local: Use a locally sourced file
+    Inputs: fileName: URI of the local file
+    Output: Acquire object
+    """
     self.__fileName = fileName
     if os.path.isfile(self.__fileName):
       return 0
@@ -281,11 +360,22 @@ class Acquire(object):
   #edef
 
   def _touch(self, fileName):
+    """
+    touch: Create a local, empty file at a specific location
+    Inputs: fileName: URI of the local file
+    Output: Acquire object
+    """
     self.__fileName = fileName
     return fs.touchFile(fileName)
   #edef
 
   def _merge(self, acquireObjects, method='cat'):
+    """
+    merge: Merge multiple acquire objects.
+    Inputs: acquireObjects: A list of Acquire objects
+            method: How to merge them (implemented: cat, zcat)
+    Output: Acquire object
+    """
     fileNames = [ ao.acquire() for ao in acquireObjects ]
     if None in fileNames:
       return 1
@@ -299,8 +389,7 @@ class Acquire(object):
     elif method == 'zcat':
       cmd = "zcat '%s' > '%s'" % ("' '".join(fileNames), self.__fileName)
     else:
-      msg.warning("Method '%s' not defined. Using cat." % method)
-      cmd = "cat '%s' > '%s'" % ("' '".join(fileNames), self.__fileName)
+      raise NotImplementedError("Method '%s' is not implemented for merge" % method)
     #fi
     p = exe.runCommand(cmd, verbose=True, shell=True)
     return p
@@ -388,6 +477,8 @@ class Acquire(object):
     if fileName is not None:
       self.__fileName = outDirName + '/' + fileName
     #fi
+
+    fs.mkdirp(outDirName)
 
     if self.__checkExistsTag(self.__fileName) and (not self.__redo):
       return 0
@@ -481,7 +572,7 @@ class Acquire(object):
     if ln:
       p = exe.runCommand("ln -s '%s' '%s'" % (oldFile, self.__fileName), verbose=True)
     else:
-      p = exe.runCommand("cp '%s' '%s'" % (oldFile, self.__fileName), verbose=True)
+      p = exe.runCommand("cp -R -T '%s' '%s'" % (oldFile, self.__fileName), verbose=True)
     #fi
     return p
   #edef

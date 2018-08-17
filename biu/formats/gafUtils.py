@@ -63,12 +63,24 @@ class GAF(object):
   #edef
 
   def enrich(self, yourSet, pathway=None, correctionType=None, **kwargs):
+    """
+    Enrich: Check enrichment of GO pathways in a given set
+
+    Inputs:
+      - yourSet: List of Uniprot protein IDs to test
+      - pathway: List of GO terms (or single term) to test (Defaults to all terms that your objectIDs are present in)
+      - correctionType: Type of multiple testing correction procedure to use
+      - **kwargs: Additional arguments for multple testing procedure
+
+    Outputs:
+     - df : Pandas Data Frame of test results
+    """
     if pathway is None:
-        pathway = self.get()
-    #fi
-    if isinstance(pathway, str):
+        pathway = self.annotations
+    elif isinstance(pathway, str):
         pathway = [ pathway ]
     #fi
+
     R = []
     B = self.objects
     for p in self.annotations:

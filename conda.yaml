@@ -13,6 +13,7 @@ dependencies:
  - intervaltree
 
  - snakemake
+ - python-drmaa
  - matplotlib
  - lftp
  - xlrd

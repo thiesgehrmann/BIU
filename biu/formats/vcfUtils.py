@@ -29,6 +29,7 @@ class VCF(object):
       utils.dbm("VCF Input source is list of Records.")
       self.__reader = list(data)
       self.__template = template
+      self.__fileName = None
     elif self.__tabix:
       utils.dbm("VCF Input source is tabixed file.")
       self.__fileName = data
@@ -43,6 +44,12 @@ class VCF(object):
   #edef
 
   def write(self, outFile, template=None):
+    """
+    write: Write the VCF structure to a VCF file
+    Inputs: outFile: The location to which it should it be written
+            template: VCF template to write with (needed for meta data). Can be specified here if the VCF file doesn't already have one
+    """
+
     # NOTE: This may not work if you have used gtFilters or sampleFilters
     template = self.__template if template is None else template
     if template is None:
@@ -60,7 +67,17 @@ class VCF(object):
   #edef
 
   @property
+  def filename(self):
+    """
+    filename: The filename at which the VCF object exists (if at all)
+    """
+    return self.__fileName
+
+  @property
   def samples(self):
+    """
+    samples: A list of samples for which genotypes are defined
+    """
     if isinstance(self.__reader, list):
       if len(self.__getReaderIndex()) == 0:
         return []
@@ -97,11 +114,17 @@ class VCF(object):
 
   @property
   def records(self):
+    """
+    records: Return a list of records
+    """
     return [ r for r in self.__reader ]
   #edef
 
   @property
   def template(self):
+    """
+    template: The VCF template
+    """
     return self.__template
   #edef
 
@@ -154,6 +177,14 @@ class VCF(object):
   #edef
 
   def whoHas(self, chromosome, pos, alt, ref=0):
+    """
+    whoHas: Return a list of samples in which the variant is present
+    Inputs: chromosome: The Chromosome ID
+            pos: The nucleotide position
+            alt: The alternative allele (A/C/G/T)
+            ref: The reverence allele (default 0)
+    Output: List of sample IDs
+    """
     var = self.getVar(chromosome, pos, alt)
     if var is None:
       return []
@@ -173,8 +204,13 @@ class VCF(object):
   #edef
 
   def getVar(self, chromosome, pos, alt, **kwargs):
-    """ Return (VCF._Record, altPos) if the alternative variant exists, otherwise None
-        AltPos is the index of the alternative allele (in the case of a multi-allelic site)
+    """
+    getVar: Get variant at a specific location
+    Inputs: chromosome: The Chromosome ID
+            pos: The nucleotide position
+            alt: The alternative allele (A/C/G/T)
+    Outputs: Return (VCF._Record, altPos) if the alternative variant exists, otherwise None
+             AltPos is the index of the alternative allele (in the case of a multi-allelic site)
     """
     V = self.query(chromosome, int(pos)-1, pos, extract='raw', **kwargs)
     for v in V:
@@ -189,6 +225,17 @@ class VCF(object):
   #edef
 
   def query(self, seqid, start, end, **kwargs):
+    """
+    query: Query the VCF file in a given region
+           If the file is tabix-indexed, then the tabix index is used. Otherwise, an index is constructed using intervaltrees.
+    Inputs: seqid: The chromosome ID
+            start: The start of the region of the query
+            end:   The end of the region of the query
+            **kwargs: See queryRegions for these options (filters, gtFilters, sampleFilters, types, subTypes, nAlleles, extract)
+    Output: depends on value of extract. See queryRegions
+
+    This function is a wrapper for queryRegions, where query regions is called with parameters ( [ (seqid, start, end) ], **kwargs)
+    """
     return self.queryRegions( [ (seqid, start, end) ], **kwargs)
   #edef
 
@@ -200,7 +247,21 @@ class VCF(object):
                    subTypes=None,
                    nAlleles=None,
                    extract=None):
-    """ This function is hacked together from internals of the pyVCF _Record and _Call classes. I hope that their definitions don't change anytime soon.
+    """
+    queryRegions: Query multiple regions at once
+    Inputs: regions:       A list of regions of the form [ (seqid, start, end) ... ]
+            filters:       [list of str ]A list of filters to apply on the FILTER column of the VCF record (Removes all records that match the filter)
+            gtFilters:     [list of str]A list of filters to apply to genotype calls
+            sampleFilters: [list of str ]Only keep these samples
+            types:         [list of str] Only keep these types of variants (see pyvcf documentation for types)
+            subtypes:      [list of str] Only keep these subtypes of variants (see pyvcf docs)
+            nAlleles:      [int] Maximum number of alleles
+            extract:       None -> Return VCF structure
+                           "raw" -> Return a list of _Record objects
+                           "summary" -> Return a summary
+    Outputs: See extract option
+
+    This function is hacked together from internals of the pyVCF _Record and _Call classes. I hope that their definitions don't change anytime soon.
     """
 
     res = []
@@ -230,6 +291,9 @@ class VCF(object):
                    types=None,
                    subTypes=None,
                    nAlleles=None):
+    """
+    filter: See options to queryRegions
+    """
 
     if not(isinstance(self.__reader, list)):
       utils.error("Cannot filter tabix indexed VCF files. First perform a query on it, and then you can filter it, or load without the tabix file")
@@ -276,6 +340,11 @@ class VCF(object):
 
   @staticmethod
   def makeIdentifier(record, altPos=None):
+    """
+    makeIdentifier: Make a unique identifier for variant.
+    Inputs: record : [VCF._Record] object (e.g. from getVar, or query)
+            altPos: [int] In the case of a multiallelic locus, select the a specific other alternative (altPos > 1)
+    """
     if altPos is not None:
       alts = [ record.ALT[altPos].sequence if hasattr(record.ALT[altPos-1], "sequence") else '-' ]
     else:
@@ -475,7 +544,8 @@ class VCF(object):
           If we want to extract information from these fields for a specific variant allele, we need to be able to reconstruct this order for an arbitrary number of alleles.
           The order is defined in the VCF specification, and implemented here.
           Search for 'GL : genotype likelihoods' in VCF spec.
-          F(j/k) = (k*(k+1)/2)+j. I """
+          F(j/k) = (k*(k+1)/2)+j. I
+      """
       
       F = lambda k,j : int(k*(k+1)/2)+j
       return [ F(ref, ref), F(ref, altAlleleID), F(altAlleleID,altAlleleID) ]

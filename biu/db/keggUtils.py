@@ -22,6 +22,16 @@ class KEGG(Dataset):
   }
 
   def __init__(self, version=list(versions.keys())[0], **kwargs):
+    """
+      Generate a KEGG dataset
+
+      Inputs:
+       - version : Which organism to use
+       - **kwargs : Dataset structure arguments
+      Output:
+       KEGG data structure
+    """
+
     fileIndex = self.__genFileIndex(version)
     Dataset.__init__(self, fileIndex)
     self.version = version
@@ -46,31 +56,60 @@ class KEGG(Dataset):
   ###############################################################################
 
   def getPathways(self):
+    """ Get a list of all pathway IDs """
     return list(self._orgMap.fromKeys)
   #edef
 
   def getGenes(self):
+    """ Get all Kegg gene IDs """
     return list(self._orgMap.toKeys)
   #edef
 
   def getGeneIDs(self):
-    """ Return the NCBI GeneIDs from the kegg map, rather than the kegg IDs (with hsa: infront)"""
+    """ Return the entrez GeneIDs from the kegg map, rather than the kegg IDs (with hsa: infront)"""
     return [ g.split(':')[1] for g in self.getGenes() ]
   #edef
 
   def getPathwayGenes(self, pathwayID):
+    """
+      getPathwayGenes: Get all kegg gene IDs for a given pathway
+
+      Inputs:
+       - pathwayID : Kegg Pathway ID
+      Outputs:
+        List of kegg gene IDs
+    """
     return self._orgMap.lookup(self._formatFeatureID(pathwayID, True))
   #edef
 
   def getPathwayGeneIDs(self, pathwayID):
+    """
+      getPathwayGeneIDs: Get all entrez gene IDs for a given pathway
+
+      Inputs:
+       - pathwayID : Kegg Pathway ID
+      Outputs:
+        List of entrez gene IDs
+    """
     return [ g.split(':')[1] for g in self.getPathwayGenes(pathwayID) ]
   #edef
 
   def getGenePathways(self, geneID):
+    """
+      getGenePathways: Get all pathway IDs for a specific gene
+
+      Inputs:
+       - geneID : entrez GeneID, or KEGG gene ID
+      Outputs:
+        List of pathway IDs
+    """
     return self._orgMap.inverse(self._formatFeatureID(geneID, False))
   #edef
 
   def _formatFeatureID(self, ID, pathway):
+    if ID is None:
+      raise ValueError("None is not a valid ID for KEGG IDs.")
+    #fi
     if pathway:
       if isinstance(ID, int):
         return "path:%s%05d" % (self.__orgID, ID)
@@ -98,14 +137,38 @@ class KEGG(Dataset):
   #edef
 
   def getPathwayInfo(self, pathwayID):
+    """
+      getPathwayInfo: get Information of a pathway
+
+      Inputs:
+        pathwayID: KEGG pathway identifier
+      Outputs:
+        Text pathway information
+    """
     return self._getFeature(self._formatFeatureID(pathwayID, True))
   #edef
 
   def getPathwayName(self, pathwayID):
+    """
+      getPathwayName: get name of a pathway
+
+      Inputs:
+        pathwayID: KEGG pathway identifier
+      Outputs:
+        Text pathway name
+    """
     return self.getPathwayInfo(pathwayID).split('\n')[1][4:].strip()
   #edef
 
   def getGeneInfo(self, geneID):
+    """
+      getGeneInfo: get Information of a gene
+
+      Inputs:
+        geneID : entrez geneID, or kegg gene identifier
+      Outputs:
+        Text gene information
+    """
     return self._getFeature(self._formatFeatureID(geneID, False))
   #edef
 
@@ -122,6 +185,20 @@ class KEGG(Dataset):
   #edef
 
   def enrich(self, yourSet, pathway=None, correctionType=None, **kwargs):
+    """
+    Enrich: Check enrichment of KEGG pathways in a given set
+
+    Inputs:
+      - yourSet: List of Entrez Gene IDs to test
+      - pathway: List of pathways (or single pathway) to test (Defaults to all pathways that your geneIDs are present in)
+      - correctionType: Type of multiple testing correction procedure to use
+      - **kwargs: Additional arguments for multple testing procedure
+
+    Outputs:
+     - df : Pandas Data Frame of test results
+    """
+    yourSet = set([ str(ID) for ID in yourSet if ID is not None]) & set(self.getGeneIDs())
+
     if pathway is None:
         pathway = set([])
         for gene in yourSet:

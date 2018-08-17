@@ -1,10 +1,25 @@
 from .. import utils
 
 pd = utils.py.loadExternalModule("pandas")
+np = utils.py.loadExternalModule("numpy")
 
 ###############################################################################
 
 def correct(pvals, correctionType, **kwargs):
+  """
+  correct: Multiple testing correction.
+
+  Inputs:
+   - pvals: list of p values
+   - correctionType: Type of correction
+     - fwer|bonferroni => bonferroni()
+     - fdr|fdr_bh => fdrBH()
+     - fdr_bhy => fdrBHY()
+   - **kwargs: Additional arguments (See arguments to called functions
+ 
+  Outputs:
+   - corrected p-values
+  """
   correctionType = correctionType.lower()
 
   if correctionType in [ 'fwer', 'bonferroni' ]:
@@ -35,6 +50,13 @@ def bonferroni(pvals):
 #edef
 
 def fdrBH(pvals):
+  """
+    Benjamini-Hochberg correction of p-values
+    Inputs:
+     - pvals: An array of p-values
+    Outputs:
+     - Corrected q-values
+  """
   nt = len(pvals)
   q  = np.zeros(nt)
   sp = sorted(enumerate(pvals), key=lambda x: x[1])
@@ -50,6 +72,14 @@ def fdrBH(pvals):
 #edef
 
 def fdrBHY(pvals, cm=None):
+  """
+    Benjamini-Hochberg-Yekutieli correction of p-values
+    Inputs:
+     - pvals: An array of p-values
+     - cm : Independence factor np.sum(1.0/(np.array( range(nt)) + 1 )), nt=len(pvals)
+    Outputs:
+     - Corrected q-values
+  """
   nt = len(pvals)
   q  = np.zeros(nt)
   sp = sorted(enumerate(pvals), key=lambda x: x[1])

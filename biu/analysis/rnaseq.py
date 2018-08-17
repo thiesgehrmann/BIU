@@ -6,6 +6,7 @@ pd     = utils.py.loadExternalModule("pandas")
 
 def normalize(method, E, *pargs, **kwargs):
     methods = { 'voom' : __normalize_voom,
+                'cpm' : __normalize_cpm,
                 'tmm' : __normalize_tmm,
                 'fpkm' : __normalize_fpkm,
                 'nonzero' : lambda x: x}
@@ -24,7 +25,11 @@ def normalize(method, E, *pargs, **kwargs):
     #fi
 #edef
 
-def __normalize_voom(E):
+def __normalize_voom(E, *pargs, **kwargs):
+    raise NotImplementedError("VOOM normalization isn't implemented yet.")
+#edef
+
+def __normalize_cpm(E):
     """log2 CPM normalization
        log2CPM = log_2 (10^6 * (r + 0.5) / (R + 1.0)) = 6 log_2 10 + log_2 (r+.5) - log_2 (R + 1)"""
     t = np.log2(E + 0.5) + 6 * np.log2(10) - np.log2(E.sum(axis=1) + 1.0)[:,np.newaxis]
