@@ -1,5 +1,6 @@
 from ..structures import Pipeline
 from .. import formats
+from .. import processing
 from .. import utils
 from .. import db
 
@@ -8,6 +9,12 @@ import datetime
 import csv
 
 pd = utils.py.loadExternalModule("pandas")
+plt = utils.py.loadExternalModule("matplotlib.pylab")
+patches = utils.py.loadExternalModule("matplotlib.patches")
+sns = utils.py.loadExternalModule("seaborn")
+np = utils.py.loadExternalModule("numpy")
+
+####################################################################
 
 snakemakeFile =  os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) + '/merlin/Snakefile'
 
@@ -95,6 +102,7 @@ class Merlin(Pipeline):
       res = pd.read_csv(self._outputFileNames()['linkage'], sep='\t')
        # Remove rows with NA fields
       res = res[(res == "na").apply(lambda row: not any(row), axis=1)]
+      res["POS"] = res["POS"].astype("float")
       res["nt_position"] = res.LABEL.apply(lambda rs: self.__dbsnp[rs][1])
       res['cluster'] = self.annotateLDRegions(res, self.__lodThresh, self.__lodDrop)
       self.__output['linkage'] = res
@@ -113,6 +121,9 @@ class Merlin(Pipeline):
       res = pd.read_csv(self._outputFileNames()['perfamlod'], delim_whitespace=True,
                         skiprows=1, header=None,
                         names=("family", "trait", "analysis", "location", "zscore", "plod", "delta", "lod"))
+      res["chr"] = res.location.apply(lambda rs: self.__dbsnp[rs][0])
+      res["nt_position"] = res.location.apply(lambda rs: self.__dbsnp[rs][1])
+      res = res.sort_values(["chr", "nt_position"])
       self.__output['perfamlod'] = res
     #fi
 
@@ -122,9 +133,21 @@ class Merlin(Pipeline):
   #############################################################################
 
   def peaks(self, pos="order"):
-    """ Get peaks in either the order of markers (default), or in nucleotide positions (pos='nt_position')"""
+    """
+    peaks: Get peak regions in either the order of markers (default), or in nucleotide positions (pos='nt_position')
+    Inputs: pos: [order|POS|nt_position]
+                  order: Order of markers
+                  POS: POS of marker
+                  nt_position : nucleotide position
+    Outputs: Dictionary of peak_ID : (peak_chromosome, peak_start, peak_end)
+    
+    """
     linkageRes = self.linkage
 
+    if pos not in [ 'order', 'POS', 'nt_position' ]:
+        raise ValueError
+    #fi
+    
     if pos == 'order':
         order = linkageRes.groupby("CHR").POS.transform(lambda v: [ p[0] for p in sorted(enumerate([ float(i) for i in v]), key=lambda x: x[1]) ])
         linkageRes["order"] = order
@@ -132,13 +155,141 @@ class Merlin(Pipeline):
     #fi
         
     groups = linkageRes.groupby("cluster").agg(["min", 'max'])[["CHR", pos]].iterrows()
-    linkagePeaks = [ (row[0], (row[1].CHR.min(),  row[1][pos].min(), row[1][pos].max()))
-                for row in groups
-                 if row[0] > 0]
+    linkagePeaks = { row[0] : ( row[1].CHR.min(), row[1][pos].min(), row[1][pos].max() ) for row in groups if row[0] > 0 }
         
-    return dict(linkagePeaks)
+    return linkagePeaks
   #edef
 
+  #############################################################################
+
+
+  def plotLOD(self, chromosomeID=None, axis=None, pos="POS"):
+      """
+      input:
+       * res: Linkage result
+       * chromosomeID: Name of chromosome to plot (If none is provided, all are plotted)
+       * axis: Which axis to plot on
+       * pos: x-axis [POS|nt_position|order]
+              POS : marker position
+              nt_position: nucleotide position
+              order: order of marker in output (integer positions)
+      
+      output:
+       * plt.show()
+      """
+      
+      if pos not in [ 'order', 'POS', 'nt_position' ]:
+        raise ValueError
+      #fi
+        
+      res = self.linkage
+      
+      if chromosomeID is None:
+          chromosomes = res.CHR.unique()
+          nrows = int(np.ceil(len(chromosomes)/3))
+          fig, axes = utils.figure.subplots(figsize=(9*3,3*nrows), ncols=3, nrows=nrows, dpi=500)
+          for i, chromosome in enumerate(chromosomes):
+              self.plotLOD(chromosome, axes[i], pos=pos)
+          #efor
+          return plt.show()
+      #fi
+      
+      if axis is None:
+          fig, axes = utils.figure.subplots(figsize=(9,3), ncols=1, nrows=1, dpi=500)
+          axis = axes[0]
+      #fi
+  
+      
+      relRes = res[(res.CHR == chromosomeID)]
+      relRes["range"] = range(len(relRes.LOD))
+      minLOD, maxLOD = (min(res.LOD), max(res.LOD))
+      if pos == "POS":
+          positions = relRes.POS
+          relRes["range"] = relRes.POS
+      elif pos == 'nt_position':
+          relRes["range"] = relRes.nt_position
+      elif pos == 'order':
+          [ p[0] for p in sorted(enumerate(relRes.POS.values), key=lambda x: x[1]) ]
+          relRes["range"] = [ p[0] for p in sorted(enumerate(relRes.POS.values), key=lambda x: x[1]) ]
+      #fi
+      
+      # Plot the clusters
+      for (chromosome, start, end) in self.peaks(pos=pos).values():
+          if chromosome != chromosomeID:
+              continue
+          #fi
+          rect = patches.Rectangle((start, minLOD),end-start, maxLOD - minLOD, linewidth=1,facecolor='r',alpha=.25)
+          axis.add_patch(rect)
+      #efor
+      axis.plot(relRes.range, relRes.LOD)
+      axis.plot([0, max(relRes.range)], [3, 3], '-', c='orange')
+      axis.plot([0, max(relRes.range)], [2, 2], '-', c='orange')
+      axis.plot([0, max(relRes.range)], [0, 0], c='k')
+      axis.set_ylim([minLOD, maxLOD])
+      axis.set_xlim([0, max(relRes.range)])
+      axis.set_title("Chromosome %s" % chromosomeID)
+  #edef
+
+  #############################################################################
+
+  def plotFamLOD(self, chromosomeID):
+    """
+    plotFamLOD: Plot the family LOD contributions for a given chromosome.
+    Inputs: ChromosomeID: The ID of the chromosome to plot
+    Outputs: Figure
+    """
+    linkageRes = self.linkage
+    famLOD     = self.perfamlod
+    
+    famLODGroup = famLOD[famLOD.chr == chromosomeID].groupby("family")[["family", "lod", "chr", "nt_position"]]
+
+    D = []
+    for i, family in enumerate(famLOD.family.unique()):
+        fg = famLODGroup.get_group(family)
+        D.append(fg.lod)
+    #efor
+
+    # Reorder the elements in the matrix
+    D = np.matrix(D)
+    order = processing.matrix.order(D, 'correlation', 'complete')
+    newD = D[order,:]
+    
+    # Make the plot
+    fig = plt.figure(figsize=(20, 20), dpi=500)
+
+    axes = [ plt.subplot2grid((20,1), (0,0), colspan=1, rowspan=2),
+             plt.subplot2grid((20,1), (2,0), colspan=1, rowspan=18) ]
+
+    # Plot the chromosome LOD score, and clusters.
+    # Plot using the order, so that we can match with the heatmap
+    merlin.plotLOD(chromosomeID, axes[0], pos="order")
+    
+    # Plot the heatmap
+    sns.heatmap(newD, ax=axes[1], cbar=False, cmap="Blues")
+
+    plt.show()
+  #edef
+
+  #############################################################################
+
+  def familiesPerPeak(self, lodThreshold=0.3):
+    """
+    familiesPerPeak: Identify families that have a LOD contribution > than a certain value in each linkage peak
+    Inputs: lodThreshold: The LOD threshold to use (default 0.3)
+    Outputs: Dictionary of clusterID: [Family IDs contributing to cluster]
+    """
+    linkagePeaks = self.peaks(pos='nt_position')
+    famLOD       = self.perfamlod
+    
+    clusterFams = {}
+    for clusterID, (chromosome, start, end) in sorted(linkagePeaks.items(), key=lambda x: (x[1][1], x[1][2])):
+        families = famLOD[(famLOD.chr == chromosome) & (famLOD.lod > lodThreshold) & 
+                          (famLOD.nt_position > start) & (famLOD.nt_position < end)].family.values
+        clusterFams[clusterID] = set(families)
+    #efor
+    return clusterFams
+  #edef
+    
   #############################################################################
 
   @staticmethod
