@@ -15,6 +15,8 @@ class Fasta(object):
   #__iterKeys = None
 
   def __init__(self, data, seqType=Sequence.DNATYPE):
+    self.__fileName = None
+
     if isinstance(data, str):
       utils.dbm("Fasta input source is file")
       self.__entries = Fasta.loadFasta(data, seqType)
@@ -32,7 +34,7 @@ class Fasta(object):
 
   def __str__(self):
     dstr  = "Fasta object\n"
-    dstr += " Where: %s\n" % self.__fileName
+    dstr += " Where: %s\n" % (self.__fileName if self.__fileName is not None else hex(id(self)))
     dstr += " Entries: %d\n" % len(self.__entries)
     dstr += " Primary type: %s\n" % self.primaryType
     return dstr
