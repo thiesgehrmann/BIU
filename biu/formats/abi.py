@@ -18,7 +18,7 @@ __version__ = '.'.join(__version_info__)
 __version__ += '-dev' if not RELEASE else ''
 
 
-__all__ = ['Trace']
+__all__ = ['ABI']
 
 # dictionary for deciding which values to extract and contain in self.data
 EXTRACT = {
@@ -84,7 +84,7 @@ def py3_get_byte(string):
     else:
         return string.encode()
 
-class Trace(object):
+class ABI(object):
     """Class representing trace file."""
     def __init__(self, in_file, trimming=False):        
         self._handle = open(in_file, 'rb')

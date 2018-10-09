@@ -9,7 +9,7 @@ from .xlsUtils import XLS as XLS
 from .seqUtils import Sequence as Sequence
 from .newickUtils import Newick as Newick
 
-from .abi import Trace as ABI
+from .abi import ABI as ABI
 
 from .sqliteUtils import SQLite as SQLite
 from .sqlDictUtils import SQLDict as SQLDict

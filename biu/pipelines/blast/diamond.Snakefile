@@ -20,27 +20,27 @@ rule mappingBlastDB:
     touch "{output.db}"
   """
 
-  # Blast genome_1 vs genome_2 and vice-versa
+  # Blast genome_db vs genome_query and vice-versa
 rule mappingBlastQuery:
   input:
-    db    = lambda wildcards: expand("%s/blastdb.{genome}.db" % (__OUTDIR__), genome=[wildcards.genome_1]),
-    trans = lambda wildcards: config["genomes"][wildcards.genome_2]["fasta"]
+    db    = lambda wildcards: "%s/blastdb.%s.db" % (__OUTDIR__, wildcards.genome_db),
+    trans = lambda wildcards: config["genomes"][wildcards.genome_query]["fasta"]
   output:
-    res = "%s/result.{genome_1}.{genome_2}.tsv"% __OUTDIR__
+    res = "%s/result.{genome_db}.{genome_query}.tsv"% __OUTDIR__
   conda: "conda.yaml"
   params:
     blast_fields = config["blast_fields"],
     evalue       = config["e_threshold"],
-    max_target_seqs = config["max_target_seqs"]
+    options      = config["options"]
   threads: 5
   shell: """
-    diamond blastp -p "{threads}" -f "6" {params.blast_fields} --max-target-seqs "{params.max_target_seqs}" -e "{params.evalue}" -d "{input.db}" -q "{input.trans}" -o "{output.res}"
+    diamond blastp -p "{threads}" -f "6" {params.blast_fields} {params.options} -e "{params.evalue}" -d "{input.db}" -q "{input.trans}" -o "{output.res}"
   """
 
   # Perform a reciprocal best blast hit to identify karyollele pairs
 rule output:
   input:
-    g1v2 = expand("%s/result.{genome_2}.{genome_1}.tsv" % __OUTDIR__, genome_1=["A"], genome_2=["B"]),
+    g1v2 = expand("%s/result.{genome_db}.{genome_query}.tsv" % __OUTDIR__, genome_db=["A"], genome_query=["B"]),
     g1fa = config["genomes"]["A"]["fasta"],
     g2fa = config["genomes"]["B"]["fasta"]
   output:
