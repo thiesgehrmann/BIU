@@ -3,6 +3,9 @@
 # abifpy.py
 # python module for reading abi trace files
 # http://github.com/bow/abifpy
+# Modified by Thies Gehrmann
+# ABI File reference: http://www6.appliedbiosystems.com/support/software_community/ABIF_File_Format.pdf
+# Relevant table: Table 5
 
 """Python module for reading .ab1 trace files."""
 
@@ -11,6 +14,12 @@ import struct
 from os.path import splitext, basename
 
 from sys import version_info
+
+from .. import utils
+
+plt         = utils.py.loadExternalModule('matplotlib.pylab')
+MaxNLocator = utils.py.loadExternalModule('matplotlib.ticker', 'MaxNLocator')
+patches     = utils.py.loadExternalModule('matplotlib.patches') 
 
 RELEASE = False
 __version_info__ = ('1', '0', )
@@ -22,24 +31,156 @@ __all__ = ['ABI']
 
 # dictionary for deciding which values to extract and contain in self.data
 EXTRACT = {
-            'TUBE1': 'well',
-            'DySN1': 'dye',
-            'GTyp1': 'polymer',
-            'MODL1': 'model', 
-            'RUND1': 'run start date',
-            'RUND2': 'run finish date',
-            'RUND3': 'data collection start date',
-            'RUND4': 'data collection finish date',
-            'RUNT1': 'run start time',
-            'RUNT2': 'run finish time',
-            'RUNT3': 'data collection start time',
-            'RUNT4': 'data collection finish time',
-            'DATA1': 'raw1',
-            'DATA2': 'raw2',
-            'DATA3': 'raw3',
-            'DATA4': 'raw4',
-            'PLOC2': 'tracepeaks',
-            'FWO_1': 'baseorder',
+    'APFN2': 'Sequencing Analysis parameters file name',
+    'APXV1': 'Analysis Protocol XML schema version',
+    'APrN1': 'Analysis Protocol settings name',
+    'APrV1': 'Analysis Protocol settings version',
+    'APrX1': 'Analysis Protocol XML string',
+    'CMNT1': 'Sample Comment',
+    'CTID1': 'Container Identifier, a.k.a. plate barcode',
+    'CTNM1': 'Container name, usually identical to CTID, but not necessarily so',
+    'CTTL1': 'Comment Title',
+    'CpEP1': 'Capillary type electrophoresis. 1 for a capillary based machine. 0 for a slab gel based machine.',
+    'DATA1': 'Channel 1 raw data',
+    'DATA2': 'Channel 2 raw data',
+    'DATA3': 'Channel 3 raw data',
+    'DATA4': 'Channel 4 raw data',
+    'DATA5': 'Short Array holding measured volts/10 (EP voltage) during run',
+    'DATA6': 'Short Array holding measured milliAmps trace (EP current) during run',
+    'DATA7': 'Short Array holding measured milliWatts trace (Laser EP Power) during run',
+    'DATA8': 'Short Array holding measured oven Temperature (polymer temperature) trace during run',
+    'DATA9': 'Channel 9 processed data',
+    'DATA10': 'Channel 10 processed data',
+    'DATA11': 'Channel 11 processed data',
+    'DATA12': 'Channel 12 processed data',
+    # Prism 3100/3100-Avant may provide DATA105
+    #          3130/3130-XL may provide DATA105
+    # 3530/3530-XL may provide DATA105-199, 9-12, 205-299
+    'DSam1': 'Downsampling factor',
+    'DySN1': 'Dye set name',
+    'Dye#1': 'Number of dyes',
+    'DyeN1': 'Dye 1 name',
+    'DyeN2': 'Dye 2 name',
+    'DyeN3': 'Dye 3 name',
+    'DyeN4': 'Dye 4 name',
+    'DyeW1': 'Dye 1 wavelength',
+    'DyeW2': 'Dye 2 wavelength',
+    'DyeW3': 'Dye 3 wavelength',
+    'DyeW4': 'Dye 4 wavelength',
+    # 'DyeN5-N': 'Dye 5-N Name',
+    # 'DyeW5-N': 'Dye 5-N Wavelength',
+    'EPVt1': 'Electrophoresis voltage setting (volts)',
+    'EVNT1': 'Start Run event',
+    'EVNT2': 'Stop Run event',
+    'EVNT3': 'Start Collection event',
+    'EVNT4': 'Stop Collection event',
+    'FWO_1': 'Base Order. Sequencing Analysis Filter wheel order. Fixed for 3500 at "GATC"',
+    'GTyp1': 'Gel or polymer Type',
+    'InSc1': 'Injection time (seconds)',
+    'InVt1': 'Injection voltage (volts)',
+    'LANE1': 'Lane/Capillary',
+    'LIMS1': 'Sample tracking ID',
+    'LNTD1': 'Length to detector',
+    'LsrP1': 'Laser Power setting (micro Watts)',
+    'MCHN1': 'Instrument name and serial number',
+    'MODF1': 'Data collection module file',
+    'MODL1': 'Model number',
+    'NAVG1': 'Pixels averaged per lane',
+    'NLNE1': 'Number of capillaries',
+    'OfSc1': 'List of scans that are marked off scale in Collection. (optional)',
+    # OvrI and OrvV are listed as "1-N", and "One for each dye (unanalyzed
+    # and/or analyzed data)"
+    'OvrI1': 'List of scan number indexes that have values greater than 32767 but did not '
+             'saturate the camera. In Genemapper samples, this can have indexes with '
+             'values greater than 32000. In sequencing samples, this cannot have '
+             'indexes with values greater than 32000.',
+    'OvrI2': 'List of scan number indexes that have values greater than 32767 but did not '
+             'saturate the camera. In Genemapper samples, this can have indexes with '
+             'values greater than 32000. In sequencing samples, this cannot have '
+             'indexes with values greater than 32000.',
+    'OvrI3': 'List of scan number indexes that have values greater than 32767 but did not '
+             'saturate the camera. In Genemapper samples, this can have indexes with '
+             'values greater than 32000. In sequencing samples, this cannot have '
+             'indexes with values greater than 32000.',
+    'OvrI4': 'List of scan number indexes that have values greater than 32767 but did not '
+             'saturate the camera. In Genemapper samples, this can have indexes with '
+             'values greater than 32000. In sequencing samples, this cannot have '
+             'indexes with values greater than 32000.',
+    'OvrV1': 'List of color data values found at the locations listed in the OvrI tag. '
+             'There must be exactly as many numbers in this array as in the OvrI array.',
+    'OvrV2': 'List of color data values found at the locations listed in the OvrI tag. '
+             'There must be exactly as many numbers in this array as in the OvrI array.',
+    'OvrV3': 'List of color data values found at the locations listed in the OvrI tag. '
+             'There must be exactly as many numbers in this array as in the OvrI array.',
+    'OvrV4': 'List of color data values found at the locations listed in the OvrI tag. '
+             'There must be exactly as many numbers in this array as in the OvrI array.',
+    'PDMF1': 'Sequencing Analysis Mobility file name chosen in collection',
+    'RMXV1': 'Run Module XML schema version',
+    'RMdN1': 'Run Module name (same as MODF)',
+    'RMdX1': 'Run Module XML string',
+    'RPrN1': 'Run Protocol name',
+    'RPrV1': 'Run Protocol version',
+    'RUND1': 'Run Started Date',
+    'RUND2': 'Run Stopped Date',
+    'RUND3': 'Data Collection Started Date',
+    'RUND4': 'Data Collection Stopped date',
+    'RUNT1': 'Run Started Time',
+    'RUNT2': 'Run Stopped Time',
+    'RUNT3': 'Data Collection Started Time',
+    'RUNT4': 'Data Collection Stopped Time',
+    'Rate1': 'Scanning Rate. Milliseconds per frame.',
+    'RunN1': 'Run Name',
+    'SCAN1': 'Number of scans',
+    'SMED1': 'Polymer lot expiration date',
+    'SMLt1': 'Polymer lot number',
+    'SMPL1': 'Sample name',
+    'SVER1': 'Data collection software version',
+    'SVER3': 'Data collection firmware version',
+    'Satd1': 'Array of longs representing the scan numbers of data points, which are flagged as saturated by data collection (optional)',
+    'Scal1': 'Rescaling divisor for color data',
+    'Scan1': 'Number of scans (legacy - use SCAN)',
+    'TUBE1': 'Well ID',
+    'Tmpr1': 'Run temperature setting',
+    'User1': 'Name of user who created the plate (optional)',
+    'PLOC1': 'Array of peak locations edited by user',
+    'PLOC2': 'Array of peak locations as called by Basecaller',
+    'PRJT1': 'SeqScape 2.0 project template name',
+    'PROJ4': 'SeqScape 2.0 project name',
+    'PSZE1': 'Plate size. The number of sample positions in the container. Current allowed values: 96, 384.',
+    'PTYP1': 'Plate type. Current allowed values: 96-Well, 384-Well.',
+    'PuSc1': 'Median pupscore',
+    'QV201': 'QV20+ value',
+    'QV202': 'One of "Pass", "Fail", or "Check"',
+    'QcPa1': 'QC parameters',
+    'QcRn1': 'Trimming and QC code',
+    'QcRs1': 'QC warnings, a concatenated comma separated string',
+    'QcRs2': 'QC errors, a concatenated comma separated string',
+    'RGOw1': 'The name entered as the Owner of a Results Group, in the Results Group Editor. Implemented as the user name from the results group.',
+    'RInj1': 'Reinjection number. The reinjection number that this sample belongs to. Not present if there was no reinjection.',
+    'RNmF1': 'Raman normalization factor',
+    'RevC1': 'for whether the sequence has been complemented',
+    'RunN1': 'Run name (which, for 3500, is different from injection name)',
+    'S/N%1': 'Signal strength for each dye',
+    'SMID1': 'Polymer first installed date',
+    'SMRn1': 'Number of runs (injections) processed with the current polymer (runs allowed - runs remaining)',
+    'SPAC1': 'Average peak spacing used in last analysis',
+    'SPAC2': 'Basecaller name - corresponds to name of bcp file.',
+    'SPAC3': 'Average peak spacing last calculated by the Basecaller.',
+    'SPEC1': 'Sequencing Analysis Specimen Name',
+    'SVER2': 'Basecaller version number',
+    'SVER4': 'Sample File Format Version String',
+    'ScPa1': 'The parameter string of size caller',
+    'ScSt1': 'Raw data start point. Set to 0 for 3500 data collection.',
+    'SpeN1': 'Active spectral calibration name',
+    'TrPa1': 'Timming parameters',
+    'TrSc1': 'Trace score.',
+    'TrSc2': 'One of "Pass", "Fail", or "Check"',
+    'phAR1': 'Trace peak aria ratio',
+    'phCH1': 'Chemistry type ("term", "prim", "unknown"), based on DYE_1 information',
+    'phDY1': 'Dye ("big", "d-rhod", "unknown"), based on mob file information',
+    'phQL1': 'Maximum Quality Value',
+    'phTR1': 'Set Trim region',
+    'phTR2': 'Trim probability',
           }     
 
 # dictionary for unpacking tag values
@@ -119,7 +260,7 @@ class ABI(object):
                 # only extract data from tags we care about
                 if key in EXTRACT:
                     # e.g. self.data['well'] = 'B6'
-                    self.data[EXTRACT[key]] = self.get_data(key)
+                    self.data[key] = self.get_data(key)
 
             self.id = self._get_file_id(in_file)
             self.name = self.get_data('SMPL1')
@@ -276,6 +417,92 @@ class ABI(object):
             trim_finish = running_sum.index(max(running_sum)) 
 
             return seq[trim_start:trim_finish]
+
+    def chromatogram(self, ax=None, xlim=None, highlight=None, seq=True, trim_threshold=50, legend=True):
+        """
+        Draw the trace.
+        Inputs:
+            ax: Matplotlib axis object. Axis to use. If not defined, it is made.
+            xlim: two-tuple. The range of sequence to plot. Default is full sequence
+            highlight: two-tuple. Highlight the range specified in this region.
+            seq: Boolean. Write the sequence on top of plot.
+            trim_threshold: Integer. Cut the sequence from the right if all signals are less than this value.
+            legend: Boolean. Draw the legend
+        """
+        
+        # If we don't have an axis... Make it
+        if ax is None:
+            fig, axes = utils.figure.subplots(ncols=1, nrows=1, figsize=(10, 3))
+            ax = axes[0]
+        #fi
+    
+        # Re-index the x-axis to correspond to each base.
+        xrange = [ 1 ]
+        ploc2 = self.data['PLOC2']
+        for i in range(len(ploc2)-1):
+            curr_peak = ploc2[i]
+            next_peak = ploc2[i+1]
+            steps = next_peak - curr_peak # Number of measurements inbetween peaks
+            step_size = 1 / steps
+            xrange.extend([ xrange[-1] + step_size * (i+1) for i in range(steps) ])
+        #efor
+        maxy = 0
+        
+        # Plot the chromatograms
+        channels = [ 'DATA%d' % c for c in [9,10,11,12] ]
+        for c, color, legend in zip(channels, 'krgb', self.data['FWO_1']):
+            ax.plot(xrange, self.data[c][ploc2[0]:][:len(xrange)], label=legend, c=color)
+            maxy = max(maxy, max(self.data[c][:len(xrange)]))
+        #efor
+        
+        # Plot the vertical lines to indicate position
+        for x in range(10, int(xrange[-1]), 10):
+            ax.plot([x, x], [0, maxy], c='grey', linestyle=':')
+        #efor
+        
+        # Determine where we should cut thr sequence
+        right_trim = len(ploc2)
+        for i, peak in list(enumerate(ploc2))[::-1]:
+            if max([self.data[c][peak] for c in channels]) >= trim_threshold:
+                break
+            #fi
+            right_trim = i
+        #efor
+        
+        # Set the range we wanted to plot.
+        if xlim is None:
+            xlim = (ploc2[0], int(xrange[-1]))
+        #fi
+        xlim = (xlim[0], min(xlim[1], right_trim))
+        ax.set_xlim(xlim[0], xlim[1])
+        
+        # Hide the top spine
+        ax.spines['top'].set_visible(False)
+        
+        # Write the sequence
+        colors = dict(zip(self.data['FWO_1'], 'krgb'))
+        if seq:
+            for i, base in enumerate(self.seq[xlim[0]:xlim[1]-1]):
+                ax.text(i+xlim[0]+1, maxy, base, color=colors[base], ha='center')
+            #efor
+        #fi
+        
+        # Draw the legend
+        if legend:
+            ax.legend()
+        #fi
+
+        if highlight is not None:
+            x1, x2 = highlight
+            rect = patches.Rectangle((x1,0), (x2-x1), maxy, linewidth=1, edgecolor='#a6bddb',facecolor='#a6bddb', alpha=100)
+            ax.add_patch(rect)
+        #fi
+
+        # Only show integer positions
+        ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+        
+        return ax
+    #edef
 
 class _TraceDir(object):
     """Class representing directory content."""
