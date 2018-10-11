@@ -387,7 +387,7 @@ class Acquire(object):
     if method == 'cat':
       cmd = "cat '%s' > '%s'" % ("' '".join(fileNames), self.__fileName)
     elif method == 'zcat':
-      cmd = "zcat '%s' > '%s'" % ("' '".join(fileNames), self.__fileName)
+      cmd = "cat '%s' | zcat > '%s'" % ("' '".join(fileNames), self.__fileName)
     else:
       raise NotImplementedError("Method '%s' is not implemented for merge" % method)
     #fi
