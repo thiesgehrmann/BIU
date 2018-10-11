@@ -1,5 +1,6 @@
 import json
 import inspect, os
+import sys
 
 class globalSettings(object):
 
@@ -37,6 +38,22 @@ class globalSettings(object):
       return self.__settings[settingID]
     #fi
   #edef
+
+  def platform(self):
+    """
+      Return the platform type of the current system [LINUX|OSX|WINDOWS|OTHER]
+    """
+    platform = sys.platform
+    if platform == "linux" or platform == "linux2":
+        return "LINUX"
+    elif platform == "darwin":
+        return "OSX"
+    elif platform == "win32":
+        return "WINDOWS"
+    #fi
+    return "OTHER"
+  #Edef
+
 
   @property
   def settings(self):

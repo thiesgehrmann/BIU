@@ -572,7 +572,12 @@ class Acquire(object):
     if ln:
       p = exe.runCommand("ln -s '%s' '%s'" % (oldFile, self.__fileName), verbose=True)
     else:
-      p = exe.runCommand("cp -R -T '%s' '%s'" % (oldFile, self.__fileName), verbose=True)
+      if settings.platform == "OSX":
+        # The -T option doesn't work on Mac
+        p = exe.runCommand("cp -R '%s' '%s'" % (oldFile, self.__fileName), verbose=True)
+      else:
+        p = exe.runCommand("cp -R -T '%s' '%s'" % (oldFile, self.__fileName), verbose=True)
+      #fi
     #fi
     return p
   #edef
