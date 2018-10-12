@@ -3,6 +3,7 @@ import json
 import tempfile
 import json
 import os
+import threading
 
 from ..config import settings as settings
 from .. import utils
@@ -16,6 +17,25 @@ def defaultSnakemakeOptions():
    "use_conda" : True,
    "conda_prefix" : settings.getPipelineCondaPrefixDir()
   }
+#edef
+
+def snakemakeOptionsToCmdArgs(opts):
+    cmdArgs = []
+    for k,v in opts.items():
+        if (k == 'use_conda'):
+            if v is True:
+                cmdArgs.append('--use-conda')
+            #fi
+        elif k == 'conda_prefix':
+            cmdArgs.append("--conda-prefix='%s'" % v)
+        # If there are things we don't know, try formatting them with these last two rules.
+        elif v is True:
+            cmdArgs.append(' --%s' % k.replace('_', '-'))
+        else:
+            cmdArgs.append(" --%s='%s'" % (k.replace('_', '-'),v))
+        #fi
+    #efor
+    return ' '.join(cmdArgs)
 #edef
 
 ###############################################################################
@@ -33,7 +53,7 @@ def defaultSnakemakeConfig(name):
 ###############################################################################
 
 class Pipeline(object):
-  
+
   __config     = None
   __snakefile  = None
   __success    = False
@@ -58,7 +78,7 @@ class Pipeline(object):
     #fi
     for (k,v) in kwargs.items():
       self.__config[k] = v
-    #fi 
+    #fi
 
     # Update the hash of the current config
     hashString = self.__configHash()
@@ -75,8 +95,21 @@ class Pipeline(object):
   #edef
 
   def run(self, targets=["output"]):
+    """
+    Run the pipeline.
+    Inputs:
+    """
     self.__writeConfigFile()
-    self.__success = snakemake(snakefile=self.__snakefile, configfile=self.__configFile, targets=targets, **self.__snakemakeOptions)
+    if threading.current_thread() == threading.main_thread():
+        self.__success = snakemake(snakefile=self.__snakefile, configfile=self.__configFile, targets=targets, **self.__snakemakeOptions)
+    else:
+        utils.msg.warning("There was an error running snakemake through the normal python interface.")
+        utils.msg.warning("I will run it via the command line.")
+        utils.msg.warning("There may be some problems with translating the python snakemake options to the command line versions.")
+
+        p = utils.exe.runCommand("snakemake --snakefile '%s' --configfile '%s' %s %s"  % (self.__snakefile, self.__configFile, snakemakeOptionsToCmdArgs(self.__snakemakeOptions), ' '.join(targets)))
+        self.__success = True if (p == 0) else False
+    #etry
   #edef
 
   def __configHash(self):
