@@ -27,7 +27,9 @@ class LLS(Dataset):
       self._registerObject('vcf_%s' % chrID, formats.VCF, [ "vcf_%s" % chrID, "vcf_%s_tbi" % chrID ], fileIndex["vcf_%s" % chrID].path, tabix=True)
     #efor
 
-    self._registerObject('phen', pd.read_csv, [ "phen"], fileIndex["phen"].path, delimiter=' ') 
+    self._registerObject('percentiles', pd.read_csv, [ "percentiles" ], fileIndex["percentiles"].path, sep='\t')
+    self._registerObject('ids', pd.read_csv, ["ids"], fileIndex["ids"].path)
+    self._registerObject('phen', pd.read_csv, [ "phen"], fileIndex["phen"].path, delimiter=' ')
 
     self._addStrFunction(lambda s: "Version: %s" % self.version)
   #edef
@@ -39,7 +41,9 @@ class LLS(Dataset):
        files['vcf_%s_tbi' % chrID] = utils.Acquire("%s/tbx/merged.chr%s.vcf.bgz.tbi" % (where, chrID), where=where)
      #efor
 
-     files['phen'] = utils.Acquire("/dev/null")
+     files['phen'] = utils.Acquire("/exports/molepi/tgehrmann/data/LLS_data/lls_phenotypes218.txt")
+     files['percentiles'] = utils.Acquire("/exports/molepi/tgehrmann/data/LLS_data/lls_percentiles.tsv")
+     files['ids'] = utils.Acquire('/exports/molepi/tgehrmann/data/LLS_data/lls_ids.csv')
 
      return files
   #edef
@@ -90,9 +94,23 @@ class LLS(Dataset):
 
   @property
   def phenotypes(self):
-    return self._getObject("phen")
+    """
+    Phenotypic information for the sequenced individuals.
+    """
+    obj = self._getObject("phen")
+    if "famnr" not in obj.columns:
+      obj["famnr"] = obj.LLnr.apply(lambda x: str(int(x.split('.')[0])))
+    #fi
+    return obj
   #edef
 
+  @property
+  def percentiles(self):
+    """
+    Percentile information for all individuals in the LLS study
+    """
+    return self._getObject("percentiles")
+  #edef
   def cgIDToLLNR(self, cgID):
     cgID    = cgID.replace('_240_37-ASM', '')
     possible = self.phenotypes[self.phenotypes.cgID == cgID].LLnr.values 
@@ -109,5 +127,55 @@ class LLS(Dataset):
     #fi
     return None
   #edef
+
+  def passFams(self, pThresh=.90):
+    """
+    Determine which families pass the novel selection threshold.
+    I.e. at least two siblings > pThresh %, and at least one parent > pThresh %
+  
+    Inputs:
+      pThresh: Float. Percentile threshold to satisfy
+    Output:
+      Set of family IDs (Integers)
+    """
+    p = self.percentiles
+    pF0 = p[(p.percentile >= pThresh) & (p.generation == 1)]
+    pF1 = p[(p.percentile >= pThresh) & (p.generation == 2)]
+  
+    f0Pass = pF0.famnr.unique()
+    f1Pass = pF1[ pF1.groupby("famnr").transform(len).llnr >= 2 ].famnr.unique()
+  
+    famPass = set(f0Pass) & set(f1Pass)
+    return famPass
+  #edef
+
+  def passIndiv(self, pThresh=.90, relFams=None, sequenced=False):
+    """
+    Determine, in the families that pass the novel selection threshold, which individuals satisify the criteria.
+    Inputs:
+      pThresh: Float. Percenfile threshold to satisfy
+      relFams: Set of Integers. Family IDs to consider (default is None, then output of passFams is used
+      sequenced: Boolean. Only return IDs of individuals that have been sequenced. (Default False
+    Output:
+      Set of individual IDs.
+    """
+    # Select all individuals from that family
+  
+    if relFams is None:
+      relFams = self.passFams(pThresh)
+    #fi
+  
+    pPer = self.percentiles
+    relIndivs = pPer[pPer.famnr.apply(lambda f: f in relFams) & (pPer.percentile >= pThresh)]
+    relIndivs = relIndivs[["famnr", "llnr", "percentile", "motherID", "fatherID", "gender"]]
+ 
+    relIndiv = set(relIndivs.llnr.values)
+    if sequenced:
+      relIndiv = relIndiv & set(self.phenotypes.LLnr.values)
+    #fi
+  
+    return relIndiv
+  #edef
+
 
 #eclass

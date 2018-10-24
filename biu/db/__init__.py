@@ -25,6 +25,8 @@ from .llsUtils import LLS as LLS
 
 from .bbmriUtils import BBMRI as BBMRI
 
+from .goto import GOTO as GOTO
+
 from .goUtils import GO as GO
 
 from .keggUtils import KEGG as KEGG
@@ -38,7 +40,7 @@ from .rvisUtils import RVIS as RVIS
 from .gdiUtils import GDI as GDI
 from .dneUtils import DNE as DNE
 
-__datasets = [ GO, LLS, Cosmic, HAGR, KEGG, DBSNP, BBMRI, CADD, ClinVar, UniProt, Gnomad ]
+__datasets = [ GO, LLS, GOTO, Cosmic, HAGR, KEGG, DBSNP, BBMRI, CADD, ClinVar, UniProt, Gnomad ]
 
 def versions(db = None):
   if db is None:
