@@ -91,7 +91,7 @@ class DBSNP(Dataset):
       return None
     #fi
     utils.dbm("Querying for rs%d via REST." % ID)
-    assemblyid = versions[self.version]["assemblyid"]
+    assemblyid = self.versions[self.version]["assemblyid"]
 
     def seqPosLookup(restResult):
       for asm in restResult['primary_snapshot_data']['placements_with_allele']:
@@ -121,6 +121,7 @@ class DBSNP(Dataset):
       return None
     #fi
     seqid, pos = pos
+    pos = pos + 1 # There seems to be an offset!
 
     if seqid not in self.__assemblySeqIDChromosomes:
       cmd = 'curl "https://www.ncbi.nlm.nih.gov/nuccore/%s?report=docsum&log$=seqview" | grep "<title>Homo sapiens" | sed -e \'s/^[[:blank:]]*//g\' | cut -d\  -f4 | cut -f1 -d,' % seqid

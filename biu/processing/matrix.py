@@ -1,9 +1,10 @@
-import numpy as np
-import scipy.spatial.distance as ssdist
 
 from .. import utils
 
 fastcluster = utils.py.loadExternalModule('fastcluster')
+np = utils.py.loadExternalModule('numpy')
+pd = utils.py.loadExternalModule('pandas')
+ssdist = utils.py.loadExternalModule('scipy.spatial.distance')
 
 def order(M, distance="correlation", method="single"):
   '''
@@ -64,3 +65,37 @@ def order(M, distance="correlation", method="single"):
   return computeSerialMatrix(D, len(M), method=method)
 #edef
 
+####################################################################
+
+def reorder(matrix, symmetric=False, by=None, **kwargs):
+    """
+    Reorder an ndarray, matrix or a dataframe
+    Inputs:
+        matrix: pandas DataFrame, numpy ndArray or numpy matrix
+        symmetric: If it is a symmetric matrix, reorder the columns as well as the rows
+        by : Reorder this matrix by the ordering of this matrix, instead
+        **kwargs: The options for biu.processing.matrix.order (distance, method etc.)
+    Output:
+        Depending on input:
+            * pandas DataFrame
+            * numpy ndArray
+            * numpy matrix
+    """
+    if isinstance(matrix,pd.DataFrame):
+        ordered = order(matrix if by is None else by, **kwargs)
+        if symmetric:
+            return matrix.iloc[ordered][[matrix.columns[i] for i in ordered]]
+        else:
+            return matrix.iloc[ordered]
+        #fi
+    elif isinstance(matrix, np.ndarray) or isinstance(matrix, np.matrix):
+        ordered = order(matrix if by is None else by, **kwargs)
+        if symmetric:
+            return matrix[order,ordered]
+        else:
+            return matrix[order,:]
+        #fi
+    else:
+        raise TypeError
+    #fi
+#edef

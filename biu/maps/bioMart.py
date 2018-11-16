@@ -33,6 +33,16 @@ class BioMart(Dataset):
   #edef
 
   def __init__(self, version=None, database=None, attributes=None, where=None, grch37=False, **kwargs):
+    """
+    Generate a BioMart Map.
+    Inputs:
+      version: String. Predefined dataset to use. See biu.maps.BioMart.versions()
+      database: String. If no version is defined, use this database. See the XML structure of the biomart query to see the database
+      attributes: List of Strings. Attributes to retrieve. Note that you can only request up to 3 external attributes
+      grch37: Boolean. Use the GRCH37 build (default False)
+    Outputs:
+      A Biomart Map
+    """
     self.__grch37 = grch37
     url = "http://grch37.ensembl.org/biomart/martservice?query=" if grch37 else 'http://www.ensembl.org/biomart/martservice?query='
 

@@ -3,6 +3,7 @@ from ..config import settings as settings
 from .. import formats
 from .. import utils
 from .. import processing
+from .. import medical
 
 pd = utils.py.loadExternalModule("pandas")
 np = utils.py.loadExternalModule("numpy")
@@ -54,10 +55,72 @@ class GOTO(Dataset):
     
     @property
     def blood(self):
+        """
+        Blood sample covariates.
+        Categorical variables are strings, provided as a categorical dtype 
+        Continuous variables are provided as floats
+        """
         if not self._objectLoaded('blood'):
             self._getObject('blood')['Sample'] = self._getObject('blood').Sample.apply(lambda s: s.replace('-', '_'))
             #self._getObject('blood')['flowcell'] = self._getObject('blood').Sample.apply(lambda s: s.split('_')[1])
             self._getObject('blood')['flowcell_lane'] = self._getObject('blood').Sample.apply(lambda s: s.split('_')[2])
+
+            def castStr(value):
+                return str(value) if str(value).strip() != "" else None
+            #edef
+
+            def castFloat(value):
+                try:
+                    if not str(value).strip():
+                        return np.nan
+                    #fi
+                    return float(value)
+                except Exception as e:
+                    return np.nan
+                #etry
+            #edef
+
+
+            FRS = []
+            for i, row in self._getObject('blood').iterrows():
+                frs = medical.health.indicators.framingham_risk_score(castFloat(row.Sex) == 1, castFloat(row.Age_Baseline),
+                                                                      castFloat(row.Cholesterol), castFloat(row.Cholesterol_HDL),
+                                                                      castFloat(row.Systolic_Blood_Pressure),
+                                                                      castFloat(row.Antihypertensive_medication) == 1,
+                                                                      castFloat(row.Current_Smoker) == 1,
+                                                                      False)
+                FRS.append(frs)
+            #edef
+            self._getObject('blood')['FRS'] = np.array(FRS)
+
+            discreteCovariates = [ 'IOP2_ID', 'timepoint', 'Sex', 'Status', 'Lipid_lowering_medication',
+                                   'Current_Smoker', 'Antihypertensive_medication', 'Date_of_sample_collection',
+                                   'intervention', 'nutridrink', 'sampID', 'Labnr', 'Sample', 'studID',
+                                   'flowcell', 'Lane', 'Index', 'blood.or.muscle', 'plate',
+                                   'RNA_blood_Isolatieseries', 'RNA_Isolation_series', 'flowcell_lane' ]
+            continuousCovariates = [ 'Age_Baseline', 'Glucose', 'Cortisol', 'IGF_BP3', 'LN_Insulin', 
+                                     'IGF_1', 'IGF1_IGFBP3', 'LN_ALAT', 'Albumin', 'ALP', 'LN_ASAT', 'Cholesterol',
+                                     'Cholesterol_HDL', 'Creatinine', 'GFR', 'LN_Triglycerides', 'LN_TSH',
+                                     'Uric_acid', 'VitaminD', 'LDL_Cholesterol', 'HDL_Cholesterol', 'DHEA_S', 'fT3', 'LN_Leptin',
+                                     'LN_Adiponectin', 'LN_Leptin_Adiponectin', 'LN_FFA', 'VitaminE', 'LN_TNFa', 'LN_IL6',
+                                     'ASAT_ALAT', 'BMI', 'Systolic_Blood_Pressure', 'Hb', 'Ht', 'Erythrocytes', 'MCV', 'MCH',
+                                     'MCHC', 'Leukocytes', 'Eosinophiles', 'Basophiles', 'Neutrophiles',
+                                     'Lymfocytes', 'Monocytes', 'Eosinophil_perc', 'Basophil_perc', 'fT4', 'LN_gGT', 'LN_CRP',
+                                     'Neutrophil_perc', 'Lymfocyte_perc', 'Monocyte_perc', 'Thrombocytes',
+                                     'Total_reads', 'Mapped_reads', 'mappedreads_perc',
+                                     'PFALIGNEDBASES', 'MEDIAN5PRIMEBIAS', 'MEDIAN3PRIMEBIAS',
+                                     'MEDIAN5PRIMETO3PRIMEBIAS', 'meaninsertsize', 'standarddeviation',
+                                     'medianinsertsize', 'Nanodrop260280', 'passedQC_perc',
+                                     'LabonchipRIN', 'Labonchip28S18S', 'totalyieldug', 'FRS' ]
+            
+            for c in discreteCovariates:
+                self._getObject('blood')[c] = self._getObject('blood')[c].map(castStr).astype('category')
+            #efor
+            
+            for c in continuousCovariates:
+                self._getObject('blood')[c] = self._getObject('blood')[c].map(castFloat).astype(float)
+            #ef r
+
         #fi
         return self._getObject('blood')
     #edef
@@ -80,7 +143,7 @@ class GOTO(Dataset):
         if self.__samplesPerIndividual is None:
             muscle = processing.lst.group(self.muscle[["IOP2_ID", "Sample", "Visitnr"]].values)
             blood  = processing.lst.group(self.blood[["IOP2_ID", "Sample", "timepoint"]].values)
-            self.__samplesPerIndividual = { str(p) : { 'blood' : { str(s[2]) : s[1] for s in blood.get(int(p),[]) }, 
+            self.__samplesPerIndividual = { str(p) : { 'blood' : { str(s[2]) : s[1] for s in blood.get(str(p),[]) }, 
                                                        'muscle' : { str(s[2]) : s[1] for s in muscle.get(int(p),[]) } }
                                            for p in self.individuals }
         #fi

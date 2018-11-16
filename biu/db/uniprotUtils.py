@@ -25,9 +25,9 @@ class UniProt(Dataset):
     self.version = version
 
     self._registerObject('_annots', formats.GFF3, ['gff'], fileIndex['gff'].path,
-                                         parentField=lambda e: e.seqid,
-                                         idField=lambda e: e.attr["ID"] if "ID" in e.attr else '%s;%s;%d;%d' % (e.seqid, e.feature, e.start, e.end),
-                                         allowAdditionalColumns=True)
+                                    parentField=lambda e: e.seqid,
+                                    idField=lambda e: e.attr["ID"] if "ID" in e.attr else '%s;%s;%d;%d' % (e.seqid, e.feature, e.start, e.end),
+                                    allowAdditionalColumns=True)
 
     self._addStrFunction(lambda s: "Version: %s" % self.version)
   #edef
@@ -43,6 +43,13 @@ class UniProt(Dataset):
   #############################################################################
 
   def getProteinDomains(self, protein):
+    """
+    Get the protein domains annotated for a specific protein
+    Inputs:
+      protein: String. Uniprot Protein ID
+    Outputs:
+      GFF3 structure. Each row is one domain annotation
+    """
     return self._annots.getChildren(protein, [ "Domain", "domain"])
   #edef
 
