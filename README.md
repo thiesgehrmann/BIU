@@ -46,42 +46,42 @@ BIU is a library of utilities and tools that provides:
 ## Examples
 
 ### Map a human gene to the worm, starting only with HGNC symbol
-    ```python
-    import biu
-    
-    # Load a genome from Ensembl
-    hg = biu.genomes.Ensembl(grch37=True)
-    wg = biu.genomes.Wormbase('Caenorhabditis_elegans')
-    
-    # Load maps
-    biomart = biu.maps.BioMart(grch37=True)
-    diopt = biu.maps.DIOPT()
-    
-    h_symbol = 'MTOR'
-    h_id     = biomart.hgnc_symbol[h_symbol][0].entrezgene
-    
-    # Using DIOPT, Identify high quality mappings
-    mtor_homologs = diopt.batch([mtor_geneid])
-    w_symbol, w_id = mtor_homologs.c_elegans[0]
-    
-    print('%s(%s) -> %s(%s)' % (h_symbol, h_id, w_symbol, w_id))
-    # MTOR(2475) -> let-363(WBGene00002583)
-    ```
+   ```python
+   import biu
+   
+   # Load a genome from Ensembl
+   hg = biu.genomes.Ensembl(grch37=True)
+   wg = biu.genomes.Wormbase('Caenorhabditis_elegans')
+   
+   # Load maps
+   biomart = biu.maps.BioMart(grch37=True)
+   diopt = biu.maps.DIOPT()
+   
+   h_symbol = 'MTOR'
+   h_id     = biomart.hgnc_symbol[h_symbol][0].entrezgene
+   
+   # Using DIOPT, Identify high quality mappings
+   mtor_homologs = diopt.batch([mtor_geneid])
+   w_symbol, w_id = mtor_homologs.c_elegans[0]
+   
+   print('%s(%s) -> %s(%s)' % (h_symbol, h_id, w_symbol, w_id))
+   # MTOR(2475) -> let-363(WBGene00002583)
+   ```
 
 ### Get all genes in the KEGG pathways that MTOR is in
-    ```python
-    import biu
-    
-    biomart = biu.maps.BioMart(grch37=True)
-    kegg    = biu.db.KEGG()
-    
-    mtor_entrez    = biomart.hgnc_symbol["MTOR"][0].entrezgene
-    mtor_pathways  = kegg.getGenePathways(mtor_entrez)
-    mtor_neighbors = set([ g for p in mtor_pathways for g in kegg.getPathwayGeneIDs(p) ])
-    
-    print(len(mtor_neighbors))
-    # 1934
-    ```
+   ```python
+   import biu
+   
+   biomart = biu.maps.BioMart(grch37=True)
+   kegg    = biu.db.KEGG()
+   
+   mtor_entrez    = biomart.hgnc_symbol["MTOR"][0].entrezgene
+   mtor_pathways  = kegg.getGenePathways(mtor_entrez)
+   mtor_neighbors = set([ g for p in mtor_pathways for g in kegg.getPathwayGeneIDs(p) ])
+   
+   print(len(mtor_neighbors))
+   # 1934
+   ```
 
 ### Retrieve information about a DBSNP variant
   ```python
@@ -113,6 +113,7 @@ BIU is a library of utilities and tools that provides:
    gff_entry = hg.gff.getID('gene:%s' % ensembl_gene_id)
    mtor_vars = dbsnp.query(gff_entry.seqid, gff_entry.start, gff_entry.end)
    print(len(mtor_vars))
+   # 18577
    ```
 
 ## Installation    
