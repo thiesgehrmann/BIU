@@ -86,8 +86,7 @@ BIU is a library of utilities and tools that provides:
 ### Retrieve information about a DBSNP variant
   ```python
   import biu
-  where = '/exports/molepi/tgehrmann/biu/'
-  biu.config.settings.setWhere(where)
+
   dbsnp = biu.db.DBSNP("human_9606_b150_GRCh37p13")
   
   chromosome, position = dbsnp["rs4894"]
