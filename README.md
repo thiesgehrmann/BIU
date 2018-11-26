@@ -27,7 +27,7 @@ BIU is a library of utilities and tools that provides:
   * Medical tools (`biu.medical`):
     * health parameters: (`biu.medical.health`) (Framingham Risk Score, etc)
 
-  * Data Structure processing (`biu.processing`):
+  * Operations on standard data structures (`biu.ops`):
     * Python lists
     * numpy Matrices
     * pandas DataFrames

@@ -2,7 +2,7 @@ from ..structures import Dataset
 from ..config import settings as settings
 from .. import formats
 from .. import utils
-from .. import processing
+from .. import ops
 from .. import medical
 
 pd = utils.py.loadExternalModule("pandas")
@@ -135,14 +135,14 @@ class GOTO(Dataset):
     
     @property
     def individuals(self):
-        return list(map(str, processing.lst.uniq(list(self.blood.IOP2_ID.values) + list(self.muscle.IOP2_ID.values))))
+        return list(map(str, ops.lst.uniq(list(self.blood.IOP2_ID.values) + list(self.muscle.IOP2_ID.values))))
     #edef
 
     @property
     def samplesPerIndividual(self):
         if self.__samplesPerIndividual is None:
-            muscle = processing.lst.group(self.muscle[["IOP2_ID", "Sample", "Visitnr"]].values)
-            blood  = processing.lst.group(self.blood[["IOP2_ID", "Sample", "timepoint"]].values)
+            muscle = ops.lst.group(self.muscle[["IOP2_ID", "Sample", "Visitnr"]].values)
+            blood  = ops.lst.group(self.blood[["IOP2_ID", "Sample", "timepoint"]].values)
             self.__samplesPerIndividual = { str(p) : { 'blood' : { str(s[2]) : s[1] for s in blood.get(str(p),[]) }, 
                                                        'muscle' : { str(s[2]) : s[1] for s in muscle.get(int(p),[]) } }
                                            for p in self.individuals }

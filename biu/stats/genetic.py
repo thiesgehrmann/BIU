@@ -1,5 +1,5 @@
 from .. import utils
-from .. import processing
+from .. import ops
 
 sstats = utils.py.loadExternalModule("scipy.stats")
 np     = utils.py.loadExternalModule("numpy")
@@ -21,12 +21,12 @@ def hardyWeinbergEquilibrium(data, alpha=0.001):
     
     resTuple = namedtuple("HardyWeinbergResult", [ 'pvalue', 'method', 'chi2statistic', 'significant' ])
 
-    obs    = processing.lst.freq(data)
+    obs    = ops.lst.freq(data)
     pvalue = __SNPHWE(obs.get(1,0), obs.get(0,0), obs.get(2,0))
 
     #n   = len(data)
     #p   = sum(data) / (sum(data) + sum(data == 0))
-    #obs = processing.lst.freq(data)
+    #obs = ops.lst.freq(data)
     #exp = { 0.0 : np.power(1-p,2) * n,
     #        1.0 : 2*p*(1-p) * n,
     #        2.0 : np.power(p,2) * n }

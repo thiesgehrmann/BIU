@@ -74,7 +74,7 @@ def reorder(matrix, symmetric=False, by=None, **kwargs):
         matrix: pandas DataFrame, numpy ndArray or numpy matrix
         symmetric: If it is a symmetric matrix, reorder the columns as well as the rows
         by : Reorder this matrix by the ordering of this matrix, instead
-        **kwargs: The options for biu.processing.matrix.order (distance, method etc.)
+        **kwargs: The options for biu.ops.matrix.order (distance, method etc.)
     Output:
         Depending on input:
             * pandas DataFrame

@@ -9,7 +9,7 @@
 """
 
 from .. import utils
-from .. import processing
+from .. import ops
 from .. import stats
 
 pd = utils.py.loadExternalModule("pandas")
@@ -201,7 +201,7 @@ def associate(covariates, data=None, nc=6, plot=False, ax=None, correctionType='
         P = pd.DataFrame(pmat, index=covariates.columns, columns=covariates.columns)
 
     else:
-        pc_data = processing.dataframe.pca(data, nc=nc)
+        pc_data = ops.dataframe.pca(data, nc=nc)
         emat = np.zeros((len(covariates.columns), nc))
         pmat = np.zeros((len(covariates.columns), nc))
         for i, cov_i in enumerate(covariates.columns):

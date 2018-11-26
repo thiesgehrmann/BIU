@@ -26,7 +26,7 @@ BIU is a library of utilities and tools that provides:
   * Medical tools (`biu.medical`):
     * health parameters: (`biu.medical.health`) (Framingham Risk Score, etc)
 
-  * Data Structure processing (`biu.processing`):
+  * Data Structure ops (`biu.ops`):
     * Python lists
     * numpy Matrices
     * pandas DataFrames
@@ -95,8 +95,9 @@ from . import maps as maps
 from . import math as math
 from . import stats as stats
 
-# Make data structure processing available
-from . import processing as processing
+# Make data structure ops available
+from . import ops as ops
+from . import ops as processing # For legacy. Remove soon.
 
 # Make tools for analysis and pipelines available
 from . import analysis as analysis
@@ -106,7 +107,7 @@ from . import medical as medical
 def __version__():
   print("BIU (Bio Utilities) python module")
   print(config.settings.dumps())
-  print(" Current config hash: %s" % processing.lst.hash(config.settings.dumps()))
+  print(" Current config hash: %s" % ops.lst.hash(config.settings.dumps()))
 #edef
 
 __missingDependencies = settings.missingDependencies()

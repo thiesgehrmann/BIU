@@ -1,6 +1,6 @@
 from ..structures import Pipeline
 from .. import formats
-from .. import processing
+from .. import ops
 from .. import utils
 from .. import db
 
@@ -251,7 +251,7 @@ class Merlin(Pipeline):
 
     # Reorder the elements in the matrix
     D = np.matrix(D)
-    order = processing.matrix.order(D, 'correlation', 'complete')
+    order = ops.matrix.order(D, 'correlation', 'complete')
     newD = D[order,:]
     
     # Make the plot

@@ -1,5 +1,5 @@
 from ... import utils
-from ... import processing
+from ... import ops
 from ... import settings as settings
 
 np = utils.py.loadExternalModule("numpy")
@@ -203,7 +203,7 @@ def isSigIn(testRes, contr=None, logic=all, alpha=0.05, lfcThresh=0.5,
     #fi
     relRes = sigTests(testRes, alpha=alpha, lfcThresh=lfcThresh, col_pval=col_pval,
                       col_lfc=col_lfc, col_contr=col_contr)
-    sigGeneGroups = processing.lst.group(relRes[[col_contr, col_index]].values, key=lambda x: x[1], value=lambda x: x[0])
+    sigGeneGroups = ops.lst.group(relRes[[col_contr, col_index]].values, key=lambda x: x[1], value=lambda x: x[0])
     sigGenes = [ g for g in sigGeneGroups if logic([ (c in sigGeneGroups[g]) for c in contr ]) ]
     return sigGenes
 #edef

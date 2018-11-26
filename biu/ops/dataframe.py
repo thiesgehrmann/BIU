@@ -60,7 +60,7 @@ def tsne(data, ret_fit=False, **kwargs):
 def reorder(df, **kwargs):
   """
   Reorder the columns/rows of a dataframe
-  See biu.processing.matrix.reorder for information on this function
+  See biu.ops.matrix.reorder for information on this function
   """
   return matrix.reorder(df, **kwargs)
 #edef
