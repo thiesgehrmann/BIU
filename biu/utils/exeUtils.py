@@ -14,7 +14,7 @@ def runCommand(cmd, bg=False, stdin=None, stdout=None, stderr=None, shell=False,
     cmd = shlex.split(cmd)
   #fi
 
-  p = subprocess.Popen(cmd, stdin=stdin, stdout=stdout, stderr=stderr, shell=shell);
+  p = subprocess.Popen(cmd, stdin=stdin, stdout=stdout, stderr=stderr, shell=shell, env=os.environ);
   if bg:
     return p;
   else:
@@ -35,7 +35,7 @@ def getCommandOutput(cmd, stdin=None, stderr=False, shell=False, verbose=False):
   #fi
 
   #p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=shell);
-  p = subprocess.run(cmd, stdin=stdin, stdout=subprocess.PIPE, stderr=(subprocess.PIPE if stderr else None), shell=shell)
+  p = subprocess.run(cmd, stdin=stdin, stdout=subprocess.PIPE, stderr=(subprocess.PIPE if stderr else None), shell=shell, env=os.environ)
 
   if stderr:
     return (p.stdout, p.stderr)

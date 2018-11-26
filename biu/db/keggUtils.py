@@ -18,7 +18,8 @@ class KEGG(Dataset):
   versions = {
     "human" : "hsa",
     "mouse" : "mmu",
-    "drosophilia" : "dme"
+    "drosophilia" : "dme",
+    "yeast" : 'sce'
   }
 
   def __init__(self, version=list(versions.keys())[0], **kwargs):
@@ -46,7 +47,7 @@ class KEGG(Dataset):
 
   def __genFileIndex(self, version, where=None):
      finalPath = '%s/kegg/%s' % ( (settings.getDataDir() if where is None else where), version)
-     orgKey = self.versions[version]
+     orgKey = self.versions[version] if version in self.versions else version
      files = {}
      files['org_map'] = utils.Acquire(where=where).curl("http://rest.kegg.jp/link/%s/pathway" % orgKey).finalize('%s/org_map.tsv' % finalPath)
      files['feature_data'] = utils.Acquire(where=where).touch('%s/feature_data.dict.sqlite' % finalPath)
@@ -130,6 +131,8 @@ class KEGG(Dataset):
         return "%s:%d" % (self.__orgID, int(ID)) # Remove leading zeros from string
       elif ID[:1+len(self.__orgID)] == '%s:' % self.__orgID:
         return ID
+      elif ID in self.getGeneIDs():
+        return "%s:%s" % (self.__orgID, ID)
       else:
         utils.dbm("Don't know what to do with '%s'" % str(ID))
       #fi

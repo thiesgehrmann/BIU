@@ -1,10 +1,30 @@
-from .. import utils
+from ... import utils
 
 sstats = utils.py.loadExternalModule("scipy.stats")
 np     = utils.py.loadExternalModule("numpy")
 pd     = utils.py.loadExternalModule("pandas")
 
 def normalize(method, E, *pargs, **kwargs):
+    """
+    Normalize RNA-Seq data.
+    Inputs:
+      method: String. Normalization method to use.
+              [ voom | cpm | tmm | fpkm | nonzero ]
+              voom: Not implemented yet...
+              cpm: log2 Countr per Million normalization
+              tmm: Trimmed Means normalization
+                   Optional arguments:
+                       refID=None The index of the reference sample to use. If None, the sample closest to the average is used 
+                       logratioTrim=0.3. See the documentation of the R CalcNormFactors function for more information
+                       sumTrim=0.05
+                       aCutoff=-1e10
+              fpkm: Not yet implemented
+              nonzero: Remove rows (i.e. columns) with entirely zero values.
+      E: DataFrame. Expression data
+         rows are samples. columns are genes
+    Output:
+      Normalized expression DataFrame
+    """
     methods = { 'voom' : __normalize_voom,
                 'cpm' : __normalize_cpm,
                 'tmm' : __normalize_tmm,

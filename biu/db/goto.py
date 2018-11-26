@@ -122,7 +122,7 @@ class GOTO(Dataset):
             #ef r
 
         #fi
-        return self._getObject('blood')
+        return self._getObject('blood').set_index('Sample')
     #edef
     
     @property
@@ -130,7 +130,7 @@ class GOTO(Dataset):
         if not self._objectLoaded('muscle'):
             self._getObject('muscle')['Sample'] = self._getObject('muscle').Sample.apply(lambda s: s.replace('-', '_'))
         #fi
-        return self._getObject('muscle')
+        return self._getObject('muscle').set_index('Sample')
     #edef
     
     @property

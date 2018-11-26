@@ -5,13 +5,13 @@ np = utils.py.loadExternalModule("numpy")
 
 ###############################################################################
 
-def correct(pvals, correctionType, **kwargs):
+def correct(pvals, correctionType='fwer', **kwargs):
   """
   correct: Multiple testing correction.
 
   Inputs:
    - pvals: list of p values
-   - correctionType: Type of correction
+   - correctionType: Type of correction (default is fwer)
      - fwer|bonferroni => bonferroni()
      - fdr|fdr_bh => fdrBH()
      - fdr_bhy => fdrBHY()
@@ -20,17 +20,32 @@ def correct(pvals, correctionType, **kwargs):
   Outputs:
    - corrected p-values
   """
+
+  data = pvals
+  if isinstance(pvals, pd.DataFrame):
+    data = pvals.values.reshape(np.product(pvals.shape))
+  elif isinstance(pvals, np.ndarray) or isinstance(pvals, np.matrix):
+    data = pvals.reshape(np.product(pvals.shape))
+  #fi
+
+
   correctionType = correctionType.lower()
 
   if correctionType in [ 'fwer', 'bonferroni' ]:
-    q = bonferroni(pvals)
+    q = bonferroni(data)
   elif correctionType in [ 'fdr', 'fdr_bh' ]:
-    q = fdrBH(pvals)
+    q = fdrBH(data)
   elif correctionType in [ 'fdr_bhy' ]:
-    q = fdrBHY(pvals, **kwargs)
+    q = fdrBHY(data, **kwargs)
   else:
     utils.warning("correctionType='%s' is unknown. Falling back to bonferroni." % str(correctionType))
-    q = bonferroni(pvals)
+    q = bonferroni(data)
+  #fi
+
+  if isinstance(pvals, pd.DataFrame):
+    q = pd.DataFrame(q.reshape(pvals.shape), index=pvals.index, columns=pvals.columns)
+  elif isinstance(pvals, np.ndarray) or isinstance(pvals, np.matrix):
+    q = q.reshape(pvals.shape)
   #fi
 
   return q
