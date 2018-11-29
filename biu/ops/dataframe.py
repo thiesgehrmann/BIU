@@ -28,34 +28,20 @@ def pca(df, nc=2, ret_fit=False, **kwargs):
     #fi
 #edef
 
-from sklearn.manifold import TSNE
-
-def tsne(data, ret_fit=False, **kwargs):
+def tsne(data, **kwargs):
     """
     Perform TSNE on a matrix/dataframe
     Inputs:
         data: Dataframe/matrix/ndarray
-        ret_fit: Boolean. Return the fit, together with the dataframe
         **kwargs: Options for TSNE
     Outputs:
-        if ret_fit is False:
-            DataFrame/matrix of TSNE reduction
-        else:
-            Same dataframe as above, plus the fit object
+        DataFrame/matrix of TSNE reduction
     """
-    rel_df = data[diffExGenes]
-    fit    = skm.TSNE(**kwargs).fit(rel_df)
-    trans  = fit.transform(rel_df)
-    if isinstance(data, pd.DataFrame):
-        trans = pd.DataFrame(trans, index=data.index, columns=[ 'TSNE_%d' % (i+1) for i in range(trans.shape[1])])
-    #fi
-    if ret_fit:
-        return trans, fit
-    else:
-        return trans
-    #fi
+    trans = skm.TSNE(**kwargs).fit_transform(data)
+    trans = pd.DataFrame(trans, index=data.index, columns=[ 'TSNE_%d' % (i+1) for i in range(trans.shape[1])])
+    return trans
+
 #edef
-        
 
 def reorder(df, **kwargs):
   """

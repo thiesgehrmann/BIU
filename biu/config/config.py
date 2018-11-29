@@ -132,29 +132,62 @@ class globalSettings(object):
   ###############################################################################
   
   def getDebugState(self):
+    """Get the state of whether or not debug messages should be displayed"""
     return self.getSetting("debug_messages")
   #edef
 
   def setDebugState(self, state):
+    """Set the state of whether or not debug messages should be displayed"""
     if isinstance(state, bool):
       self.setSettings(debug_messages=state)
     #fi
   #edef
 
   def toggleDebug(self):
+    """Toggle the state of whether or not debug messages should be displayed"""
     self.setSettings(debug_messages=not(self.getDebugState()))
   #edef
 
   def getDebugStream(self):
+    """ Get the stream to which debug messages should be printed to"""
     return self.getSetting("debug_stream")
   #edef
 
   def setDebugStream(self, stream):
+    """ Set the stream to which debug messages should be written to (must be stderr or stdout, falls back to stdout)"""
     if stream not in [ "stderr", "stdout" ]:
       stream = "stdout"
     #fi
     return self.setSettings(debug_stream=stream)
   #edef
+
+  ###############################################################################
+
+  def getErrorState(self):
+    """Get the state of whether or not error messages should be displayed"""
+    return self.getSetting("error_messages")
+  #edef
+  def setErrorState(self, state):
+    """Set the state of whether or not error messages should be displayed"""
+    if isinstance(state, bool):
+      self.setSettings(error_messages=state)
+  #edef
+  def toggleErrorState(self):
+    """Toggle the state of whether or not error messages should be displayed"""
+    self.setSettings(error_messages=not(self.getErrorState()))
+
+  def getWarningState(self):
+    """Get the state of whether or not warning messages should be displayed"""
+    return self.getSetting("warning_messages")
+  #edef
+  def setWarningState(self, state):
+    """Set the state of whether or not warning messages should be displayed"""
+    if isinstance(state, bool):
+      self.setSettings(warning_messages=state)
+  #edef
+  def toggleWarningState(self):
+    """Toggle the state of whether or not warning messages should be displayed"""
+    self.setSettings(warning_messages=not(self.getWarningState()))
 
   ###############################################################################
 

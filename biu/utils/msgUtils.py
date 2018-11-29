@@ -19,17 +19,21 @@ def dbm(message):
 ###############################################################################
 
 def error(message):
-  for line in str(message).split('\n'):
-    sys.stderr.write('E: %s\n' % line)
-  #efor
+  if settings.getErrorState():
+    for line in str(message).split('\n'):
+      sys.stderr.write('E: %s\n' % line)
+    #efor
+  #fi
 #edef
 
 ###############################################################################
 
 def warning(message):
-  for line in str(message).split('\n'):
-    sys.stderr.write('W: %s\n' % line)
-  #efor
+  if settings.getWarningState():
+    for line in str(message).split('\n'):
+      sys.stderr.write('W: %s\n' % line)
+    #efor
+  #fi
 #edef
 
 ###############################################################################

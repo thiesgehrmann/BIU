@@ -11,6 +11,9 @@
   "debug_messages" : true,
   "debug_stream" : "stderr",
 
+  "error_messages" : false,
+  "warnings_messages" : false,
+
   "pipeline_where" : "",
   "pipelines_base" : "pipelines",
   "pipelines_common_name" : "common",

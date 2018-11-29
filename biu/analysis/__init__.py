@@ -5,7 +5,9 @@ Tools for analysis of different types of data:
   * Normalization
   * Differential expression (with limma/VOOM)
  * covariates : Analyze covariation between your data and their covariates
+ * trajectory: Analyze the movement of samples through PC space
 """
 
 from . import rnaseq
 from . import covariates
+from . import trajectory

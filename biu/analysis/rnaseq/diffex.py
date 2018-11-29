@@ -286,7 +286,10 @@ def compair(diffex, contrA, contrB, alpha=0.05, lfcThresh=0.5,
         
         Comparisons are given:
             significant: Is the gene significantly differentially expressed in any condition (pvalue < alpha) & lfc > lfcThresh
+            sig_both:    Is the gene significantly differentially expressed in all conditions?
             consistent:  Does the Log Fold change have the same sign in both contrasts
+            up:          Is the LFC consistent and larger than zero in both?
+            down:        Is the LFC consistent and less than zero in both?
             stronger:    Is the Log Fold Change consistent and larger in contrast B than in contrast A?
             weaker:      Is the LFC consistent and smaller in contrast B than in contrast A?
             slope:       In terms of the volcano plot, with which slope does the gene move?
@@ -296,7 +299,10 @@ def compair(diffex, contrA, contrB, alpha=0.05, lfcThresh=0.5,
     D = diffex[diffex[col_contr].isin([contrA, contrB])].copy()
     D = D.pivot(index='gene', columns='contr', values=['qvalue', 'logFC'])
     D['significant'] = list(map(np.any, (D[col_pval].values < 0.05) & (D[col_lfc].abs().values > lfcThresh )))
+    D['sig_both']    = list(map(np.all, (D[col_pval].values < 0.05) & (D[col_lfc].abs().values > lfcThresh )))
     D['consistent']  = list(map(lambda x: ~np.logical_xor(*x), (D[col_lfc] > 0).values))
+    D['up']          = list(map(np.all, (D[col_lfc].values > 0 )))
+    D['down']        = list(map(np.all, (D[col_lfc].values < 0 )))
     D['stronger']    = D.consistent.values & (D[col_lfc][contrB].abs().values > D[col_lfc][contrA].abs().values)
     D['weaker']      = D.consistent.values & (D[col_lfc][contrB].abs().values < D[col_lfc][contrA].abs().values)
     D['slope']       = (-np.log10(D[col_pval][contrB].values)+np.log10(D[col_pval][contrA].values))/(D[col_lfc][contrB].values-D[col_lfc][contrA].values)
