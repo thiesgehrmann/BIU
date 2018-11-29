@@ -53,6 +53,21 @@ class GOTO(Dataset):
         return files
     #edef
     
+    def __castStr(self, value):
+        return str(value) if str(value).strip() != "" else None
+    #edef
+
+    def __castFloat(self, value):
+        try:
+            if not str(value).strip():
+                return np.nan
+            #fi
+            return float(value)
+        except Exception as e:
+            return np.nan
+        #etry
+    #edef
+    
     @property
     def blood(self):
         """
@@ -65,29 +80,15 @@ class GOTO(Dataset):
             #self._getObject('blood')['flowcell'] = self._getObject('blood').Sample.apply(lambda s: s.split('_')[1])
             self._getObject('blood')['flowcell_lane'] = self._getObject('blood').Sample.apply(lambda s: s.split('_')[2])
 
-            def castStr(value):
-                return str(value) if str(value).strip() != "" else None
-            #edef
-
-            def castFloat(value):
-                try:
-                    if not str(value).strip():
-                        return np.nan
-                    #fi
-                    return float(value)
-                except Exception as e:
-                    return np.nan
-                #etry
-            #edef
-
-
             FRS = []
             for i, row in self._getObject('blood').iterrows():
-                frs = medical.health.indicators.framingham_risk_score(castFloat(row.Sex) == 1, castFloat(row.Age_Baseline),
-                                                                      castFloat(row.Cholesterol), castFloat(row.Cholesterol_HDL),
-                                                                      castFloat(row.Systolic_Blood_Pressure),
-                                                                      castFloat(row.Antihypertensive_medication) == 1,
-                                                                      castFloat(row.Current_Smoker) == 1,
+                frs = medical.health.indicators.framingham_risk_score(self.__castFloat(row.Sex) == 1,
+                                                                      self.__castFloat(row.Age_Baseline),
+                                                                      self.__castFloat(row.Cholesterol), 
+                                                                      self.__castFloat(row.Cholesterol_HDL),
+                                                                      self.__castFloat(row.Systolic_Blood_Pressure),
+                                                                      self.__castFloat(row.Antihypertensive_medication) == 1,
+                                                                      self.__castFloat(row.Current_Smoker) == 1,
                                                                       False)
                 FRS.append(frs)
             #edef
@@ -114,12 +115,12 @@ class GOTO(Dataset):
                                      'LabonchipRIN', 'Labonchip28S18S', 'totalyieldug', 'FRS' ]
             
             for c in discreteCovariates:
-                self._getObject('blood')[c] = self._getObject('blood')[c].map(castStr).astype('category')
+                self._getObject('blood')[c] = self._getObject('blood')[c].map(self.__castStr).astype('category')
             #efor
             
             for c in continuousCovariates:
-                self._getObject('blood')[c] = self._getObject('blood')[c].map(castFloat).astype(float)
-            #ef r
+                self._getObject('blood')[c] = self._getObject('blood')[c].map(self.__castFloat).astype(float)
+            #efor
 
         #fi
         return self._getObject('blood').set_index('Sample')
@@ -129,6 +130,39 @@ class GOTO(Dataset):
     def muscle(self):
         if not self._objectLoaded('muscle'):
             self._getObject('muscle')['Sample'] = self._getObject('muscle').Sample.apply(lambda s: s.replace('-', '_'))
+            
+            categorical = [ 'sampID', 'IOP2_ID', 'Sex', 'Lipid_lowering_medication', 'Antihypertensive_medication', 
+                            'Status', 'studID', 'flowcell', 'Lane', 'Index', 'Visitnr', 'Biopsynumberused',
+                            'Isolationsseries', 'plate', 'blood.or.muscle' ]
+            numeric     = [ 'Age_Baseline','Nanodrop260280', 'LabonchipRIN', 'Labonchip28S18S', 'totalyieldug',
+                            'passedQC_perc', 'Total_reads', 'Mapped_reads', 'mappedreads_perc', 'PFALIGNEDBASES',
+                            'MEDIAN5PRIMEBIAS', 'MEDIAN3PRIMEBIAS', 'MEDIAN5PRIMETO3PRIMEBIAS', 'meaninsertsize',
+                            'standarddeviation', 'medianinsertsize', 'Glucose', 'Creatinine', 'Cholesterol', 'LN_Insulin',
+                            'WholeBody_percentage_fat', 'WholeBody_percentage_lean', 'total_legs_fat_percentage',
+                            'total_legs_lean_percentage', 'BMI', 'ln_Collagen', 'Pax7_per_nucleus', 'ln_Pax7_per_fiber',
+                            'Ki67_per_nucleus', 'ln_Ki67_per_fiber', 'MyHC1', 'MyHC1_2A', 'MyHC2A', 'MyHC1_2X', 'MyHC2A_2X',
+                            'MyHC2X', 'ln_CSA_um2', 'ln_lipiddropletarea', 'HDL_cholesterol', 'LN_Triglycerides',
+                            'LDL_cholesterol', 'LN_Leptin_Adiponectin', 'XXLVLDLL_LNscaled', 'XLVLDLL_LNscaled',
+                            'LVLDLL_LNscaled', 'MVLDLL_LNscaled', 'SVLDLL_LNscaled', 'XSVLDLL_LNscaled', 'IDLL_LNscaled',
+                            'LLDLL_LNscaled', 'SLDLL_LNscaled', 'XLHDLL_LNscaled', 'MHDLL_LNscaled', 'SHDLL_LNscaled',
+                            'VLDLD_LNscaled', 'LDLD_LNscaled', 'HDLD_LNscaled', 'SerumC_LNscaled', 'VLDLC_LNscaled',
+                            'RemNAtC_LNscaled', 'LDLC_LNscaled', 'HDLC_LNscaled', 'EstC_LNscaled', 'FreeC_LNscaled',
+                            'TotPG_LNscaled', 'PC_LNscaled', 'SM_LNscaled', 'TotCho_LNscaled', 'ApoA1_LNscaled',
+                            'ApoB_LNscaled', 'TotFA_LNscaled', 'FALen_LNscaled', 'UnsatDeg_LNscaled', 'LA_LNscaled',
+                            'CLA_LNscaled', 'FAw3_LNscaled', 'FAw6_LNscaled', 'PUFA_LNscaled', 'MUFA_LNscaled',
+                            'SFA_LNscaled', 'Glc_LNscaled', 'Lac_LNscaled', 'Pyr_LNscaled', 'Cit_LNscaled', 'Glol_LNscaled',
+                            'Ala_LNscaled', 'Gln_LNscaled', 'Gly_LNscaled', 'His_LNscaled', 'Ile_LNscaled', 'Leu_LNscaled',
+                            'Val_LNscaled', 'Phe_LNscaled', 'Tyr_LNscaled', 'Ace_LNscaled', 'AcAce_LNscaled',
+                            'bOHBut_LNscaled', 'Crea_LNscaled', 'Alb_LNscaled', 'Gp_LNscaled', 'Gripstrength', 'darkred',
+                            'darkgreen', 'navyblue', 'magenta', 'cyan3', 'darkorange', 'grey60' ]
+            
+            for c in categorical:
+                self._getObject('muscle')[c] = self._getObject('muscle')[c].map(self.__castStr).astype('category')
+            #efor
+            
+            for c in numeric:
+                self._getObject('muscle')[c] = self._getObject('muscle')[c].map(self.__castFloat).astype(float)
+            #efor
         #fi
         return self._getObject('muscle').set_index('Sample')
     #edef

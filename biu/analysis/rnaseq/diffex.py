@@ -111,26 +111,58 @@ def voom(formula, expr, covariates, group, contrasts, out_dir=dir_path):
     return R
 #edef
 
-def summary(testRes, alpha=0.05, lfcThresh=0.5, col_contr='contr', col_pval='qvalue', col_lfc='logFC'):
+def summary(diffex, alpha=0.05, lfcThresh=0.5, ov=False, col_contr='contr', col_pval='qvalue', col_lfc='logFC'):
     """
     summary: Returns a summary of the differential expression tests
     Inputs: 
-        testRes : The table of tests (e.g. from voom)
+        diffex : The table of tests (e.g. from voom)
         alpha: pvalue threshold
         lfcThresh: LogFC threshold
+        overlaps: Also return the overlaps with other conditions
             
         col_pval: The column to use as corrected pvalue
         col_lfc: The column to use as log fold change
         col_contr: The column to use as the contrast column
     Output: List of genes significant by the specified conditions
     """
-    R = testRes.copy()
-    R['significant'] = 1 * (R[col_pval].values < alpha) & (np.abs(R[col_lfc].values) > lfcThresh )
-    R['up']          = 1 * ((R.significant == 1) & (R[col_lfc] > 0))
-    R['down']        = 1 * ((R.significant == 1) & (R[col_lfc] < 0))
+    S = diffex.copy()
+    S['significant'] = 1 * (S[col_pval].values < alpha) & (np.abs(S[col_lfc].values) > lfcThresh )
+    S['up']          = 1 * ((S.significant == 1) & (S[col_lfc] > 0))
+    S['down']        = 1 * ((S.significant == 1) & (S[col_lfc] < 0))
     
-    return R.groupby(col_contr).agg(sum)[['significant','up','down']]
+    S = S.groupby(col_contr).agg(sum)[['significant','up','down']]
+    
+    if ov:
+        ov = overlaps(diffex, alpha=alpha, lfcThresh=lfcThresh, col_contr=col_contr, col_pval=col_pval, col_lfc=col_lfc)
+        S.columns = pd.MultiIndex.from_product([['summary'], S.columns])
+        ov.columns = pd.MultiIndex.from_product([['overlaps'], ov.columns])
+        return S.join(ov)
+    else:
+        return S
+    #fi
+    
 #edef
+
+def overlaps(diffex, alpha=0.05, lfcThresh=0.5, col_contr='contr', col_pval='qvalue', col_lfc='logFC'):
+    """
+    Overlaps: Returns a table of overlaps the differential expression tests
+    Inputs: 
+        diffex : The table of tests (e.g. from voom)
+        alpha: pvalue threshold
+        lfcThresh: LogFC threshold
+        overlaps: Also return the overlaps with other conditions
+            
+        col_pval: The column to use as corrected pvalue
+        col_lfc: The column to use as log fold change
+        col_contr: The column to use as the contrast column
+    Output: List of genes significant by the specified conditions
+    """
+    sigin = significant_in(diffex, alpha=alpha, lfcThresh=lfcThresh,
+                           col_contr=col_contr, col_pval=col_pval, col_lfc=col_lfc)
+    ov = ops.lst.overlap(list(sigin.values()))
+    ov = pd.DataFrame(ov, columns=sigin.keys(), index=sigin.keys())
+    return ov
+#edef  
 
 
 def sigTests(testRes, alpha=0.05, lfcThresh=0.5, col_pval='qvalue', col_lfc='logFC', col_contr='contr'):
