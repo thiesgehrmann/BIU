@@ -4,7 +4,7 @@ np = utils.py.loadExternalModule("numpy")
 
 def linearInterpolation(curveX, curveY, p, isSorted=False):
     """
-    linearInterpolation: Interpolate a value on a curve
+    linearInterpolation: Linearly Interpolate a value on a curve
     
     Inputs:
       curveX : The X axis coordinates for the curve
@@ -17,7 +17,7 @@ def linearInterpolation(curveX, curveY, p, isSorted=False):
     """
 
     if not isSorted:
-      curveX, curveY = zip(*sorted(zip(curveX, curveY), key=lambda x: x[0]))
+        curveX, curveY = zip(*sorted(zip(curveX, curveY), key=lambda x: x[0]))
     #fi
     
     if hasattr(p, '__len__'):

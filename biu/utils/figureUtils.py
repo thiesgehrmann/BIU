@@ -63,26 +63,73 @@ def venn(*sets, ax=None, names=None):
 
 ###############################################################################
 
-def equal_xlim_ylim(axes, xlim=None, ylim=None):
+def equal_aspect(axes, aspect=1.0):
+    """
+    For a set of axes, make all xlimits and ylimits the same.
+    Inputs:
+        axes: A list of matplotlib axes
+        aspect: Float. Set the aspect of all axes to this value
+    Outputs:
+        Output of set_aspect for each axis
+    """
+    return [ ax.set_aspect(aspect) for ax in axes ]
+#edef
+
+def equal_xylim(axes, xlim=None, ylim=None, aspect=None):
     """
     For a set of axes, make all xlimits and ylimits the same.
     Inputs:
         axes: A list of matplotlib axes
         xlim: Tuple of (min, max) limits for x-axis. or None, (then it is taken from the ranges already in the axis)
         ylim: Tuple of (min, max) limits for y-axis. or None, (then it is taken from the ranges already in the axis)
+        aspect: Float. Set the aspect of all axes to this value
     Outputs:
         A tuple:
         ( (min_x, max_x), (min_y, max_y) )
+    """
+
+    xlim = equal_xlim(axes, xlim)
+    ylim = equal_ylim(axes, ylim)
+    
+    if aspect is not None:
+        equal_aspect(axes, aspect)
+    #fi
+    
+    return (xlim, ylim)
+#edef
+
+def equal_xlim(axes, xlim=None):
+    """
+    For a set of axes, make all xlimits the same.
+    Inputs:
+        axes: A list of matplotlib axes
+        xlim: Tuple of (min, max) limits for x-axis. or None, (then it is taken from the ranges already in the axis)
+    Outputs:
+        A tuple:
+        (min_x, max_x)
     """
     if xlim is None:
         xlim = [ f(list(zip(*[ ax.get_xlim() for ax in axes ]))) for f in [ np.min, np.max ] ]
     #fi
     [ ax.set_xlim(xlim) for ax in axes ]
     
+    return xlim
+#edef
+
+def equal_ylim(axes, ylim=None):
+    """
+    For a set of axes, make all ylimits the same.
+    Inputs:
+        axes: A list of matplotlib axes
+        ylim: Tuple of (min, max) limits for y-axis. or None, (then it is taken from the ranges already in the axis)
+    Outputs:
+        A tuple:
+        (min_y, max_y)
+    """
     if ylim is None:
         ylim = [ f(list(zip(*[ ax.get_ylim() for ax in axes ]))) for f in [ np.min, np.max ] ]
     #fi
     [ ax.set_ylim(ylim) for ax in axes ]
     
-    return (xlim, ylim)
+    return ylim
 #edef

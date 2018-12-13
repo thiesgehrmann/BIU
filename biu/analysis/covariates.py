@@ -1,11 +1,13 @@
 """
   Tools to analyze covariates.
+   * detect_categorical
    * expand_categorical
    * order_categories
    * dummy
    * cramers_corrected_stat 
    * associate_pair
    * associate
+
 """
 
 from .. import utils
@@ -20,6 +22,51 @@ sns    = utils.py.loadExternalModule('seaborn')
 
 from collections import namedtuple
 assoc_result = namedtuple('associationResult', ['method', 'statistic', 'pvalue'])
+
+
+def detect_categorical(df, ret_types=False):
+    """
+    Detects and sets categorical columns in a dataframe.
+    Inputs:
+        df: A pandas DataFrame
+        ret_types: Return a dictionary of column: [category|numeric]
+    Outputs:
+        A copy of the dataframe, in which columns detected to be categorical have the appropriate dtype set ('category')
+        Numeric columns (columns with numbers) are coerced to be numeric floats
+        
+        if ret_types is True:
+         (dataframe, dict)
+         
+    Note: This function detects if a column is numeric by testing if each non-NA cell contains an
+          integer/float, or an integer-like string or a float-like string. Otherwise, it is
+          set as categorical.
+    """
+    new_df = df.copy()
+    types = {}
+    for col in df.columns:
+        series = df[col]
+        if hasattr(series, 'str') or (series.dtype.name == 'object'):
+            not_na = series.str.isnumeric()[~pd.isna(series)]
+            if all(not_na):
+                new_df[col] = pd.to_numeric(series, errors='coerce')
+                types[col] = 'numeric'
+            else:
+                # make it categorical
+                new_df[col] = new_df[col].astype('category')
+                types[col] = 'category'
+            #fi
+        else:
+            new_df[col] = pd.to_numeric(series, errors='coerce')
+            types[col] = 'numeric'
+        #edef
+    #efor
+
+    if ret_types:
+        return new_df, types
+    else:
+        return new_df
+    #fi
+#efor
 
 def expand_categorical(cov):
     """
@@ -174,6 +221,7 @@ def associate(covariates, data=None, nc=6, plot=False, ax=None, correctionType='
     Inputs:
       covariates: A dataframe of covariates (rows are data points, columns are covariates)
       data: A dataframe of data (rows are datapoints, columns are measurements)
+            If data is None, then each covariate will be associated with the other covariates
       effect: Report the effect size instead of the pvalue
       nc : The number of components to inspect
       plot: Boolean. Plot a diagram of results if True
@@ -231,3 +279,4 @@ def associate(covariates, data=None, nc=6, plot=False, ax=None, correctionType='
 
     return E, P
 #edef
+

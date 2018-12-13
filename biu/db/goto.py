@@ -46,7 +46,7 @@ class GOTO(Dataset):
         #efor
         files['expr'] = utils.Acquire('/exports/molepi/tgehrmann/data/GOTO_data/goto_expr.csv')
         files['blood_cov'] = utils.Acquire('/exports/molepi/tgehrmann/data/GOTO_data/datasheet_RNAseq_blood_V2.csv')
-        files['muscle_cov'] = utils.Acquire('/exports/molepi/tgehrmann/data/GOTO_data/muscle_QC_covariates_filesv3.csv')
+        files['muscle_cov'] = utils.Acquire('/exports/molepi/tgehrmann/data/GOTO_data/muscle_QC_covariates_filesv2.csv')
 
         #files['phen'] = utils.Acquire("/dev/null")
 
@@ -153,8 +153,7 @@ class GOTO(Dataset):
                             'SFA_LNscaled', 'Glc_LNscaled', 'Lac_LNscaled', 'Pyr_LNscaled', 'Cit_LNscaled', 'Glol_LNscaled',
                             'Ala_LNscaled', 'Gln_LNscaled', 'Gly_LNscaled', 'His_LNscaled', 'Ile_LNscaled', 'Leu_LNscaled',
                             'Val_LNscaled', 'Phe_LNscaled', 'Tyr_LNscaled', 'Ace_LNscaled', 'AcAce_LNscaled',
-                            'bOHBut_LNscaled', 'Crea_LNscaled', 'Alb_LNscaled', 'Gp_LNscaled', 'Gripstrength', 'darkred',
-                            'darkgreen', 'navyblue', 'magenta', 'cyan3', 'darkorange', 'grey60' ]
+                            'bOHBut_LNscaled', 'Crea_LNscaled', 'Alb_LNscaled', 'Gp_LNscaled', 'Gripstrength' ]
             
             for c in categorical:
                 self._getObject('muscle')[c] = self._getObject('muscle')[c].map(self.__castStr).astype('category')
@@ -175,10 +174,10 @@ class GOTO(Dataset):
     @property
     def samplesPerIndividual(self):
         if self.__samplesPerIndividual is None:
-            muscle = ops.lst.group(self.muscle[["IOP2_ID", "Sample", "Visitnr"]].values)
-            blood  = ops.lst.group(self.blood[["IOP2_ID", "Sample", "timepoint"]].values)
+            muscle = ops.lst.group(self.muscle.reset_index()[["IOP2_ID", "Sample", "Visitnr"]].values)
+            blood  = ops.lst.group(self.blood.reset_index()[["IOP2_ID", "Sample", "timepoint"]].values)
             self.__samplesPerIndividual = { str(p) : { 'blood' : { str(s[2]) : s[1] for s in blood.get(str(p),[]) }, 
-                                                       'muscle' : { str(s[2]) : s[1] for s in muscle.get(int(p),[]) } }
+                                                       'muscle' : { str(s[2]) : s[1] for s in muscle.get(str(p),[]) } }
                                            for p in self.individuals }
         #fi
         return self.__samplesPerIndividual

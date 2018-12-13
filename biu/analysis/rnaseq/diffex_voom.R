@@ -98,18 +98,26 @@ efit <- eBayes(voomfit)
 # Output the data
 
 allTestRes = NULL
-for (contr.idx in 1:dim(contr.matrix)[2] ){
-  contr.name <- names(contr.matrix[1,])[contr.idx]
-  testRes <- data.frame(topTreat(efit, coef=contr.idx, n=Inf))
-  testRes$contr <- unlist(strsplit(contr.name,'='))[[1]]
-  testRes$gene  <- rownames(testRes)
-  print(contr.name)
-  
-  if (is.null(allTestRes)){
-    allTestRes <- testRes
-  } else {
-    allTestRes <- rbind(allTestRes, testRes)
-  }
+
+if(length(contrasts) == 1){
+    allTestRes <- data.frame(topTreat(efit, coef=1, n=Inf))
+    allTestRes$contr <- unlist(strsplit(contrasts[[1]],'='))[[1]]
+    allTestRes$gene  <- rownames(allTestRes)
+    
+} else {
+    for (contr.idx in 1:dim(contr.matrix)[2] ){
+      contr.name <- colnames(contr.matrix[1,])[contr.idx]
+      testRes <- data.frame(topTreat(efit, coef=contr.idx, n=Inf))
+      testRes$contr <- unlist(strsplit(contr.name,'='))[[1]]
+      testRes$gene  <- rownames(testRes)
+      print(contr.name)
+
+      if (is.null(allTestRes)){
+        allTestRes <- testRes
+      } else {
+        allTestRes <- rbind(allTestRes, testRes)
+      }
+    }
 }
 
 write.table(allTestRes, file=Ofile, sep=';', row.names=FALSE)

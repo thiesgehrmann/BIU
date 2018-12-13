@@ -187,13 +187,14 @@ class KEGG(Dataset):
     #fi
   #edef
 
-  def enrich(self, yourSet, pathway=None, correctionType=None, **kwargs):
+  def enrich(self, yourSet, background=None, pathway=None, correctionType=None, **kwargs):
     """
     Enrich: Check enrichment of KEGG pathways in a given set
 
     Inputs:
       - yourSet: List of Entrez Gene IDs to test
       - pathway: List of pathways (or single pathway) to test (Defaults to all pathways that your geneIDs are present in)
+      - background: List of Entrez Gene IDs to use as background (e.g. set of all expressed genes)
       - correctionType: Type of multiple testing correction procedure to use
       - **kwargs: Additional arguments for multple testing procedure
 
@@ -208,13 +209,19 @@ class KEGG(Dataset):
           pathway = set(self.getGenePathways(gene)) | pathway
         #efor
     #fi
+    
+    if background is None:
+        background = self.getGeneIDs()
+    #fi
+    background = set(background)
+    
     if isinstance(pathway, str):
         pathway = [ pathway ]
     #fi
     R = []
     B = self.getGeneIDs()
     for p in pathway:
-        pathwayGenes = self.getPathwayGeneIDs(p)
+        pathwayGenes = set(self.getPathwayGeneIDs(p)) & background
         res = stats.enrichment.setEnrichment(yourSet, pathwayGenes, B)
         R.append((p, res.method, res.c2statistic, res.oddsratio, res.pvalue))
     #efor
