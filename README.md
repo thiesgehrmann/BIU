@@ -126,7 +126,8 @@ BIU is a library of utilities and tools that provides:
 Currently, there is no proper pythonic way to install the package.
 Just clone the github repository and add BIU to your path.
   ```python
-     os.path.append('path/to/BIU')
+     import sys
+     sys.path.append('path/to/BIU')
      import biu
   ```
 
