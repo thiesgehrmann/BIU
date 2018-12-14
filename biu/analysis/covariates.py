@@ -23,6 +23,7 @@ sns    = utils.py.loadExternalModule('seaborn')
 from collections import namedtuple
 assoc_result = namedtuple('associationResult', ['method', 'statistic', 'pvalue'])
 
+##############################################################################################
 
 def detect_categorical(df, ret_types=False):
     """
@@ -75,10 +76,10 @@ def expand_categorical(cov):
       cov: Pandas DataFrame. covariates are annotated as categorical (with cov.col.astype('category') )
     Output:
       Pandas DataFrame, with categorical covariates removed, and new numerical covariates to replace it.
-      e.g. original column: [ A,A,B,C ]:
-      new columns:          [ 1,1,0,0 ]
-                            [ 0,0,1,0 ]
-                            [ 0,0,0,1 ]
+      e.g. original column: c [ A,A,B,C ]:
+      new columns:          c_A [ 1,1,0,0 ]
+                            c_B [ 0,0,1,0 ]
+                            c_C [ 0,0,0,1 ]
     """
     E = cov.copy()
     for col in E.columns:
@@ -215,7 +216,7 @@ def associate_pair(X, Y):
     return assocs[(X.dtype.name == 'category',Y.dtype.name == 'category')](X_no_na, Y_no_na)
 #edef
 
-def associate(covariates, data=None, nc=6, plot=False, ax=None, correctionType='fdr', **kwargs):
+def associate(covariates, data=None, nc=6, plot=False, ax=None, method='fdr', **kwargs):
     """
     Correlate a matrix of covariates with itself, or with the first nc PCs of a data matrix
     Inputs:
@@ -226,8 +227,8 @@ def associate(covariates, data=None, nc=6, plot=False, ax=None, correctionType='
       nc : The number of components to inspect
       plot: Boolean. Plot a diagram of results if True
       ax: Matplotlib axis. Plot onto this axis, if None, generate own one.
-      correctionType: The Multiple Testing Correction method to use (see biu.stats.correction.correct). You can specify None to not correct.
-      **kwargs: Optional arguments for biu.stats.correction.correct
+      method: The Multiple Testing Correction method to use (see biu.stats.p_adjust). You can specify None to not correct.
+      **kwargs: Optional arguments for biu.stats.p_adjust
     Output:
         E : A dataframe of effects, and
         P : A dataframe of (corrected) p-values
@@ -264,8 +265,8 @@ def associate(covariates, data=None, nc=6, plot=False, ax=None, correctionType='
         P = pd.DataFrame(pmat, index=covariates.columns, columns=pc_data.columns)
     #fi
 
-    if correctionType is not None:
-        P = stats.correction.correct(P, correctionType=correctionType, **kwargs)
+    if method is not None:
+        P = stats.p_adjust(P, method=method, **kwargs)
     #fi
 
     if plot:

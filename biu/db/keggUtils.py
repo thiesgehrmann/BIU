@@ -187,7 +187,7 @@ class KEGG(Dataset):
     #fi
   #edef
 
-  def enrich(self, yourSet, background=None, pathway=None, correctionType=None, **kwargs):
+  def enrich(self, yourSet, background=None, pathway=None, method=None, **kwargs):
     """
     Enrich: Check enrichment of KEGG pathways in a given set
 
@@ -195,8 +195,8 @@ class KEGG(Dataset):
       - yourSet: List of Entrez Gene IDs to test
       - pathway: List of pathways (or single pathway) to test (Defaults to all pathways that your geneIDs are present in)
       - background: List of Entrez Gene IDs to use as background (e.g. set of all expressed genes)
-      - correctionType: Type of multiple testing correction procedure to use
-      - **kwargs: Additional arguments for multple testing procedure
+      - method: Type of multiple testing correction procedure to use
+      - **kwargs: Additional arguments for biu.stats.p_adjust
 
     Outputs:
      - df : Pandas Data Frame of test results
@@ -227,8 +227,8 @@ class KEGG(Dataset):
     #efor
 
     df = pd.DataFrame(R, columns=['pathway', 'method', 'c2statistic', 'oddsratio', 'p'])
-    if correctionType is not None:
-      df['q'] = stats.correction.correct(df.p.values, correctionType, **kwargs)
+    if method is not None:
+      df['q'] = stats.p_adjust(df.p.values, method, **kwargs)
     #fi
 
     return df

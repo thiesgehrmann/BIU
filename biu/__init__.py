@@ -4,6 +4,7 @@ BIU: BioInformatics Utilities.
 BIU is a library of utilities and tools that provides:
 
   * Access to several standard (and not so standard) Bioinformatics formats (`biu.formats`)
+    * Fasta, GFF, VCF, PED, ABI, Newick
 
   * Automated retrieval and interface to data from several databases (`biu.db`):
     * Genomes (Ensembl, Flybase, Wormbase)
@@ -22,25 +23,30 @@ BIU is a library of utilities and tools that provides:
   * Analysis of bioinformatic data (`biu.analysis`)
     * RNASeq data: (`biu.analysis.rnaseq`)
     * Covariates: (`biu.analysis.covariates`)
+    * Trajectory: (`biu.analysis.trajectory)
 
   * Medical tools (`biu.medical`):
     * health parameters: (`biu.medical.health`) (Framingham Risk Score, etc)
 
   * Data Structure ops (`biu.ops`):
-    * Python lists
-    * numpy Matrices
-    * pandas DataFrames
+    * Python lists (`biu.ops.lst`)
+    * numpy Matrices (`biu.ops.matrix`)
+    * pandas DataFrames (`biu.ops.dataframe`)
+    * arrays (`biu.ops.array`)
    
   * Statistical analysis (`biu.stats`)
     * Regression (`biu.stats.regression`):
       * LOWESS regression
     * Enrichment (`biu.stats.enrichment`)
-    * Multiple Testing Correction (FWER, FDR) (`biu.stats.correction`)
+    * Multiple Testing Correction (FWER, FDR) (`biu.stats.p_adjust`)
     * Statistical genetics (`biu.stats.genetics`)
       * Hardy Weinberg Equilibrium test)
 
   * Mathematical functionality (`biu.math`)
     * Interpolation (`biu.math.interpolation`)
+    * Linear algrbra (`biu.math.linalg`)
+    
+  * R functions converted to python (`biu.R`)
     
 
 BIU depends on a lot of modules.

@@ -5,10 +5,11 @@
 BIU is a library of utilities and tools that provides:
 
   * Access to several standard (and not so standard) Bioinformatics formats (`biu.formats`)
+    * Fasta, GFF, VCF, PED, ABI, Newick
 
   * Automated retrieval and interface to data from several databases (`biu.db`):
     * Genomes (Ensembl, Flybase, Wormbase)
-    * Database/Datasets (ClinVar, DBSnp, GnomAD, Kegg, GO, UniProt, CADD, etc.)
+    * Database/Datasets (ClinVar, DBSnp, GnomAD, Kegg, UniProt, CADD, etc.)
 
   * Mapping between genome Identifiers (`biu.maps`):
     * Within a genome, where possible (gene -> Transcript -> Protein)
@@ -23,25 +24,30 @@ BIU is a library of utilities and tools that provides:
   * Analysis of bioinformatic data (`biu.analysis`)
     * RNASeq data: (`biu.analysis.rnaseq`)
     * Covariates: (`biu.analysis.covariates`)
+    * Trajectory: (`biu.analysis.trajectory)
 
   * Medical tools (`biu.medical`):
     * health parameters: (`biu.medical.health`) (Framingham Risk Score, etc)
 
-  * Operations on standard data structures (`biu.ops`):
-    * Python lists
-    * numpy Matrices
-    * pandas DataFrames
+  * Data Structure ops (`biu.ops`):
+    * Python lists (`biu.ops.lst`)
+    * numpy Matrices (`biu.ops.matrix`)
+    * pandas DataFrames (`biu.ops.dataframe`)
+    * arrays (`biu.ops.array`)
    
   * Statistical analysis (`biu.stats`)
     * Regression (`biu.stats.regression`):
       * LOWESS regression
     * Enrichment (`biu.stats.enrichment`)
-    * Multiple Testing Correction (FWER, FDR) (`biu.stats.correction`)
+    * Multiple Testing Correction (FWER, FDR) (`biu.stats.p_adjust`)
     * Statistical genetics (`biu.stats.genetics`)
       * Hardy Weinberg Equilibrium test)
 
   * Mathematical functionality (`biu.math`)
     * Interpolation (`biu.math.interpolation`)
+    * Linear algrbra (`biu.math.linalg`)
+    
+  * R functions converted to python (`biu.R`)
 
 ## Examples
 
@@ -121,6 +127,7 @@ Currently, there is no proper pythonic way to install the package.
 Just clone the github repository and add BIU to your path.
   ```python
      os.path.append('path/to/BIU')
+     import biu
   ```
 
 ### Dependencies
@@ -157,9 +164,6 @@ All external dependencies currently used are:
 
 ## Documentation
 
-See [Documentation](docs#biu-documentation) for documentation.
+(Most) Functions (especially recently-programmed functions) have an associated docstring.
+See [Documentation](docs#biu-documentation) for some documentation.
 
-## Example usage
-
-See [example.ipynb](docs/example.ipynb) for an example usage.
-=======

@@ -62,14 +62,14 @@ class GAF(object):
     #fi
   #edef
 
-  def enrich(self, yourSet, pathway=None, correctionType=None, **kwargs):
+  def enrich(self, yourSet, pathway=None, method=None, **kwargs):
     """
     Enrich: Check enrichment of GO pathways in a given set
 
     Inputs:
       - yourSet: List of Uniprot protein IDs to test
       - pathway: List of GO terms (or single term) to test (Defaults to all terms that your objectIDs are present in)
-      - correctionType: Type of multiple testing correction procedure to use
+      - method: Type of multiple testing correction procedure to use
       - **kwargs: Additional arguments for multple testing procedure
 
     Outputs:
@@ -90,8 +90,8 @@ class GAF(object):
     #efor
 
     df = pd.DataFrame(R, columns=['pathway', 'method', 'c2statistic', 'oddsratio', 'p'])
-    if correctionType is not None:
-      df['q'] = stats.correction.correct(df.p.values, correctionType, **kwargs)
+    if method is not None:
+      df['q'] = stats.p_adjust(df.p.values, method, **kwargs)
     #fi
 
     return df
