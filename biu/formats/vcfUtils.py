@@ -1,6 +1,7 @@
 from .. import utils
 
 pd           = utils.py.loadExternalModule("pandas")
+np           = utils.py.loadExternalModule("numpy")
 vcf          = utils.py.loadExternalModule("vcf")
 intervaltree = utils.py.loadExternalModule("intervaltree")
 
@@ -549,6 +550,38 @@ class VCF(object):
       
       F = lambda k,j : int(k*(k+1)/2)+j
       return [ F(ref, ref), F(ref, altAlleleID), F(altAlleleID,altAlleleID) ]
+  #edef
+
+  ###############################################################################
+
+  def genotype_matrix(self):
+    """
+    Create a genotype matrix from the records in the VCF
+    
+    Returns:
+        G: a DataFrame with columns as samples, and rows as variants
+        Cells are encoded as 0/1/2 for homozygous ref/heterozygous/homozygous variant.
+    
+    NOTE: ASSUMES REFERENCE is reference.
+    If you wish to use a different variant as reference, this function will not work!
+    """
+
+    G = np.zeros((len(self.samples), len(self.records)))
+    for i, record in enumerate(self.records):
+        for j, sample in enumerate(record.samples):
+            gt = sample.data.GT.replace('|', ' ').replace('/',' ').split(' ')
+            if gt[0] != gt[1]:
+                gt = 1
+            elif (gt[0] == '0') or (gt[1] == '0'):
+                gt = 0
+            else:
+                gt = 2
+            #fi
+            G[j,i] = gt
+        #efor
+    #efor
+                
+    return pd.DataFrame(G, index=self.samples, columns=[self.makeIdentifier(r) for r in self.records])
   #edef
 
 ###############################################################################
