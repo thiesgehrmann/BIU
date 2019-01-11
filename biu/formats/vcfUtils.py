@@ -9,7 +9,7 @@ intervaltree = utils.py.loadExternalModule("intervaltree")
 
 class VCF(object):
 
-  __slots__ = [ '__reader', '__tabix', '__fileName', '__template', '__vcfArgs', '__readerIndex' ]
+  __slots__ = [ '__reader', '__tabix', '__fileName', '__template', '__vcfArgs', '__readerIndex', '__records' ]
 
   #__reader = None
   #__tabix = None
@@ -25,6 +25,7 @@ class VCF(object):
     self.__tabix = tabix
     self.__fileName = None
     self.__template = None
+    self.__records  = None
 
     if not(isinstance(data, str)):
       utils.dbm("VCF Input source is list of Records.")
@@ -117,8 +118,12 @@ class VCF(object):
   def records(self):
     """
     records: Return a list of records
+    This may take some time if the file is large...
     """
-    return [ r for r in self.__reader ]
+    if self.__records is None:
+      self.__records = [ r for r in self.__reader ]
+    #edef
+    return self.__records
   #edef
 
   @property
@@ -156,7 +161,7 @@ class VCF(object):
 
   def __getReaderIndex(self, k=None):
     if self.__readerIndex is None:
-      self.__makeIndex(self.__reader)
+      self.__makeIndex(self.records)
     #fi
 
     if k is None:
@@ -564,13 +569,17 @@ class VCF(object):
     
     NOTE: ASSUMES REFERENCE is reference.
     If you wish to use a different variant as reference, this function will not work!
+
+    NOTE:
     """
 
     G = np.zeros((len(self.samples), len(self.records)))
     for i, record in enumerate(self.records):
         for j, sample in enumerate(record.samples):
             gt = sample.data.GT.replace('|', ' ').replace('/',' ').split(' ')
-            if gt[0] != gt[1]:
+            if len(gt) == 1:
+                gt = 1 if gt[0] == '1' else 0
+            elif gt[0] != gt[1]:
                 gt = 1
             elif (gt[0] == '0') or (gt[1] == '0'):
                 gt = 0

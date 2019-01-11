@@ -1,6 +1,7 @@
 from ... import utils
 from ... import ops
 from ... import settings as settings
+from ... import stats
 
 np = utils.py.loadExternalModule("numpy")
 pd = utils.py.loadExternalModule("pandas")
@@ -32,7 +33,7 @@ def voom(formula, expr, covariates, group, contrasts, out_dir=dir_path):
     Output:
         A pandas dataframe of diff. ex. results
         NOTE: The qvalue column is the corrected p-value provided by limma. This is corrected WITHIN each condition
-              The fdr column gives the corrected p-value, corrected across ALL conditions.
+              The fdr column gives the corrected p-value, corrected across ALL conditions (This is the default column used for all other functions.
 
         A typical pipeline would be:
 
@@ -114,7 +115,7 @@ def voom(formula, expr, covariates, group, contrasts, out_dir=dir_path):
     return R
 #edef
 
-def summary(diffex, alpha=0.05, lfcThresh=0.5, ov=False, col_contr='contr', col_pval='qvalue', col_lfc='logFC'):
+def summary(diffex, alpha=0.05, lfcThresh=0.5, ov=False, col_contr='contr', col_pval='fdr', col_lfc='logFC'):
     """
     summary: Returns a summary of the differential expression tests
     Inputs: 
@@ -146,7 +147,7 @@ def summary(diffex, alpha=0.05, lfcThresh=0.5, ov=False, col_contr='contr', col_
     
 #edef
 
-def overlaps(diffex, alpha=0.05, lfcThresh=0.5, col_contr='contr', col_pval='qvalue', col_lfc='logFC'):
+def overlaps(diffex, alpha=0.05, lfcThresh=0.5, col_contr='contr', col_pval='fdr', col_lfc='logFC'):
     """
     Overlaps: Returns a table of overlaps the differential expression tests
     Inputs: 
@@ -168,7 +169,7 @@ def overlaps(diffex, alpha=0.05, lfcThresh=0.5, col_contr='contr', col_pval='qva
 #edef  
 
 
-def sigTests(diffex, alpha=0.05, lfcThresh=0.5, col_pval='qvalue', col_lfc='logFC', col_contr='contr'):
+def sigTests(diffex, alpha=0.05, lfcThresh=0.5, col_pval='fdr', col_lfc='logFC', col_contr='contr'):
     """
     Return the set rows of significant tests.
     Input:
@@ -186,7 +187,7 @@ def sigTests(diffex, alpha=0.05, lfcThresh=0.5, col_pval='qvalue', col_lfc='logF
 #edef
 
 def significant_in(diffex, contr=None, split_updown=False, alpha=0.05, lfcThresh=0.5,
-                   col_contr='contr', col_pval='qvalue', col_lfc='logFC', col_index='gene'):
+                   col_contr='contr', col_pval='fdr', col_lfc='logFC', col_index='gene'):
     """
     Return a dictionary of significant genes per contrast
     Inputs:
@@ -217,7 +218,7 @@ def significant_in(diffex, contr=None, split_updown=False, alpha=0.05, lfcThresh
 #edef
 
 def isSigIn(diffex, contr=None, logic=all, alpha=0.05, lfcThresh=0.5,
-                  col_contr='contr', col_index='gene', col_pval='qvalue', col_lfc='logFC'):
+                  col_contr='contr', col_index='gene', col_pval='fdr', col_lfc='logFC'):
     """
     isSigIn: Returns genes that are significant in a given set of contrasts.
     Inputs: 
@@ -244,7 +245,7 @@ def isSigIn(diffex, contr=None, logic=all, alpha=0.05, lfcThresh=0.5,
 #edef
 
 def volcanoPlot(diffex, alpha=0.05, lfcThresh=0.5, contr=None, ax=None,
-                col_pval='pvalue', col_qval='qvalue', col_lfc='logFC', col_contr='contr', **kwargs):
+                col_pval='pvalue', col_qval='fdr', col_lfc='logFC', col_contr='contr', **kwargs):
     """
     volcanoPlot: Plots volcanoplots for each contrast
     Inputs:
@@ -260,7 +261,7 @@ def volcanoPlot(diffex, alpha=0.05, lfcThresh=0.5, contr=None, ax=None,
         col_lfc: The column to use as log fold change
         col_contr: The column to use as the contrast column
     Output:
-        List of genes significant by the specified conditions
+        (Figure, axes)
     """
 
     tests = diffex[col_contr].drop_duplicates().values
@@ -273,6 +274,7 @@ def volcanoPlot(diffex, alpha=0.05, lfcThresh=0.5, contr=None, ax=None,
     if ax is not None:
         axes = ax if hasattr(ax, '__len__') else [ ax ]
         assert len(ax) == len(tests)
+        fig = axes[0].get_figure()
     else:
         ncols = min(np.ceil(np.sqrt(len(tests))), 4)
         nrows = np.ceil(len(tests) / ncols)
@@ -289,12 +291,12 @@ def volcanoPlot(diffex, alpha=0.05, lfcThresh=0.5, contr=None, ax=None,
         relRows = diffex[diffex[col_contr] == test]
         sigRows = sigTests(relRows, alpha=alpha, lfcThresh=lfcThresh,
                            col_pval=col_qval, col_lfc=col_lfc, col_contr=col_contr)
-        axes[idx].scatter(relRows[col_lfc], -np.log10(relRows[col_pval]), s=0.5)
+        axes[idx].scatter(relRows[col_lfc], -np.log10(relRows[col_pval]), s=0.5, label=None)
         axes[idx].set_title(test)
         axes[idx].plot([rangeFC[0], rangeFC[1]], [sigThresh, sigThresh], linestyle=':', c='red', label='FDR corrected pvalue threshold')
         axes[idx].plot([-lfcThresh, -lfcThresh], rangePV, linestyle=':', c='orange')
         axes[idx].plot([lfcThresh, lfcThresh], rangePV, linestyle=':', c='orange', label='logFC threshold')
-        axes[idx].legend()
+        axes[idx].legend(loc='upper center')
         axes[idx].scatter(sigRows.logFC, -np.log10(sigRows[col_pval]), c='r', s=0.5)
         axes[idx].set_ylabel('-log pvalue')
         axes[idx].set_xlabel('log Fold Change')
@@ -305,7 +307,7 @@ def volcanoPlot(diffex, alpha=0.05, lfcThresh=0.5, contr=None, ax=None,
 
 
 def compair(diffex, contrA, contrB, alpha=0.05, lfcThresh=0.5,
-            col_contr='contr', col_index='gene', col_pval='pvalue', col_qval='qvalue', col_lfc='logFC'):
+            col_contr='contr', col_index='gene', col_pval='pvalue', col_qval='fdr', col_lfc='logFC'):
     """
     Compare a pair (compair) of contrasts, per gene
     Inputs:
@@ -350,7 +352,7 @@ def compair(diffex, contrA, contrB, alpha=0.05, lfcThresh=0.5,
 #edef
 
 def pairedVolcanoPlot(diffex, contrA, contrB, alpha=0.05, lfcThresh=0.5, only_significant=True, ax=None,
-                      color='stronger', col_contr='contr', col_index='gene', col_pval='pvalue', col_qval='qvalue', col_lfc='logFC'):
+                      color='stronger', col_contr='contr', col_index='gene', col_pval='pvalue', col_qval='fdr', col_lfc='logFC'):
     """
     pairedVolcanoPlot: Plot two volcanoplots on top of each other, and join genes by lines
     Inputs:

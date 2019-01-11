@@ -106,17 +106,21 @@ if(length(contrasts) == 1){
     
 } else {
     for (contr.idx in 1:dim(contr.matrix)[2] ){
-      contr.name <- colnames(contr.matrix[1,])[contr.idx]
-      testRes <- data.frame(topTreat(efit, coef=contr.idx, n=Inf))
-      testRes$contr <- unlist(strsplit(contr.name,'='))[[1]]
-      testRes$gene  <- rownames(testRes)
-      print(contr.name)
+        contr.name <- contrasts[contr.idx]
+        testRes <- data.frame(topTreat(efit, coef=contr.idx, n=Inf))
+        print(contrasts)
+        print(colnames(contr.matrix[1,]))
+        print(contr.idx)
+        print(contr.name)
+        testRes$contr <- unlist(strsplit(contr.name,'='))[[1]]
+        testRes$gene  <- rownames(testRes)
+        print(contr.name)
 
-      if (is.null(allTestRes)){
-        allTestRes <- testRes
-      } else {
-        allTestRes <- rbind(allTestRes, testRes)
-      }
+        if (is.null(allTestRes)){
+            allTestRes <- testRes
+        } else {
+            allTestRes <- rbind(allTestRes, testRes)
+        }
     }
 }
 
