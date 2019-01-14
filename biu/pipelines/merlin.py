@@ -262,7 +262,7 @@ class Merlin(Pipeline):
 
     # Plot the chromosome LOD score, and clusters.
     # Plot using the order, so that we can match with the heatmap
-    merlin.plotLOD(chromosomeID, axes[0], pos="order")
+    self.plotLOD(chromosomeID, axes[0], pos="order")
     
     # Plot the heatmap
     sns.heatmap(newD, ax=axes[1], cbar=False, cmap="Blues")
