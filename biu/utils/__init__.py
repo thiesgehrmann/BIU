@@ -6,7 +6,7 @@ from . import msgUtils as msg
 
 from .acquireUtils import Acquire as Acquire
 
-from . import figureUtils as figure
+from . import figure as figure
 
 from . import pyUtils as py
 

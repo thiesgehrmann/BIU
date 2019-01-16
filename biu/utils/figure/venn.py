@@ -1,5 +1,5 @@
 # Taken from Joseph Ryan Peterson's venn utilities at https://raw.githubusercontent.com/JosephRyanPeterson/pyvenn/master/venn.py
-from . import pyUtils as py
+from .. import pyUtils as py
 
 
 # coding: utf-8
@@ -7,9 +7,11 @@ from itertools import chain
 from collections import Iterable
 import math
 
-plt = py.loadExternalModule("matplotlib.pyplot")
+__all__ = [ 'venn2', 'venn3', 'venn4', 'venn5', 'venn6', 'venn6' ]
+
+plt     = py.loadExternalModule("matplotlib.pyplot")
 patches = py.loadExternalModule("matplotlib.patches")
-colors = py.loadExternalModule("matplotlib.colors")
+colors  = py.loadExternalModule("matplotlib.colors")
 
 default_colors = [
     # r, g, b, a
@@ -108,23 +110,37 @@ def get_labels(data, fill=["number"]):
         sets_for_difference = [sets_data[i] for i in range(N) if  key[i] == '0']
         for s in sets_for_intersection:
             value = value & s
+        #efor
+        
         for s in sets_for_difference:
             value = value - s
+        #efor
+        
         set_collections[key] = value
+    #efor
 
     labels = {k: "" for k in set_collections}
     if "logic" in fill:
         for k in set_collections:
             labels[k] = k + ": "
+        #efor
+    #fi
+    
     if "number" in fill:
         for k in set_collections:
             labels[k] += str(len(set_collections[k]))
+        #efor
+    #fi
+    
     if "percent" in fill:
         data_size = len(s_all)
         for k in set_collections:
             labels[k] += "(%.1f%%)" % (100.0 * len(set_collections[k]) / data_size)
+        #efor
+    #fi
 
     return labels
+#edef
 
 def venn2(labels, names=['A', 'B'], **options):
     """
@@ -155,6 +171,7 @@ def venn2(labels, names=['A', 'B'], **options):
     if not ax:
         fig = plt.figure(0, figsize=figsize, dpi=dpi)
         ax = fig.add_subplot(111)
+    #fi
     ax.set_aspect('equal')
     ax.set_axis_off()
     ax.set_ylim(bottom=0.0, top=0.7)
@@ -173,8 +190,10 @@ def venn2(labels, names=['A', 'B'], **options):
     if legend_loc is not None:
         leg = ax.legend(names, loc=legend_loc, fancybox=True, fontsize=fontsize)
         leg.get_frame().set_alpha(0.5)
+    #fi
 
     return ax.get_figure(), ax
+#edef
 
 def venn3(labels, names=['A', 'B', 'C'], **options):
     """
@@ -205,6 +224,7 @@ def venn3(labels, names=['A', 'B', 'C'], **options):
     if not ax:
         fig = plt.figure(0, figsize=figsize, dpi=dpi)
         ax = fig.add_subplot(111)
+    #fi
     ax.set_aspect('equal')
     ax.set_axis_off()
     ax.set_ylim(bottom=0.0, top=1.0)
@@ -229,8 +249,10 @@ def venn3(labels, names=['A', 'B', 'C'], **options):
     if legend_loc is not None:
         leg = ax.legend(names, loc=legend_loc, fancybox=True, fontsize=fontsize)
         leg.get_frame().set_alpha(0.5)
+    #fi
 
     return ax.get_figure(), ax
+#edef
 
 def venn4(labels, names=['A', 'B', 'C', 'D'], **options):
     """
@@ -261,6 +283,7 @@ def venn4(labels, names=['A', 'B', 'C', 'D'], **options):
     if not ax:
         fig = plt.figure(0, figsize=figsize, dpi=dpi)
         ax = fig.add_subplot(111)
+    #fi
     ax.set_aspect('equal')
     ax.set_axis_off()
     ax.set_ylim(bottom=0.0, top=1.0)
@@ -295,8 +318,10 @@ def venn4(labels, names=['A', 'B', 'C', 'D'], **options):
     if legend_loc is not None:
         leg = ax.legend(names, loc=legend_loc, fancybox=True, fontsize=fontsize)
         leg.get_frame().set_alpha(0.5)
+    #fi
 
     return ax.get_figure(), ax
+#edef
 
 def venn5(labels, names=['A', 'B', 'C', 'D', 'E'], **options):
     """
@@ -327,6 +352,8 @@ def venn5(labels, names=['A', 'B', 'C', 'D', 'E'], **options):
     if not ax:
         fig = plt.figure(0, figsize=figsize, dpi=dpi)
         ax = fig.add_subplot(111)
+    #fi
+    
     ax.set_aspect('equal')
     ax.set_axis_off()
     ax.set_ylim(bottom=0.0, top=1.0)
@@ -379,8 +406,10 @@ def venn5(labels, names=['A', 'B', 'C', 'D', 'E'], **options):
     if legend_loc is not None:
         leg = ax.legend(names, loc=legend_loc, fancybox=True, fontsize=fontsize)
         leg.get_frame().set_alpha(0.5)
+    #fi
 
     return ax.get_figure(), ax
+#edef
 
 def venn6(labels, names=['A', 'B', 'C', 'D', 'E'], **options):
     """
@@ -411,6 +440,8 @@ def venn6(labels, names=['A', 'B', 'C', 'D', 'E'], **options):
     if not ax:
         fig = plt.figure(0, figsize=figsize, dpi=dpi)
         ax = fig.add_subplot(111)
+    #fi
+    
     ax.set_aspect('equal')
     ax.set_axis_off()
     ax.set_ylim(bottom=0.230, top=0.845)
@@ -497,6 +528,8 @@ def venn6(labels, names=['A', 'B', 'C', 'D', 'E'], **options):
     if legend_loc is not None:
         leg = ax.legend(names, loc=legend_loc, fancybox=True, fontsize=fontsize)
         leg.get_frame().set_alpha(0.5)
+    #fi
 
     return ax.get_figure(), ax
+#edef
 

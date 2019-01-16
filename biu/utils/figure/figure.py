@@ -1,9 +1,11 @@
-from . import pyUtils as py
-from . import figureUtilsVenn as pyvenn
+from .. import pyUtils as py
+from . import venn as pyvenn
 
 np      = py.loadExternalModule('numpy')
 plt     = py.loadExternalModule('matplotlib.pylab')
 pltvenn = py.loadExternalModule('matplotlib_venn')
+
+__all__ = [ 'subplots', 'venn', 'equal_aspect', 'equal_xylim', 'equal_xlim', 'equal_ylim' ]
 
 ###############################################################################
 
