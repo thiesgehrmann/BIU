@@ -327,35 +327,44 @@ class MultiJointPlot(object):
                 if hist_part > 0:
                     hist_x = fig.add_subplot(gs[ base_y+hist_x_pos[1]:base_y+hist_x_pos[1]+hist_x_dim[1],
                                                  base_x+hist_x_pos[0]:base_x+hist_x_pos[0]+hist_x_dim[0] ])
-                    
-                    # Turn off tick labels
-                    hist_x.set_xticklabels([])
-                    hist_x.spines['right'].set_visible(False)
-                    hist_x.spines['top'].set_visible(False)
-                    hist_x.spines['bottom'].set_visible(False)
-                    if xlim is not None:
-                        hist_x.set_xlim(xlim)
-                    #fi
 
                     hist_y = fig.add_subplot(gs[ base_y+hist_y_pos[1]:base_y+hist_y_pos[1]+hist_y_dim[1],
                                                  base_x+hist_y_pos[0]:base_x+hist_y_pos[0]+hist_y_dim[0] ])
                     
-                    hist_y.set_yticklabels([])
-                    hist_y.spines['right'].set_visible(False)
-                    hist_y.spines['top'].set_visible(False)
-                    hist_y.spines['left'].set_visible(False)
-                    if ylim is not None:
-                        hist_y.set_xlim(ylim)
+                    for ax in [ hist_x, hist_y ]:
+                        ax.set_xticklabels([])
+                        ax.set_yticklabels([])
+                        ax.spines['right'].set_visible(False)
+                        ax.spines['top'].set_visible(False)
+                    #efor
+                    
+                    hist_x.tick_params(axis='y', which='both', bottom=False, top=False, labelbottom=False)
+                    hist_y.tick_params(axis='x', which='both', bottom=False, top=False, labelbottom=False)
+                    hist_x.spines['left'].set_visible(False)
+                    hist_y.spines['bottom'].set_visible(False)
+                    
+                    if xlim is not None:
+                        hist_x.set_xlim(xlim)
                     #fi
+                    
+                    if ylim is not None:
+                        hist_y.set_ylim(ylim)
+                    #fi
+                    
                 else:
                     hist_x = hist_y = None
                 #fi
 
                 joint = fig.add_subplot(gs[ base_y+plot_pos[1]:base_y+plot_pos[1]+plot_dim[1],
                                            base_x+plot_pos[0]:base_x+plot_pos[0]+plot_dim[0] ])
+                
+                joint.spines['top'].set_visible(False)
+                joint.spines['right'].set_visible(False)
+                
                 if xlim is not None:
                     joint.set_xlim(xlim)
                 #fi
+                             
                 if ylim is not None:
                     joint.set_ylim(ylim)
                 #fi

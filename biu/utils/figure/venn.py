@@ -165,7 +165,7 @@ def venn2(labels, names=['A', 'B'], **options):
     dpi = options.get('dpi', 96)
     fontsize = options.get('fontsize', 14)
     name_colors = options.get('name_colors', [default_colors[i] for i in range(4)])
-    ax = options.get('axes')
+    ax = options.get('ax')
     legend_loc = options.get('legend_loc', 'best')
 
     if not ax:
@@ -218,7 +218,7 @@ def venn3(labels, names=['A', 'B', 'C'], **options):
     dpi = options.get('dpi', 96)
     fontsize = options.get('fontsize', 14)
     name_colors = options.get('name_colors', [default_colors[i] for i in range(4)])
-    ax = options.get('axes')
+    ax = options.get('ax')
     legend_loc = options.get('legend_loc', 'best')
 
     if not ax:
@@ -277,7 +277,7 @@ def venn4(labels, names=['A', 'B', 'C', 'D'], **options):
     dpi = options.get('dpi', 96)
     fontsize = options.get('fontsize', 14)
     name_colors = options.get('name_colors', [default_colors[i] for i in range(4)])
-    ax = options.get('axes')
+    ax = options.get('ax')
     legend_loc = options.get('legend_loc', 'best')
 
     if not ax:
@@ -346,7 +346,7 @@ def venn5(labels, names=['A', 'B', 'C', 'D', 'E'], **options):
     dpi = options.get('dpi', 96)
     fontsize = options.get('fontsize', 14)
     name_colors = options.get('name_colors', [default_colors[i] for i in range(4)])
-    ax = options.get('axes')
+    ax = options.get('ax')
     legend_loc = options.get('legend_loc', 'best')
 
     if not ax:
@@ -434,7 +434,7 @@ def venn6(labels, names=['A', 'B', 'C', 'D', 'E'], **options):
     dpi = options.get('dpi', 96)
     fontsize = options.get('fontsize', 14)
     name_colors = options.get('name_colors', [default_colors[i] for i in range(4)])
-    ax = options.get('axes')
+    ax = options.get('ax')
     legend_loc = options.get('legend_loc', 'best')
 
     if not ax:

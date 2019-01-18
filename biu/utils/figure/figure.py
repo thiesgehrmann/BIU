@@ -49,13 +49,16 @@ def venn(*sets, ax=None, names=None):
     """
 
     nsets = len(sets)
-    if nsets == 2:
-        return pltvenn.venn2(sets, ax=ax, set_labels=names)
-    elif nsets == 3:
-        return pltvenn.venn3(sets, ax=ax, set_labels=names)
-    elif (nsets >= 4) & (nsets <= 6):
+    #if nsets == 2:
+    #    return pltvenn.venn2(sets, ax=ax, set_labels=names)
+    #elif nsets == 3:
+    #    return pltvenn.venn3(sets, ax=ax, set_labels=names)
+    if (nsets >= 2) & (nsets <= 6):
         labels = pyvenn.get_labels(sets, fill=['number', 'logic'])
-        fig, ax = { 4: pyvenn.venn4, 5: pyvenn.venn5, 6: pyvenn.venn6}[nsets](labels, names=names)
+        fig, ax = { 2: pyvenn.venn2, 3: pyvenn.venn3,
+                    4: pyvenn.venn4, 5: pyvenn.venn5,
+                    6: pyvenn.venn6
+                  }[nsets](labels, names=names, ax=ax)
         fig.show()
         return fig, ax
     else:
