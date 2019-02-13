@@ -290,6 +290,49 @@ class Merlin(Pipeline):
     return clusterFams
   #edef
     
+  def contributingFamilies(self, chrom, start, end, lodThreshold=0.3, logic='any'):
+      """
+      contributingFamilies:
+      Identify families that have a LOD contribution > than a certain value in a given region
+      Inputs
+      -------
+      chrom: The chromosome to look at
+      start: The starting nt position
+      end: The ending nt position
+      lodThreshold: The LOD threshold to use (default 0.3)
+      logic: {'any', 'all'}
+          if 'any': Return families that pass the lodThreshold at any point within the region
+          if 'all': Return only the families that pass the lodThreshold at ALL points within the region
+  
+      Outputs
+      --------
+      List of Family IDs contributing to specified region
+      """
+  
+      perfamlod = self.perfamlod[self.perfamlod.chr == chrom]
+  
+      # Identify the nearest marker positions for the start and stop (make sure they are not the same)
+      nearest_pos_index   = perfamlod.nt_position.unique()
+      nearest_pos_index   = nearest_pos_index[~pd.isna(nearest_pos_index)]
+      nearest_start_index = nearest_pos_index[nearest_pos_index <= start]
+      nearest_end_index   = nearest_pos_index[nearest_pos_index >= end]
+  
+      nearest_start = nearest_start_index[np.abs(nearest_start_index - start).argmin()]
+      nearest_end   = nearest_end_index[np.abs(nearest_end_index - end).argmin()]
+  
+      relreg = perfamlod[ (perfamlod.nt_position >= nearest_start) & (perfamlod.nt_position <= nearest_end) ]
+      fams = np.array([])
+      if logic == 'any':
+          fams = relreg[relreg.lod >= lodThreshold].family.unique()
+      elif logic == 'all':
+          fams = np.array(set(relreg.family.values) - set(relreg[relreg.lod < lodThreshold].family.values) )
+      else:
+          raise ValueError
+      #fi
+  
+      return fams
+  #edef
+    
   #############################################################################
 
   @staticmethod

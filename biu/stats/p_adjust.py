@@ -61,6 +61,12 @@ def p_adjust(p, method='fwer', n=None):
     q = np.ones(lp)
     q[~np.isnan(p)] = methods[method](p[~np.isnan(p)], n)
     
+    if isinstance(porig, pd.DataFrame):
+        q = pd.DataFrame(q.reshape(porig.shape), columns=porig.columns, index=porig.index)
+    elif isinstance(porig, np.ndarray) or isinstance(porig, np.matrix):
+        q = q.reshape(porig.shape)
+    #fi
+    
     return q
 #edef
     

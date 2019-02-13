@@ -562,20 +562,61 @@ class VCF(object):
   def genotype_matrix(self):
     """
     Create a genotype matrix from the records in the VCF
-    
+
     Returns:
         G: a DataFrame with columns as samples, and rows as variants
         Cells are encoded as 0/1/2 for homozygous ref/heterozygous/homozygous variant.
-    
+
     NOTE: ASSUMES REFERENCE is reference.
     If you wish to use a different variant as reference, this function will not work!
 
-    NOTE:
+    NOTE: catches some weird errors in the VCF structure, whereby a person might be missing.
+    The internal gm object makes sure that this doesnt interfere with the results.
     """
+    
+    class gm(object):
+        def __init__(self, samples, n_variants):
+            self.values = None
+            self.n_variants = n_variants            
+            self.sample_idx = { s : i for (i,s) in enumerate(samples) }
+            
+            self.gt = np.zeros((self.n_samples, self.n_variants))
+        #edef
+        
+        @ property
+        def n_samples(self):
+            return len(self.sample_idx)
+        #edef
+        
+        @property
+        def shape(self):
+            return self.gt.shape
+        #edef
+        
+        @property
+        def samples(self):
+            return list(self.sample_idx.keys())
+        
+        def __setitem__(self, key, value):
+            sample_id, variant_id = key
+            if sample_id not in self.sample_idx:
+                self.sample_idx[sample_id] = len(self.sample_idx)
+                self.gt.resize((self.n_samples, self.n_variants))
+            #fi
+            
+            if variant_id >  self.n_variants:
+                self.gt.resize((self.n_samples, variant_id+1))
+                self.n_variants = variant_id
+            #fi
+            
+            sample_key = self.sample_idx[sample_id]
+            self.gt[sample_key, variant_id] = value
+        #edef
+    #eclass
 
-    G = np.zeros((len(self.samples), len(self.records)))
+    G = gm(self.samples, len(self.records))
     for i, record in enumerate(self.records):
-        for j, sample in enumerate(record.samples):
+        for sample in record.samples:
             gt = sample.data.GT.replace('|', ' ').replace('/',' ').split(' ')
             if len(gt) == 1:
                 gt = 1 if gt[0] == '1' else 0
@@ -586,11 +627,11 @@ class VCF(object):
             else:
                 gt = 2
             #fi
-            G[j,i] = gt
+            G[sample.sample,i] = gt
         #efor
     #efor
-                
-    return pd.DataFrame(G, index=self.samples, columns=[self.makeIdentifier(r) for r in self.records])
+
+    return pd.DataFrame(G.gt, index=G.samples, columns=[self.makeIdentifier(r) for r in self.records])
   #edef
 
 ###############################################################################

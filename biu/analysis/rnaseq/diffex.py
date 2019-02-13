@@ -80,7 +80,7 @@ def voom(formula, expr, covariates, group, contrasts, out_dir=dir_path):
         #fi
     #efor
     samples_renamed = { s : 'sample_%d' % (i+1) for (i,s) in enumerate(C.index) }
-    covars_renamed  = { c : 'covar_%d' % (i+1) for (i,c) in enumerate(C.columns) }
+    covars_renamed  = { c : 'covar_%d' % (i+1) for (i,c) in enumerate(sorted(C.columns, key=len, reverse=True)) }
     C = C.rename(columns=covars_renamed, index=samples_renamed) 
     group = covars_renamed[group]
 

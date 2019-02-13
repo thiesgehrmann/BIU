@@ -36,13 +36,15 @@ def subplots(flatten=True, dpi=300, **kwargs):
 
 ###############################################################################
 
-def venn(*sets, ax=None, names=None):
+def venn(*sets, ax=None, names=None, fill=['number'], **kwargs):
     """
     Draw a venn diagram for between 2-6 sets
     Inputs:
       - *sets: sets to consider
       - ax : Axis to draw on (only works for 2-3 venn groups
       - names : Names of sets
+      - fill: list of any in [ number|logic|percent ]. How to define the labels in the venn diagram?
+      - *kwargs: Additional arguments to the functions.
     Outputs:
       - fig : Matplotlib figure
       - ax : Matplotlib axis
@@ -54,11 +56,11 @@ def venn(*sets, ax=None, names=None):
     #elif nsets == 3:
     #    return pltvenn.venn3(sets, ax=ax, set_labels=names)
     if (nsets >= 2) & (nsets <= 6):
-        labels = pyvenn.get_labels(sets, fill=['number', 'logic'])
+        labels = pyvenn.get_labels(sets, fill=fill)
         fig, ax = { 2: pyvenn.venn2, 3: pyvenn.venn3,
                     4: pyvenn.venn4, 5: pyvenn.venn5,
                     6: pyvenn.venn6
-                  }[nsets](labels, names=names, ax=ax)
+                  }[nsets](labels, names=names, ax=ax, **kwargs)
         fig.show()
         return fig, ax
     else:

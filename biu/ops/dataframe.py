@@ -4,6 +4,7 @@ from . import matrix
 skd = utils.py.loadExternalModule('sklearn.decomposition')
 skm = utils.py.loadExternalModule('sklearn.manifold')
 pd  = utils.py.loadExternalModule('pandas')
+np  = utils.py.loadExternalModule('numpy')
 
 def pca(df, nc=2, ret_fit=False, **kwargs):
     """
@@ -49,4 +50,91 @@ def reorder(df, **kwargs):
   See biu.ops.matrix.reorder for information on this function
   """
   return matrix.reorder(df, **kwargs)
+#edef
+
+def flat(df, fields=None, sep=None, ignore_unequal_rows=False):
+    """
+    Flatten a Pandas DataFrame, given columns with lists in them
+    Parameters:
+    -----------
+    
+    df:
+        Pandas DataFrame
+    fields:
+        The fields to flatten
+    sep:
+        If the fields are a list in string format, you can specify the delimiter here
+    ignore_uneqial_rows:
+        If the lists are not exactly the same length, you can choose to ignore the error induced by this here.
+        
+    Output:
+        Pandas DataFrame with flattened columns
+    
+    example 1:
+    ---------------------
+    
+    x = idx | f1 | f2    | f3
+          0 |  1 | [0,1] | [2,3]
+          1 | 34 | [8,9] | [7,6]
+          
+    flat(x, ['f1','f2']) =
+        idx | f1 | f2 | f3
+          0 |  1 |  0 |  2
+          0 |  1 |  1 |  3
+          1 | 34 |  8 |  7
+          1 | 34 |  9 |  6
+          
+    example 2:
+    ----------------------
+    
+    x = idx | f1    | f2
+          0 | [0,1] | [2,3]
+          1 | [8,9] | [7,6]
+          
+    flat(x) =
+        idx | f1 | f2
+          0 |  0 |  2
+          0 |  1 |  3
+          1 |  8 |  7
+          1 |  9 |  6
+    """
+    
+    if fields is None:
+        fields = list(df.columns)
+    #fi
+    
+    non_grouped_fields = [ f for f in df.columns if f not in fields ]
+
+    grouped = df.copy()
+    
+    if sep is not None:
+        for f in fields:
+            grouped[f] = grouped[f].apply(lambda x: x.split(sep))
+        #efor
+    #fi
+    
+    for f in fields:
+        if not hasattr(grouped[f].iloc[0], '__iter__'):
+            raise ValueError("Field %s doesn't is not iterable")
+        #fi
+    #efor
+    
+    lengths_match = grouped[fields].applymap(len).apply(lambda x: np.all(x == x[0]), axis=1)
+    
+    if (not lengths_match.all()) and (not ignore_unequal_rows):
+        raise ValueError("Some rows don't have the same length in all columns. Set ignore_unequal_rows=True if you want to ignore.")
+    #fi
+
+    flattened = []
+    indexes   = []
+    for (i, row) in grouped.iterrows():
+        for values in zip(*row[fields]):
+            flattened.append(list(values) + list(row[non_grouped_fields].values))
+            indexes.append(i)
+        #efor
+    #efor
+
+    flattened = pd.DataFrame(flattened, index=indexes, columns=fields + non_grouped_fields)
+    
+    return flattened
 #edef
