@@ -1,7 +1,4 @@
-from ..structures import fileManager as fm
-from ..structures import resourceManager as rm
 from .. import utils
-
 from . import SQLite
 
 import os

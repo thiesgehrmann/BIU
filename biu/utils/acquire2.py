@@ -561,7 +561,7 @@ class Acquire2(object):
             return p
         #edef
         
-        step = AcquireStep("FTP(%s/%s)" % (server, location), [], output_file
+        step = AcquireStep("FTP(%s/%s)" % (server, location), [], output_file,
                            lambda i,o: _ftp(o, server, location, username, password))
         return self.add_step(step)
     #edef
@@ -585,13 +585,13 @@ class Acquire2(object):
             return 1
         #fi
 
-        def _lftp(output_file, server,location, username, password)
+        def _lftp(output_file, server,location, username, password):
             cmd = "echo -en  'open \"%s\"\\nuser \"%s\" \"%s\"\\ncat \"%s\"' | lftp > '%s'" % (server, username, password, location, output_file)
             p = exe.runCommand(cmd, shell=True, verbose=True)
             return p
         #edef
         
-        step = AcquireStep("LFTP(%s/%s)" % (server, location), [], output_file
+        step = AcquireStep("LFTP(%s/%s)" % (server, location), [], output_file,
                    lambda i,o: _lftp(o, server, location, username, password))
         return self.add_step(step)
     #edef
@@ -613,7 +613,7 @@ class Acquire2(object):
             p = exe.runCommand(cmd, verbose=True)
             return p
         #edef
-        step = AcquireStep("WGET(%s)" % (url), [], output_file
+        step = AcquireStep("WGET(%s)" % (url), [], output_file,
                            lambda i,o: _wget(o, url))
         return self.add_step(step)
     #edef
@@ -829,8 +829,8 @@ class Acquire2(object):
         out_file = self.output.basename + '.cmd'
         output   = AcquireFile(inputs[-1].dirname, out_file)
 
-        def _cmd(infile, outfile, placeholder)
-            if placeholder is not None
+        def _cmd(infile, outfile, placeholder):
+            if placeholder is not None:
                 cmd = cmd.replace(placeholder, infile)
             else:
                 cmd = cmd + ' ' + infile

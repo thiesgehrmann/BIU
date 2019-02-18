@@ -1,13 +1,9 @@
-from .iris import Iris
-
+## Old Dataset databases
 from .caddUtils import CADD as CADD
 
 from .clinVarUtils import ClinVar as ClinVar
 
 from .gnomadUtils import Gnomad as Gnomad
-
-from .genomeUtils import Genome as Genome
-from .genomeUtils import listGenomes as listGenomes
 
 from .gtexUtils import GTeX as GTeX
 
@@ -16,12 +12,6 @@ from .uniprotUtils import UniProt as UniProt
 from .cosmicUtils import Cosmic as Cosmic
 
 from .hagrUtils import HAGR as HAGR
-
-#from .reactomeUtils import Reactome as Reactome
-#from .reactomeUtils import listVersions as listReactomeVersions
-
-#from .neo4j import Neo4jDB as Neo4jDB
-#from .neo4j import listVersions as listNeo4jVersions
 
 from .llsUtils import LLS as LLS
 
@@ -33,18 +23,30 @@ from .goUtils import GO as GO
 
 from .keggUtils import KEGG as KEGG
 
-#from .mirmineUtils import MiRmine as MiRmine
-#from .mirmineUtils import listVersions as listMiRmineVersions
-
 from .dbsnpUtils import DBSNP as DBSNP
 
-from .rvisUtils import RVIS as RVIS
-from .gdiUtils import GDI as GDI
-from .dneUtils import DNE as DNE
+### Dataset2 databases
 
+from .iris import Iris
 from .gwas_catalog import GWAS_Catalog
 
-__datasets = [ GO, LLS, GOTO, Cosmic, HAGR, KEGG, DBSNP, BBMRI, CADD, ClinVar, UniProt, Gnomad, GWAS_Catalog, Iris ]
+
+## SUPER OLD ResourceManager/LazyObject databases
+
+#from .rvisUtils import RVIS as RVIS
+#from .gdiUtils import GDI as GDI
+#from .dneUtils import DNE as DNE
+#from .mirmineUtils import MiRmine as MiRmine
+#from .mirmineUtils import listVersions as listMiRmineVersions
+#from .reactomeUtils import Reactome as Reactome
+#from .reactomeUtils import listVersions as listReactomeVersions
+
+#from .neo4j import Neo4jDB as Neo4jDB
+#from .neo4j import listVersions as listNeo4jVersions
+#from .genomeUtils import Genome as Genome
+#from .genomeUtils import listGenomes as listGenomes
+
+__datasets = [ GO, LLS, GOTO, Cosmic, HAGR, KEGG, DBSNP, BBMRI, CADD, ClinVar, UniProt, Gnomad, GWAS_Catalog, Iris, GTeX ]
 
 def versions(db = None):
     if db is None:
