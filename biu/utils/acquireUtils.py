@@ -88,7 +88,7 @@ class Acquire(object):
       if status != 0:
         msg.error("Could not complete step '%s'" % step.step)
         self.__rmExistsTag(self.__fileName)
-        return None
+        raise RuntimeError("Could not acquire this file. Failed at step '%s'." % step.step)
       else:
         self.__setExistsTag(self.__fileName) # Set exist tag.
       #fi

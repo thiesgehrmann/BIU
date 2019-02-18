@@ -1,3 +1,5 @@
+from .iris import Iris
+
 from .caddUtils import CADD as CADD
 
 from .clinVarUtils import ClinVar as ClinVar
@@ -31,8 +33,8 @@ from .goUtils import GO as GO
 
 from .keggUtils import KEGG as KEGG
 
-from .mirmineUtils import MiRmine as MiRmine
-from .mirmineUtils import listVersions as listMiRmineVersions
+#from .mirmineUtils import MiRmine as MiRmine
+#from .mirmineUtils import listVersions as listMiRmineVersions
 
 from .dbsnpUtils import DBSNP as DBSNP
 
@@ -40,68 +42,31 @@ from .rvisUtils import RVIS as RVIS
 from .gdiUtils import GDI as GDI
 from .dneUtils import DNE as DNE
 
-__datasets = [ GO, LLS, GOTO, Cosmic, HAGR, KEGG, DBSNP, BBMRI, CADD, ClinVar, UniProt, Gnomad ]
+from .gwas_catalog import GWAS_Catalog
+
+__datasets = [ GO, LLS, GOTO, Cosmic, HAGR, KEGG, DBSNP, BBMRI, CADD, ClinVar, UniProt, Gnomad, GWAS_Catalog, Iris ]
 
 def versions(db = None):
-  if db is None:
-    db = __datasets
-  else:
-    db = [ db ]
-  #fi
+    if db is None:
+        db = __datasets
+    else:
+        db = [ db ]
+    #fi
 
-  for d in sorted(db, key=lambda x: x.__name__):
-    print(d.__name__)
-    for version in d.versions:
-      print(" * %s" % version)
+    for d in sorted(db, key=lambda x: x.__name__):
+        print(d.__name__)
+        if hasattr(d, 'versions'):
+            for version in d.versions:
+                print(" * %s" % version)
+            #efor
+        #fi
     #efor
-  #efor
 #edef
 
 def list():
-  print("Available databases:")
-  for db in sorted(["Genomes", "CADD", "ClinVar", "Gnomad", "GTeX", "UniProt", "Cosmic", "HAGR", "LLS", "BBMRI", "GO", "KEGG", "MiRmine", "RVIS", "GDI", "DNE" ]):
-    print(" * %s" % db)
-  #efor
-#eclass
+    print("Available databases:")
+    for db in sorted(__datasets):
+        print(" * %s" % db.__name__)
+#efor
 
-def listVersions():
-  print("CADD:")
-  listCADDVersions()
 
-  print("\nClinVar:")
-  listClinVarVersions()
-
-  print("\nGnomAD")
-  listGnomadVersions()
-
-  print("\nGenomes:")
-  listGenomes()
-
-  print("\nGTeX:")
-  listGTeXVersions()
-
-  print("\nUniProt:")
-  listUniProtVersions()
-
-#  print("\nReactome:")
-#  listReactomeVersions()
-
-  print("\nNeo4j:")
-  listNeo4jVersions()
-
-  print("LLS:")
-  listLLSVersions()
-
-  print("BBMIR:")
-  listBBMRIVersions()
-
-  print("GO:")
-  listGOVersions()
-
-  print("KEGG:")
-  listKEGGVersions()
-
-  print("MiRmine:")
-  listMiRmineVersions()
-
-#edef

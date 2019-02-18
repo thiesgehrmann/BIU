@@ -1,4 +1,6 @@
 
+from .dataset2 import Dataset2
+
 from .fileManager import FileManager
 from .dataset import Dataset
 
