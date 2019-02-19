@@ -9,12 +9,9 @@ from .gtexUtils import GTeX as GTeX
 
 from .uniprotUtils import UniProt as UniProt
 
-from .cosmicUtils import Cosmic as Cosmic
-
 from .hagrUtils import HAGR as HAGR
 
 from .llsUtils import LLS as LLS
-
 from .bbmriUtils import BBMRI as BBMRI
 
 from .goto import GOTO as GOTO
@@ -29,6 +26,7 @@ from .dbsnpUtils import DBSNP as DBSNP
 
 from .iris import Iris
 from .gwas_catalog import GWAS_Catalog
+from .cosmic import Cosmic as Cosmic
 
 
 ## SUPER OLD ResourceManager/LazyObject databases

@@ -142,6 +142,8 @@ class AcquireFixedFile(AcquireFile):
     #edef
 #eclass
 
+###############################################################################
+
 class AcquireFinalFile(AcquireFile):
     """
     For final files, we don't want:
@@ -308,6 +310,10 @@ class Acquire2(object):
     
     """
     
+    AcquireStep = AcquireStep
+    AcquireFile = AcquireFile
+    AcquireFinalFile = AcquireFinalFile
+    AcquireFixedFile = AcquireFixedFile
     STATUS_SUCCESS = 0
     STATUS_FAILURE = 1
     
@@ -543,7 +549,7 @@ class Acquire2(object):
         Output: Acquire object
         """
         ext         = '' if ext is None else ('.' + ext)
-        ftp_hash    = biu.ops.lst.hash([ server, location, username, password ]) + ext
+        ftp_hash    = ops.lst.hash([ server, location, username, password ]) + ext
         output_file = AcquireFile(dirname=None, basename=ftp_hash)
 
         def _ftp(output_file, server, location, username, password):
@@ -577,7 +583,7 @@ class Acquire2(object):
         Output: Acquire object
         """
         ext         = '' if ext is None else ('.' + ext)
-        ftp_hash    = biu.ops.lst.hash([ server, location, username, password ]) + ext
+        ftp_hash    = ops.lst.hash([ server, location, username, password ]) + ext
         output_file = AcquireFile(dirname=None, basename=ftp_hash)
 
         if not exe.exists('lftp'):
@@ -605,7 +611,7 @@ class Acquire2(object):
         Output: Acquire object
         """
         ext         = '' if ext is None else ('.' + ext)
-        ftp_hash    = biu.ops.lst.hash([ server, location, username, password ]) + ext
+        ftp_hash    = ops.lst.hash([ server, location, username, password ]) + ext
         output_file = AcquireFile(dirname=None, basename=ftp_hash)
 
         def _wget(output_file, url):
