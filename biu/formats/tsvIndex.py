@@ -96,7 +96,7 @@ class TSVIndex(object):
     """
     values: Return a list of values of the index
     """
-    return self.__lst()
+    return self.__lst
   #edef
 
   def __str__(self):
@@ -106,6 +106,10 @@ class TSVIndex(object):
     dstr += " #Rows : %d\n" % len(self.__lst)
     dstr += " #Indexes: %d\n" % len(self.__idx)
     return dstr
+  #edef
+    
+  def __repr__(self):
+    return str(self)
   #edef
 
 #eclass

@@ -87,11 +87,9 @@ class Cosmic(Dataset2):
         self._obj.add_file("noncoding.vcf.bgz.tbi", noncoding_tbi)
         
         self._obj.register("coding", ["coding.vcf.bgz", "coding.vcf.bgz.tbi"],
-                           lambda i: formats.VCF(i["coding.vcf.bgz"], tabix=True),
-                           "Coding Variants in Cosmic")
+                           lambda i: formats.VCF(i["coding.vcf.bgz"], tabix=True))
         self._obj.register("noncoding", ["noncoding.vcf.bgz", "noncoding.vcf.bgz.tbi"],
-                           lambda i: formats.VCF(i["noncoding.vcf.bgz"], tabix=True),
-                           "Noncoding Variants in Cosmic")
+                           lambda i: formats.VCF(i["noncoding.vcf.bgz"], tabix=True))
     #edef
     
     def query(self, chrom, start, stop, coding=True, noncoding=True, *pargs, **kwargs):

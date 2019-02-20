@@ -611,7 +611,7 @@ class Acquire2(object):
         Output: Acquire object
         """
         ext         = '' if ext is None else ('.' + ext)
-        ftp_hash    = ops.lst.hash([ server, location, username, password ]) + ext
+        ftp_hash    = ops.lst.hash([ url ]) + ext
         output_file = AcquireFile(dirname=None, basename=ftp_hash)
 
         def _wget(output_file, url):

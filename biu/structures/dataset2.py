@@ -24,10 +24,10 @@ class DataObjects(object):
     """
     
     __slots__ = [ 'registered', 'files', 'local_files', 'loaded', 'where',
-                  'download_where', 'redo', 'acquired_files', 'parent_class' ]
+                  'download_where', 'redo', 'acquired_files' ]
 
     
-    def __init__(self, where, download_where, redo=False, local_files=None, add_property=None):
+    def __init__(self, where, download_where, redo=False, local_files=None):
         """
         Initialize a DataObject object
         Parameters:
@@ -47,7 +47,6 @@ class DataObjects(object):
         self.acquired_files = []
         self.registered     = {}
         self.loaded         = {}
-        self.parent_class   = add_property
         
         if local_files is not None:
             for lf_name, lf_path in local_files.items():
@@ -119,7 +118,7 @@ class DataObjects(object):
         #efor
     #edef
     
-    def register(self, name, required_files, load_func, docstring=None):
+    def register(self, name, required_files, load_func):
         """
         Register an object
         
@@ -163,16 +162,10 @@ class DataObjects(object):
         
         self.registered[name] = (load_func, required_files)
         
-        if self.parent_class is not None:
-            getter = lambda x: self.get(name)
-            setter = lambda x, value: self.set(name, value)
-            prop   = property(fget=getter, fset=setter, doc=docstring)
-            setattr(self.__class__, name, prop)
-            if not hasattr(self.parent_class, name):# Only add the property if it doesn't yet exist...
-                utils.msg.dbm("Adding property '%s' to parent class." % name)
-                setattr(self.parent_class, name, prop)
-            #fi
-        #fi
+        getter = lambda x: self.get(name)
+        setter = lambda x, value: self.set(name, value)
+        prop   = property(fget=getter, fset=setter)
+        setattr(self.__class__, name, prop)
     #edef
     
     def load(self, name):
@@ -180,7 +173,7 @@ class DataObjects(object):
         Loads or re-loads an object
         """
         if name not in self.registered:
-            raise NameError("No such object is registered: '%s'." % name)
+            raise AttributeError("No such object is registered: '%s'." % name)
         #fi
         
         load_func, required_files = self.registered[name]
@@ -219,7 +212,7 @@ class DataObjects(object):
         Change the value of a loaded object (Useful if you are doing data management within the dataset)
         """
         if (name not in self.loaded) and (name not in self.registered):
-            raise NameError("No such object is known: '%s'." % name)
+            raise AttributeError("No such object is known: '%s'." % name)
         #fi
         self.loaded[name] = value
     #edef
@@ -241,7 +234,19 @@ class DataObjects(object):
 #eclass
 
 ##############################################################
+
+def Dataset2_test():
+    """
+    A wrapper function that makes a new version of the Dataset2 class when it is run.
+    """
     
+    class Dataset2_unique_class(Dataset2):
+        def __init__(self, *pargs, **kwargs):
+            super(Dataset2_unique_class, self).__init__(*pargs, **kwargs)
+    #eclass
+    
+    return Dataset2_unique_class
+#edef
 
 class Dataset2(object):
     """
@@ -253,7 +258,7 @@ class Dataset2(object):
     Datasets will also provide additional methods to specifically access the relevant dataset
     """
     
-    __slots__ = [ 'where', 'download_where', 'redo', '_obj', '_str_funcs' ]
+    __slots__ = [ '__where', '__download_where', '__redo', '_obj', '_str_funcs' ]
     
     def __init__(self, dataset_identifier,
                  where=settings.getDataDir(),
@@ -269,16 +274,24 @@ class Dataset2(object):
         redo:               Boolean. Re-download the data, or not
         local_files:        Dict: A dictionary of (name:path) for files
         """
-
+        
         class _data_class(DataObjects):
             def __init__(self, *pargs, **kwargs):
                 super(_data_class, self).__init__(*pargs, **kwargs)
         #eclass
         
-        self.where          = os.path.abspath(os.path.expanduser(where) + '/' + dataset_identifier)
-        self.download_where = os.path.abspath(os.path.expanduser(download_where))
-        self._obj           = _data_class(self.where, self.download_where, redo, local_files, self.__class__)
-        self._str_funcs     = []
+        for attr in object.__getattribute__(self, '__slots__'):
+            object.__setattr__(self, attr, None)
+        #efor
+        
+        where          = os.path.abspath(os.path.expanduser(where) + '/' + dataset_identifier)
+        download_where = os.path.abspath(os.path.expanduser(download_where))
+        
+        object.__setattr__(self, '__where', where)
+        object.__setattr__(self, '__download_where', download_where)
+        object.__setattr__(self, '__redo', redo)
+        object.__setattr__(self, '_obj', _data_class(where, download_where, redo, local_files))
+        object.__setattr__(self, '_str_funcs', [])
     #edef
     
     def _add_str_func(self, fun):
@@ -304,6 +317,10 @@ class Dataset2(object):
         Prepare a string representation of the class
         """
         dstr  = "%s object\n" % self.__class__.__name__
+        
+        dstr += "Where: %s\n" % self.__where
+        dstr += "Downloaded data in: %s\n" % self.__download_where
+        dstr += "Redo: %s\n" % self.__redo
 
         for f in self._str_funcs:
             fstr = f(self)
@@ -342,5 +359,50 @@ class Dataset2(object):
         """
         return str(self)
     #edef
+    
+    def __getattr__(self, name):
+        """After regular attribute access, try looking up the name within the registered objects
+        This allows simpler access to objects for interactive use.
+        """
+
+        # Note: obj.x will always call obj.__getattribute__('x') prior to
+        # calling obj.__getattr__('x').
+        
+        try:
+            object.__getattribute__(self, name)
+        except AttributeError:
+            pass
+        #etry
+        
+        return object.__getattribute__(self, '_obj')[name]
+
+    #edef
+
+    def __setattr__(self, name, value):
+        """After regular attribute access, try setting the name
+        This allows simpler access to objects for interactive use.
+        """
+
+        # first try regular attribute access via __getattribute__, so that
+        # e.g. ``obj.x`` and ``obj.x = 4`` will always reference/modify
+        # the same attribute.
+
+        try:
+            object.__getattribute__(self, name)
+            return object.__setattr__(self, name, value)
+        except AttributeError:
+            pass
+        #etry
+        
+        object.__getattribute__(self, '_obj')[name] = value
+    #edef
+    
+    def __dir__(self):
+        """
+        To allow tab-completion for the registered objects.
+        """
+        return object.__dir__(self) + list(self._obj.registered.keys())
+    #edef
+                                 
 
 #eclass

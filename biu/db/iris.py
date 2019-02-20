@@ -19,11 +19,12 @@ class Iris(Dataset2):
         
         # An example of how to make a more complicated loading scheme
         def iris_mod_func(d):
+            print(d)
             ir = pd.read_csv(d["iris.tsv"], index_col=False, names=['a','b','c','d','class'])
             ir['e'] = ir[['a','b','c','d']].sum(axis=1)
             return ir
         #edef
-        self._obj.register("iris_mod", [], iris_mod_func,
+        self._obj.register("iris_mod", ["iris.tsv"], iris_mod_func,
                            docstring="An Pandas DataFrame with modified the IRIS data")
         
         # An example of how to prevent loading a file unnecessarily...
