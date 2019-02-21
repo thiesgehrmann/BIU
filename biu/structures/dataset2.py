@@ -403,6 +403,5 @@ class Dataset2(object):
         """
         return object.__dir__(self) + list(self._obj.registered.keys())
     #edef
-                                 
 
 #eclass

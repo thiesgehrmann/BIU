@@ -84,16 +84,13 @@ class GWAS_Catalog(Dataset2):
             return total
         #edef
         
-        self._obj.register( "assoc", ["assoc.tsv"], loadAssoc,
-                           "Associations provided in the GWAS catalog.")
+        self._obj.register( "assoc", ["assoc.tsv"], loadAssoc)
         
         self._obj.register("studies",  ["studies.tsv"],
-                           lambda d: pd.read_csv(d["studies.tsv"], sep='\t'),
-                           "A table with information about each study in the GWAS catalog.")
+                           lambda d: pd.read_csv(d["studies.tsv"], sep='\t'))
         
         self._obj.register("ancestry", ["ancestry.tsv"],
-                           lambda d: pd.read_csv(d["ancestry.tsv"], sep='\t', index_col=False),
-                           "Information on the ancestry information per study in the catalog.")
+                           lambda d: pd.read_csv(d["ancestry.tsv"], sep='\t', index_col=False))
         
         self.__assoc = None
 
