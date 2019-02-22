@@ -91,8 +91,6 @@ class GWAS_Catalog(Dataset2):
         
         self._obj.register("ancestry", ["ancestry.tsv"],
                            lambda d: pd.read_csv(d["ancestry.tsv"], sep='\t', index_col=False))
-        
-        self.__assoc = None
 
     #edef
     

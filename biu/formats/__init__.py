@@ -3,6 +3,7 @@ from .pedUtils import PED as PED
 from .fastaUtils import Fasta as Fasta
 from .gff3Utils import GFF3 as GFF3
 from .vcfUtils import VCF as VCF
+from .vcf2 import VCF2 as VCF2
 from .gafUtils import GAF as GAF
 from .xlsxUtils import XLSX as XLSX
 from .xlsUtils import XLS as XLS

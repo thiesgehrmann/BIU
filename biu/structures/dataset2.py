@@ -1,6 +1,8 @@
 from .. import settings
 from .. import utils
+
 import os
+import pathlib
 
 class DataObjects(object):
     """
@@ -84,8 +86,10 @@ class DataObjects(object):
             
             if isinstance(finalize, str):
                 acquire_object = acquire_object.finalize("%s/%s" % (self.where, finalize))
-            elif isinstance(finalize, bool):
+            elif isinstance(finalize, bool) and finalize:
                 acquire_object = acquire_object.finalize("%s/%s" % (self.where, name))
+            else:
+                acquire_object = acquire_object.copy()
             #fi
             
             self.files[name] = acquire_object
@@ -261,8 +265,8 @@ class Dataset2(object):
     __slots__ = [ '__where', '__download_where', '__redo', '_obj', '_str_funcs' ]
     
     def __init__(self, dataset_identifier,
-                 where=settings.getDataDir(),
-                 download_where=settings.getDownloadDir(),
+                 where=None,
+                 download_where=None,
                  redo=False, local_files=None):
         """
         Initialize a Dataset object:
@@ -274,6 +278,9 @@ class Dataset2(object):
         redo:               Boolean. Re-download the data, or not
         local_files:        Dict: A dictionary of (name:path) for files
         """
+        
+        where = where if where is not None else settings.getDataDir()
+        download_where = download_where if download_where is not None else settings.getDownloadDir()
         
         class _data_class(DataObjects):
             def __init__(self, *pargs, **kwargs):
@@ -318,9 +325,9 @@ class Dataset2(object):
         """
         dstr  = "%s object\n" % self.__class__.__name__
         
-        dstr += "Where: %s\n" % self.__where
-        dstr += "Downloaded data in: %s\n" % self.__download_where
-        dstr += "Redo: %s\n" % self.__redo
+        dstr += "Where: %s\n" % object.__getattribute__(self, '__where')
+        dstr += "Downloaded data in: %s\n" % object.__getattribute__(self, '__download_where')
+        dstr += "Redo: %s\n" % str(object.__getattribute__(self, '__redo'))
 
         for f in self._str_funcs:
             fstr = f(self)
@@ -345,7 +352,7 @@ class Dataset2(object):
         for what in self._obj.files:
             loc = self._obj.get_file(what).path
             if os.path.islink(loc):
-                dstr += "  * [%s] %s : %s -> %s\n" % ('S' if self._obj.get_file(what).exists else ' ', what, loc, Path(loc).resolve())
+                dstr += "  * [%s] %s : %s -> %s\n" % ('S' if self._obj.get_file(what).exists else ' ', what, loc, pathlib.Path(loc).resolve())
             else:
                 dstr += "  * [%s] %s : %s\n" % ('X' if self._obj.get_file(what).exists else ' ', what, loc)
             #fi

@@ -27,6 +27,9 @@ from .dbsnpUtils import DBSNP as DBSNP
 from .iris import Iris
 from .gwas_catalog import GWAS_Catalog
 from .cosmic import Cosmic as Cosmic
+from .lls2 import LLS2 as LLS2 # A re-implementation of LLS
+from .bbmri2 import BBMRI2 as BBMRI2 # A re-implementation of BBMRI
+from .gnomad2 import Gnomad2 as Gnomad2
 
 
 ## SUPER OLD ResourceManager/LazyObject databases

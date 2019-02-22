@@ -103,7 +103,7 @@ class AcquireFixedFile(AcquireFile):
     
     def __init__(self, file=None, directory=None):
         """
-        Initialize an AcquirePreExistingFile object.
+        Initialize an AcquireFixedFile object.
         
         If you have a file:
           AcquirePreExistingFile('./my_file.txt')
@@ -121,7 +121,7 @@ class AcquireFixedFile(AcquireFile):
             dirname, basename = os.path.split(directory)
         #fi
         
-        super(AcquirePreExistingFile, self).__init__(dirname, basename)
+        super(AcquireFixedFile, self).__init__(dirname, basename)
     #edef
 
     @property
@@ -317,7 +317,7 @@ class Acquire2(object):
     STATUS_SUCCESS = 0
     STATUS_FAILURE = 1
     
-    def __init__(self, file=None, where=settings.getDownloadDir(), redo=False, steps=[]):
+    def __init__(self, file=None, where=settings.getDownloadDir(), redo=False, steps=None):
         """
         Initialize an Acquire2 object
         parameters:
@@ -329,16 +329,27 @@ class Acquire2(object):
         """
         self.where = os.path.abspath(os.path.expanduser(where))
         self.redo  = redo
-        self.steps = [] if steps is None else steps
-        
+
+        steps = [] if steps is None else steps
         for step in steps:
             if not isinstance(step, AcquireStep):
                 raise ValueError("Steps parameter must be list of AcquireSteps")
+            #fi
+        #efor
+        
+        self.steps = steps
         
         if (file is not None):
-            step = AcquireStep("Local", [], AcquirePreExistingFile(file), lambda i, o: self.STATUS_SUCCESS)
+            step = AcquireStep("Local", [], AcquireFixedFile(file), lambda i, o: self.STATUS_SUCCESS)
             self.steps.append(step)
         #fi
+    #edef
+    
+    def copy(self):
+        """
+        Make a copy of the current Acquire2 pipeline
+        """
+        return Acquire2(where=self.where, redo=self.redo, steps=self.steps)
     #edef
     
     @property
@@ -381,6 +392,10 @@ class Acquire2(object):
         
         Returns the output AcquireFile object for this pipeline.
         """
+        if self.output.exists and not self.redo:
+            return self.output
+        #fi
+        
         for step in self.steps:
             step.do(self.where, self.redo)
         #efor
@@ -439,7 +454,7 @@ class Acquire2(object):
         """
         Specify a local file.
         """
-        step = AcquireStep("Local", [], AcquirePreExistingFile(file), lambda i,o: self.STATUS_SUCCESS)
+        step = AcquireStep("Local", [], AcquireFixedFile(file), lambda i,o: self.STATUS_SUCCESS)
         return self.add_step(step)
     #edef
     
