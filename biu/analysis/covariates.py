@@ -42,32 +42,10 @@ def detect_categorical(df, ret_types=False):
           integer/float, or an integer-like string or a float-like string. Otherwise, it is
           set as categorical.
     """
-    new_df = df.copy()
-    types = {}
-    for col in df.columns:
-        series = df[col]
-        if hasattr(series, 'str') or (series.dtype.name == 'object'):
-            not_na = series.str.isnumeric()[~pd.isna(series)]
-            if all(not_na):
-                new_df[col] = pd.to_numeric(series, errors='coerce')
-                types[col] = 'numeric'
-            else:
-                # make it categorical
-                new_df[col] = new_df[col].astype('category')
-                types[col] = 'category'
-            #fi
-        else:
-            new_df[col] = pd.to_numeric(series, errors='coerce')
-            types[col] = 'numeric'
-        #edef
-    #efor
+    return ops.dataframe.detect_categorical(df, ret_types)
+#edef
 
-    if ret_types:
-        return new_df, types
-    else:
-        return new_df
-    #fi
-#efor
+##############################################################################################
 
 def expand_categorical(cov):
     """
@@ -97,6 +75,8 @@ def expand_categorical(cov):
     return E
 #edef
 
+##############################################################################################
+
 def order_categories(categories, cont=None, statistic=np.mean):
     """
     Order categories based on a statistic of a continuous variable associated with the category
@@ -124,6 +104,8 @@ def order_categories(categories, cont=None, statistic=np.mean):
     return np.array([ order[c] for c in categories])
 #edef
 
+##############################################################################################
+
 def dummy(categorical_var):
     """
     Given a list of categorical variables, dummy code them
@@ -147,6 +129,7 @@ def dummy(categorical_var):
     return d
 #edef
 
+##############################################################################################
     
 def cramers_corrected_stat(confusion_matrix):
     """ calculate Cramers V statistic for categorial-categorial association.
@@ -165,6 +148,8 @@ def cramers_corrected_stat(confusion_matrix):
     pvalue = sstats.chi2.pdf(statistic, n)
     return assoc_result('cramers_v', statistic, pvalue)
 #edef
+
+##############################################################################################
 
 def associate_pair(X, Y):
     """
@@ -215,6 +200,8 @@ def associate_pair(X, Y):
     
     return assocs[(X.dtype.name == 'category',Y.dtype.name == 'category')](X_no_na, Y_no_na)
 #edef
+
+##############################################################################################
 
 def associate(covariates, data=None, nc=6, plot=False, ax=None, method='fdr', **kwargs):
     """
@@ -280,4 +267,6 @@ def associate(covariates, data=None, nc=6, plot=False, ax=None, method='fdr', **
 
     return E, P
 #edef
+
+##############################################################################################
 

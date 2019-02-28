@@ -11,3 +11,5 @@ from .acquire2 import Acquire2
 from . import figure as figure
 
 from . import html as html
+
+from . import decorators as decorators

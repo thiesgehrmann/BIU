@@ -115,7 +115,7 @@ def voom(formula, expr, covariates, group, contrasts, out_dir=dir_path):
     return R
 #edef
 
-def summary(diffex, alpha=0.05, lfcThresh=0.5, ov=False, col_contr='contr', col_pval='fdr', col_lfc='logFC'):
+def summary(diffex, alpha=0.05, lfcThresh=0.5, ov=False, col_contr='contr', col_pval='fdr', col_lfc='logFC', col_index='gene'):
     """
     summary: Returns a summary of the differential expression tests
     Inputs: 
@@ -137,7 +137,7 @@ def summary(diffex, alpha=0.05, lfcThresh=0.5, ov=False, col_contr='contr', col_
     S = S.groupby(col_contr).agg(sum)[['significant','up','down']]
     
     if ov:
-        ov = overlaps(diffex, alpha=alpha, lfcThresh=lfcThresh, col_contr=col_contr, col_pval=col_pval, col_lfc=col_lfc)
+        ov = overlaps(diffex, alpha=alpha, lfcThresh=lfcThresh, col_contr=col_contr, col_pval=col_pval, col_lfc=col_lfc, col_index=col_index)
         S.columns = pd.MultiIndex.from_product([['summary'], S.columns])
         ov.columns = pd.MultiIndex.from_product([['overlaps'], ov.columns])
         return S.join(ov)
@@ -147,7 +147,7 @@ def summary(diffex, alpha=0.05, lfcThresh=0.5, ov=False, col_contr='contr', col_
     
 #edef
 
-def overlaps(diffex, alpha=0.05, lfcThresh=0.5, col_contr='contr', col_pval='fdr', col_lfc='logFC'):
+def overlaps(diffex, alpha=0.05, lfcThresh=0.5, col_contr='contr', col_pval='fdr', col_lfc='logFC', col_index='gene'):
     """
     Overlaps: Returns a table of overlaps the differential expression tests
     Inputs: 
@@ -162,7 +162,7 @@ def overlaps(diffex, alpha=0.05, lfcThresh=0.5, col_contr='contr', col_pval='fdr
     Output: List of genes significant by the specified conditions
     """
     sigin = significant_in(diffex, alpha=alpha, lfcThresh=lfcThresh,
-                           col_contr=col_contr, col_pval=col_pval, col_lfc=col_lfc)
+                           col_contr=col_contr, col_pval=col_pval, col_lfc=col_lfc, col_index=col_index)
     ov = ops.lst.overlap(list(sigin.values()))
     ov = pd.DataFrame(ov, columns=sigin.keys(), index=sigin.keys())
     return ov
@@ -282,8 +282,8 @@ def volcanoPlot(diffex, alpha=0.05, lfcThresh=0.5, contr=None, ax=None,
                                           figsize = (5*ncols, 5*nrows),
                                           sharey=True, sharex=True, **kwargs)
     #fi
-
-    rangeFC   = (diffex[col_lfc].min(), diffex[col_lfc].max())
+    lfc = diffex[col_lfc][np.isfinite(diffex[col_lfc].values)]
+    rangeFC   = (lfc.min(), lfc.max())
     rangePV   = -np.log10([diffex[col_pval].max(), diffex[col_pval].min()])
     sigThresh = diffex[diffex[col_qval] < 0.05][col_pval].max()
     sigThresh = -np.log10(sigThresh)
@@ -297,7 +297,7 @@ def volcanoPlot(diffex, alpha=0.05, lfcThresh=0.5, contr=None, ax=None,
         axes[idx].plot([-lfcThresh, -lfcThresh], rangePV, linestyle=':', c='orange')
         axes[idx].plot([lfcThresh, lfcThresh], rangePV, linestyle=':', c='orange', label='logFC threshold')
         axes[idx].legend(loc='upper center')
-        axes[idx].scatter(sigRows.logFC, -np.log10(sigRows[col_pval]), c='r', s=0.5)
+        axes[idx].scatter(sigRows[col_lfc], -np.log10(sigRows[col_pval]), c='r', s=0.5)
         axes[idx].set_ylabel('-log pvalue')
         axes[idx].set_xlabel('log Fold Change')
     #efor
@@ -320,6 +320,7 @@ def compair(diffex, contrA, contrB, alpha=0.05, lfcThresh=0.5,
         col_pval: The column to use as corrected pvalue
         col_lfc: The column to use as log fold change
         col_contr: The column to use as the contrast column
+        col_index: The column to use as the gene identifier
         
     Outputs:
         Dataframe of comparisons, per gene
@@ -337,7 +338,7 @@ def compair(diffex, contrA, contrB, alpha=0.05, lfcThresh=0.5,
     """
     
     D = diffex[diffex[col_contr].isin([contrA, contrB])].copy()
-    D = D.pivot(index='gene', columns='contr', values=[col_pval, col_qval, col_lfc])
+    D = D.pivot(index=col_index, columns=col_contr, values=[col_pval, col_qval, col_lfc])
     D['significant'] = list(map(np.any, (D[col_qval].values < 0.05) & (D[col_lfc].abs().values > lfcThresh )))
     D['sig_both']    = list(map(np.all, (D[col_qval].values < 0.05) & (D[col_lfc].abs().values > lfcThresh )))
     D['consistent']  = list(map(lambda x: ~np.logical_xor(*x), (D[col_lfc] > 0).values))
@@ -398,7 +399,8 @@ def pairedVolcanoPlot(diffex, contrA, contrB, alpha=0.05, lfcThresh=0.5, only_si
         l.set_color('g' if 1*c > 0 else 'r')
     #efor
     
-    rangeFC = (diffex[col_lfc].min().min(),diffex[col_lfc].max().max())
+    lfc = diffex[col_lfc][np.isfinite(diffex[col_lfc].values)]
+    rangeFC   = (lfc.min(), lfc.max())
     rangePV = -np.log10([diffex[col_pval].min().min(),diffex[col_pval].max().max()])
     sigThresh = diffex[diffex[col_qval] < 0.05][col_pval].max()
     sigThresh = -np.log10(sigThresh)

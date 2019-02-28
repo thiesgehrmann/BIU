@@ -1,10 +1,53 @@
 from .. import utils
 from . import matrix
 
+from . import series
+
 skd = utils.py.loadExternalModule('sklearn.decomposition')
 skm = utils.py.loadExternalModule('sklearn.manifold')
 pd  = utils.py.loadExternalModule('pandas')
 np  = utils.py.loadExternalModule('numpy')
+
+#########################################################################
+
+def detect_categorical(df, ret_types=False):
+    """
+    Detects and sets categorical columns in a dataframe.
+    Inputs:
+        df: A pandas DataFrame
+        ret_types: Return a dictionary of column: [category|numeric]
+    Outputs:
+        A copy of the dataframe, in which columns detected to be categorical have the appropriate dtype set ('category')
+        Numeric columns (columns with numbers) are coerced to be numeric floats
+        
+        if ret_types is True:
+         (dataframe, dict)
+         
+    Note: This function detects if a column is numeric by testing if each non-NA cell contains an
+          integer/float, or an integer-like string or a float-like string. Otherwise, it is
+          set as categorical.
+    """
+    new_df = df.copy()
+    types = {}
+    for col in df.columns:
+        S = df[col]
+        if series.is_categorical(S):
+            new_df[col] = series.cast_str(S).astype('category')
+            types[col] = 'category'
+        else:
+            new_df[col] = series.cast_float(S)
+            types[col] = 'numeric'
+        #fi
+    #efor
+    
+    if ret_types:
+        return new_df, types
+    else:
+        return new_df
+    #fi
+#efor
+
+#########################################################################
 
 def pca(df, nc=2, ret_fit=False, **kwargs):
     """
@@ -29,6 +72,8 @@ def pca(df, nc=2, ret_fit=False, **kwargs):
     #fi
 #edef
 
+#########################################################################
+
 def tsne(data, **kwargs):
     """
     Perform TSNE on a matrix/dataframe
@@ -44,6 +89,8 @@ def tsne(data, **kwargs):
 
 #edef
 
+#########################################################################
+
 def reorder(df, **kwargs):
   """
   Reorder the columns/rows of a dataframe
@@ -51,6 +98,8 @@ def reorder(df, **kwargs):
   """
   return matrix.reorder(df, **kwargs)
 #edef
+
+#########################################################################
 
 def flat(df, fields=None, sep=None, ignore_unequal_rows=False):
     """
@@ -138,3 +187,5 @@ def flat(df, fields=None, sep=None, ignore_unequal_rows=False):
     
     return flattened
 #edef
+
+#########################################################################

@@ -200,7 +200,7 @@ class VCF2(object):
         filter_functions = {
             "samples" :   lambda obj: obj.filter_samples,
             "region" :    lambda obj: obj.filter_region,
-            "filters" :   lambda obj: obj.filter_filters,
+            "filters" :   lambda obj: obj.filter_filter,
             "vartypes" :  lambda obj: obj.filter_vartype,
             "n_alleles" : lambda obj: obj.filter_n_alleles
         }
@@ -231,7 +231,7 @@ class VCF2(object):
         #fi
     #edef
 
-    def who_has(self, chrom, pos, ref, alt):
+    def who_has(self, chrom=None, pos=None, ref=None, alt=None, var=None):
         """
         Determine who has a specific variant
 
@@ -246,9 +246,16 @@ class VCF2(object):
         --------
         List of sample IDs for who has the variant.
         """
-        var = self.get_var(chrom, pos, ref, alt)
-        if var is None:
-            return []
+        
+        if (chrom is not None) and (pos is not None) and (ref is not None) and (alt is not None) and (var is None):
+            var = self.get_var(chrom, pos, ref, alt)
+            if var is None:
+                return []
+            #fi
+        elif (alt is not None) and (var is not None) and isinstance(var, cyvcf2.Variant):
+            ref = var.REF
+        else:
+            raise ValueError("Incorrect parameter specification.")
         #fi
 
         ref = ref.upper()
@@ -546,8 +553,15 @@ class VCF2_records(VCF2_master_type):
     #edef
 
     def filter_filter(self, filters):
-        return VCF2_records([ v for v in self.records if not any([f in filters for f in v.FILTER]) ],
-                            self.samples)
+        def test(var):
+            if var.FILTER is None:
+                return True
+            #fi
+            
+            return not any([f in filters for f in var.FILTER])
+        #edef
+        
+        return VCF2_records([ v for v in self.records if test(v) ], self.samples)
     #edef
 
     def filter_samples(self, samples):
@@ -572,6 +586,7 @@ class VCF2_cyvcf2(VCF2_master_type):
         super(VCF2_cyvcf2, self).__init__(*pargs, **kwargs)
         
         self._vcf = cyvcf2.VCF(file, lazy=True, gts012=True, samples=self._samples)
+        self._file = file
     #edef
     
     @property
@@ -598,12 +613,12 @@ class VCF2_cyvcf2(VCF2_master_type):
 
     def filter_samples(self, samples):
         self._vcf.set_samples(samples)
-        return VCF2_cyvcf2(self.__file, self.samples)
+        return VCF2_cyvcf2(self._file, self.samples)
     #edef
 
     def filter_region(self, chrom, start, end):
         region = '%s:%s-%s' % (str(chrom), str(int(start)), str(int(end)))
-        return VCF2_records(self._vcf(region), self.samples)
+        return VCF2_records([ v for v in self._vcf(region) ], self.samples)
     #edef
 
     def filter_n_alleles(self, n_alleles):

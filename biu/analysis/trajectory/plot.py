@@ -174,7 +174,7 @@ def _trajectoryPlot2D_super(pdata, conditions, component1, component2, cmap, ax,
                     pdata[component2][conditions].values.transpose(),
                     linewidth=0.3, zorder=1, c='k')    
     
-    ax.set_title('TrajectoryPlot (%s)' % ('->'.join(conditions)))
+    ax.set_title('TrajectoryPlot (%s)' % ('->'.join([str(c) for c in conditions])))
     ax.set_xlabel('%s%s' % (component1, '' if pca_var_explained is None else ' (%2.3f)' % (pca_var_explained[component1] * 100)))
     ax.set_ylabel('%s%s' % (component2, '' if pca_var_explained is None else ' (%2.3f)' % (pca_var_explained[component2] * 100)))
     

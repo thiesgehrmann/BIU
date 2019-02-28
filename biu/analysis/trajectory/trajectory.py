@@ -26,6 +26,8 @@ class Trajectory(object):
               * data:   The dataframe of expression/measurements. Rows are samples, Genes/Measurements are columns
                 labels: The dataframe of information about the samples. Must have same index as data dataframe.
                         Rows are samples, columns are measurements.
+                col_index: String. The index to use in labels for the sample groupings (e.g. individuals)
+                col_condition: String. The index to use in labels for condition grouping.
         Outputs:
             Trajectory Object
         """
@@ -48,8 +50,8 @@ class Trajectory(object):
 
         self.labels = labels.copy()
         self.rdata = data.copy()
-        self.tdata = data.join(labels[[col_index, col_condition]]).pivot(index=col_index, columns=col_condition, values=list(data.columns))
-        self.pdata = pca_data.join(labels[[col_index, col_condition]]).pivot(index=col_index, columns=col_condition, values=list(pca_data.columns))
+        self.tdata = pd.pivot_table(data.join(labels[[col_index, col_condition]]), index=col_index, columns=col_condition, values=list(data.columns))
+        self.pdata = pd.pivot_table(pca_data.join(labels[[col_index, col_condition]]), index=col_index, columns=col_condition, values=list(pca_data.columns))
         self.pca_fit = pca_fit
         
         self._meas       = list(self.rdata.columns)
@@ -144,8 +146,268 @@ class Trajectory(object):
         vector[:, not_components] = 0
         return pd.DataFrame(vector, index=self.pdata.index, columns=self.pdata.columns.levels[0])
     #edef
+    
+    class Mean_Axis_Of_Effect(object):
+        """
+        Contains the mean axis of effect in a trajectory analysis.
+        """
+        def __init__(self, center_1, center_2, components, cond_1, cond_2):
+            """
+            Initialize a Mean_Axis_Of_Effect object.
+
+            parameters:
+            -----------
+            center_1: numpy array. Mean PC of condition 1
+            center_2: numpy array. Mean PC of condition 2
+            components: numpy array: Which components of the PCA to use.
+            cond_1: String. Name of the first condition
+            cond_2: String. Name of the second condition
+
+            All components not listed in `components` will be set to zero.
+            """
+
+            self._components = components
+            self._not_components = [ c for c in range(len(center_1)) if c not in self._components ]
+
+            self._center_1 = center_1
+            self._center_2 = center_2
+
+            self._center_1[self._not_components] = 0
+            self._center_2[self._not_components] = 0
+
+            self._vector = self._center_2 - self._center_1
+
+            self._conditions = (conda, condb)
+        #edef
+
+        @property
+        def center_1(self):
+            """
+            Return the first center.
+            """
+            return self._center_1
+        #edef
+
+        @property
+        def center_2(self):
+            """
+            Return the second center.
+            """
+            return self._center_2
+        #edef
+
+        @property
+        def vector(self):
+            """
+            Return the difference between the two centers
+            """
+            return self._vector
+        #edef
+
+        @property
+        def conditions(self):
+            """
+            Return a tuple of the names of the first and second conditions.
+            """
+            return self.conditions
+        #edef
+
+        def plot(self, ax, x_dim=0, y_dim=1, **kwargs):
+            """
+            Plot the mean axis in two dimensions to an axis.
+
+            parameters:
+            -----------
+            ax: Matplotlib axis. The axis to plot onto.
+            c:  Color. The color of the mean points and lines
+            x_dim: Which component to use as the X dimension (of the provided components)
+            y_dim: Which component to use as the Y dimension (of the provided components)
+            **kwargs: Additional arguments to ax.scatter and ax.plot (e.g. color, alpha)
+
+            Returns:
+            --------
+            matplotlib axis.
+            """
+            x = self._components[x_dim]
+            y = self._components[y_dim]
+
+            c1 = self.center_1
+            c2 = self.center_2
+
+            slope_2d  = self.vector[y] / self.vector[x]
+            intercept_2d = ((c1[y] + c2[y]) - slope_2d*(c1[x] + c2[x])) / 2
 
 
+            xrange = ax.get_xlim()
+
+            ax.scatter([c1[x], c2[x]], [c1[y], c2[y]], zorder=2, label='Center', **kwargs)
+            ax.plot(xrange, slope_2d * np.array(xrange) + intercept_2d, zorder=2, label='Axis of effect', **kwargs)
+            ax.legend()
+
+            return ax
+        #edef
+
+        def __str__(self):
+            """
+            A string representation of the object
+            """
+            dstr = "Mean Axis Of Effect object\n\n"
+            dstr += "Axis between condition '%s' and '%s'\n" % self._conditions
+            dstr += "Components selected: %s\n" % ', '.join(self._components)
+            return dstr
+        #edef
+
+        def __repr__(self):
+            return str(self)
+        #edef
+    #eclass
+        
+    class Mean_Axis_Of_Effect(object):
+        """
+        Contains the mean axis of effect in a trajectory analysis.
+        """
+        def __init__(self, center_1, center_2, components, cond_1, cond_2):
+            """
+            Initialize a Mean_Axis_Of_Effect object.
+
+            parameters:
+            -----------
+            center_1: numpy array. Mean PC of condition 1
+            center_2: numpy array. Mean PC of condition 2
+            components: numpy array: Which components of the PCA to use.
+            cond_1: String. Name of the first condition
+            cond_2: String. Name of the second condition
+
+            All components not listed in `components` will be set to zero.
+            """
+
+            self._components = components
+            self._not_components = [ c for c in range(len(center_1)) if c not in self._components ]
+
+            self._center_1 = center_1
+            self._center_2 = center_2
+
+            self._center_1[self._not_components] = 0
+            self._center_2[self._not_components] = 0
+
+            self._vector = self._center_2 - self._center_1
+
+            self._conditions = (cond_1, cond_2)
+        #edef
+
+        @property
+        def center_1(self):
+            """
+            Return the first center.
+            """
+            return self._center_1
+        #edef
+
+        @property
+        def center_2(self):
+            """
+            Return the second center.
+            """
+            return self._center_2
+        #edef
+
+        @property
+        def vector(self):
+            """
+            Return the difference between the two centers
+            """
+            return self._vector
+        #edef
+
+        @property
+        def conditions(self):
+            """
+            Return a tuple of the names of the first and second conditions.
+            """
+            return self.conditions
+        #edef
+
+        def plot(self, ax, x_dim=0, y_dim=1, scatter_label='Center', plot_label='Axis of effect', **kwargs):
+            """
+            Plot the mean axis in two dimensions to an axis.
+
+            parameters:
+            -----------
+            ax: Matplotlib axis. The axis to plot onto.
+            c:  Color. The color of the mean points and lines
+            x_dim: Which component to use as the X dimension (of the provided components)
+            y_dim: Which component to use as the Y dimension (of the provided components)
+            scatter_label: A label for the centers
+            plot_label: A label for the axis of effect line.
+
+            **kwargs: Additional arguments to ax.scatter and ax.plot (e.g. color, alpha)
+
+            Returns:
+            --------
+            matplotlib axis.
+            """
+            x = self._components[x_dim]
+            y = self._components[y_dim]
+
+            c1 = self.center_1
+            c2 = self.center_2
+
+            slope_2d  = self.vector[y] / self.vector[x]
+            intercept_2d = ((c1[y] + c2[y]) - slope_2d*(c1[x] + c2[x])) / 2
+
+
+            xrange = ax.get_xlim()
+
+            ax.scatter([c1[x], c2[x]], [c1[y], c2[y]], zorder=2, label=scatter_label, **kwargs)
+            ax.plot(xrange, slope_2d * np.array(xrange) + intercept_2d, zorder=2, label=plot_label, **kwargs)
+            ax.legend()
+
+            return ax
+        #edef
+
+        def __str__(self):
+            """
+            A string representation of the object
+            """
+            dstr = "Mean Axis Of Effect object\n\n"
+            dstr += "Axis between condition '%s' and '%s'\n" % self._conditions
+            dstr += "Components selected: %s\n" % ', '.join(self._components)
+            return dstr
+        #edef
+
+        def __repr__(self):
+            return str(self)
+        #edef
+    #eclass
+    
+    def mean_axis_of_effect2(self, cond1, cond2, components=None, ax=None, **kwargs):
+        """
+        Determine the trajectory of the mean axis of effect between two conditions
+        Intputs:
+            cond1: The name of condition 1
+            cond2: The name of condition 2
+            components: List of Integers, or None.
+                        If you only want to investigate the trajectory in a specific set of components,
+                        specify them here. Starts at 0
+            ax: Matplotlib axis. if not None, then plot the axis here.
+            c:  Matplotlib color. If plotting, then draw with this color
+        Outputs:
+            Mean_Axis_Of_Effect object
+        """
+        
+        if components is None:
+            components = list(range(len(self.pdata.columns.levels[0])))
+        #fi
+        components = np.array(components, dtype='int')
+
+        center_1 = self.pdata.swaplevel(0,1, axis=1).mean()[cond1].values
+        center_2 = self.pdata.swaplevel(0,1, axis=1).mean()[cond2].values
+        
+        return self.Mean_Axis_Of_Effect(center_1, center_2, components, cond1, cond2)
+    #edef
+        
+
+    @utils.decorators.deprecated("mean_axis_of_effect has been replaced with mean_axis_of_effect_2.")
     def mean_axis_of_effect(self, cond1, cond2, components=None, ax=None, c='b'):
         """
         Determine the trajectory of the mean axis of effect between two conditions
@@ -172,6 +434,7 @@ class Trajectory(object):
                 ax:           the axis plotted on
                 xrange:       The range on which the axis was plotted on
         """
+        
         if components is None:
             components = list(range(len(self.pdata.columns.levels[0])))
         #fi

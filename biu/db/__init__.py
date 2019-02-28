@@ -29,7 +29,9 @@ from .gwas_catalog import GWAS_Catalog
 from .cosmic import Cosmic as Cosmic
 from .lls2 import LLS2 as LLS2 # A re-implementation of LLS
 from .bbmri2 import BBMRI2 as BBMRI2 # A re-implementation of BBMRI
+from .goto2 import GOTO2 as GOTO2
 from .gnomad2 import Gnomad2 as Gnomad2
+from .cadd2 import CADD2 as CADD2
 
 
 ## SUPER OLD ResourceManager/LazyObject databases
