@@ -674,7 +674,8 @@ class Acquire2(object):
         inputs      = [self.output]
         output_dir   = AcquireFile(inputs[-1].dirname, inputs[-1].basename + '.__untarred__')
         
-        def _unzip(input_tar, output_dir):
+        def _untar(input_tar, output_dir):
+            fs.mkdirp(output_dir)
             p = exe.runCommand("tar -xf '%s' -C '%s'" % (input_tar, output_dir), verbose=True)
             return p
         #edef

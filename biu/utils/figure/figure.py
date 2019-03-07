@@ -9,13 +9,16 @@ __all__ = [ 'subplots', 'venn', 'equal_aspect', 'equal_xylim', 'equal_xlim', 'eq
 
 ###############################################################################
 
-def subplots(flatten=True, dpi=300, **kwargs):
+def subplots(flatten=True, ncols=1, nrows=1, dpi=300, **kwargs):
     """
-    Wrapper for matplotlib subplots
+    Wrapper for matplotlib subplots. Provides defaults for some arguments.
 
     Inputs:
       - flatten : Flatten the list of axes, if 2D.
-      - dpi : DPI of figure
+      - dpi : DPI of figure (default 300)
+      - ncols: Number of columns (default 1)
+      - nrows: Number of rows  (default 1)
+      
       - **kwargs : Arguments to subplots
     Output:
      - fig : matplotlib figure
@@ -25,7 +28,7 @@ def subplots(flatten=True, dpi=300, **kwargs):
      fig, axes = subplots(nrows=2, ncols=2)
     """
 
-    fig, axes = plt.subplots(dpi=dpi, **kwargs)
+    fig, axes = plt.subplots(ncols=ncols, nrows=nrows, dpi=dpi, **kwargs)
     if hasattr(axes, '__len__') and flatten:
         axes = axes.flatten()
     else:

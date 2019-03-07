@@ -57,12 +57,12 @@ class GOTO2(Dataset2):
             D['Sample'] = D.Sample.apply(lambda s: s.replace('-', '_'))
             D['flowcell_lane'] = D.Sample.apply(lambda s: s.split('_')[2])
 
-            discreteCovariates = [ 'IOP2_ID', 'timepoint', 'Sex', 'Status', 'Lipid_lowering_medication',
+            discrete_covariates = [ 'IOP2_ID', 'timepoint', 'Sex', 'Status', 'Lipid_lowering_medication',
                                    'Current_Smoker', 'Antihypertensive_medication', 'Date_of_sample_collection',
                                    'intervention', 'nutridrink', 'sampID', 'Labnr', 'Sample', 'studID',
                                    'flowcell', 'Lane', 'Index', 'blood.or.muscle', 'plate',
                                    'RNA_blood_Isolatieseries', 'RNA_Isolation_series', 'flowcell_lane' ]
-            continuousCovariates = [ 'Age_Baseline', 'Glucose', 'Cortisol', 'IGF_BP3', 'LN_Insulin', 
+            continuous_covariates = [ 'Age_Baseline', 'Glucose', 'Cortisol', 'IGF_BP3', 'LN_Insulin', 
                                      'IGF_1', 'IGF1_IGFBP3', 'LN_ALAT', 'Albumin', 'ALP', 'LN_ASAT', 'Cholesterol',
                                      'Cholesterol_HDL', 'Creatinine', 'GFR', 'LN_Triglycerides', 'LN_TSH',
                                      'Uric_acid', 'VitaminD', 'LDL_Cholesterol', 'HDL_Cholesterol', 'DHEA_S', 'fT3', 'LN_Leptin',
@@ -77,12 +77,12 @@ class GOTO2(Dataset2):
                                      'medianinsertsize', 'Nanodrop260280', 'passedQC_perc',
                                      'LabonchipRIN', 'Labonchip28S18S', 'totalyieldug' ]
             
-            for c in discreteCovariates:
-                D[c] = D[c].map(cast_str).astype('category')
+            for c in discrete_covariates:
+                D[c] = ops.series.cast_str(D[c]).astype('category')
             #efor
             
-            for c in continuousCovariates:
-                D[c] = D[c].map(cast_float).astype(float)
+            for c in continuous_covariates:
+                D[c] = ops.series.cast_float(D[c])
             #efor
             
             FRS = [ medical.health.indicators.framingham_risk_score(row.Sex == 1,
@@ -131,11 +131,11 @@ class GOTO2(Dataset2):
                             'bOHBut_LNscaled', 'Crea_LNscaled', 'Alb_LNscaled', 'Gp_LNscaled', 'Gripstrength' ]
             
             for c in categorical:
-                D[c] = D[c].map(cast_str).astype('category')
+                D[c] = ops.series.cast_str(D[c]).astype('category')
             #efor
             
             for c in numeric:
-                D[c] = D[c].map(cast_float).astype(float)
+                D[c] = ops.series.cast_float(D[c])
             #efor
 
             return D.set_index('Sample')
@@ -175,6 +175,17 @@ class GOTO2(Dataset2):
             return D.set_index('biomaterial_id')
         #edef
         self._obj.register("metabolomics_cov", ["metab_biomat.csv", "metab_visit.csv"], lambda f: load_metab_cov(f))
+        
+        # Add all the Database tables, for now.
+        tgz = '/exports/molepi/tgehrmann/data/GOTO_data/GOTO-database-711cf1c7e3ff39b8f44a9015759c702752af3525.tar.gz'
+        tgz = utils.Acquire2(tgz)
+        tgz = tgz.gunzip().untar('GOTO-database-711cf1c7e3ff39b8f44a9015759c702752af3525/tables')
+        tables = [ 'accelerometry', 'aliquots', 'BIA_mobile', 'BIA_standing', 'biomaterial', 'cell_counts', 
+                   'ckcl', 'dexa_hip', 'dexa_spine', 'dexa_whole_body', 'glycans', 'grip_strength', 'histology',
+                   'MRI_spectroscopy', 'nightingale_metabolomics', 'person', 'respiratory', 'rna_seq', 'visit' ]
+
+        [self._obj.add_file("%s.csv" % table, tgz.select('%s.csv' % table)) for table in tables]
+        [self._obj.register("db_%s" % t, ["%s.csv" % t], lambda f, t=t: pd.read_csv(f["%s.csv" % t])) for t in tables]
         
         self._add_str_func(lambda s: "Version: %s" % self.version)
     #edef

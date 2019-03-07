@@ -1,7 +1,7 @@
 from .. import utils
 
 pd = utils.py.loadExternalModule('pandas')
-np = utils.py.loadExternalModule('np')
+np = utils.py.loadExternalModule('numpy')
 
 #########################################################################
 
