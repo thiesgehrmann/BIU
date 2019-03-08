@@ -46,7 +46,7 @@ BIU is a library of utilities and tools that provides:
     * Interpolation (`biu.math.interpolation`)
     * Linear algrbra (`biu.math.linalg`)
     
-  * R functions converted to python (`biu.R`)
+  * Tools to interface with R (via rpy2) (`biu.R`)
     
 
 BIU depends on a lot of modules.
@@ -78,6 +78,7 @@ All external dependencies currently used are:
   * tabix
   * vcf
   * xlrd
+  * rpy2
 
 """
 
@@ -109,6 +110,8 @@ from . import ops as processing # For legacy. Remove soon.
 from . import analysis as analysis
 from . import pipelines as pipelines
 from . import medical as medical
+
+from .R import R
 
 def __version__():
   print("BIU (Bio Utilities) python module")

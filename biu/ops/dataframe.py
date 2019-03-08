@@ -32,7 +32,7 @@ def detect_categorical(df, ret_types=False):
     for col in df.columns:
         S = df[col]
         if series.is_categorical(S):
-            new_df[col] = series.cast_str(S).astype('category')
+            new_df[col] = series.cast_category(S)
             types[col] = 'category'
         else:
             new_df[col] = series.cast_float(S)

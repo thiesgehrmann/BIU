@@ -5,6 +5,24 @@ np = utils.py.loadExternalModule('numpy')
 
 #########################################################################
 
+def cast_category(series):
+    """
+    Cast a pandas Series to string, and then to a categorical column
+    Takes care of nan values.
+    
+    parameters:
+    -----------
+    series: A pandas series
+    
+    Returns:
+    --------
+    A series with string type
+    """
+    return cast_str(series).astype('category')
+#edef
+
+#########################################################################
+
 def cast_str(series):
     """
     Cast a pandas series to numerical type.

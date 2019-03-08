@@ -78,7 +78,7 @@ class GOTO2(Dataset2):
                                      'LabonchipRIN', 'Labonchip28S18S', 'totalyieldug' ]
             
             for c in discrete_covariates:
-                D[c] = ops.series.cast_str(D[c]).astype('category')
+                D[c] = ops.series.cast_category(D[c])
             #efor
             
             for c in continuous_covariates:
@@ -131,7 +131,7 @@ class GOTO2(Dataset2):
                             'bOHBut_LNscaled', 'Crea_LNscaled', 'Alb_LNscaled', 'Gp_LNscaled', 'Gripstrength' ]
             
             for c in categorical:
-                D[c] = ops.series.cast_str(D[c]).astype('category')
+                D[c] = ops.series.cast_category(D[c])
             #efor
             
             for c in numeric:
@@ -165,7 +165,7 @@ class GOTO2(Dataset2):
                         'AF_score', 'systolic_bp', 'diastolic_bp', 'SPPB', 'walking', 'chair_stand', 'remaining' ]
 
             for col in categorical:
-                D[col] = ops.series.cast_str(D[col]).astype('category')
+                D[col] = ops.series.cast_category(D[c])
             #efor
 
             for col in numeric:
