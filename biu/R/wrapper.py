@@ -36,8 +36,6 @@ class R(object):
     """
     _tconverter          = None
     _converter           = None
-    _rpy2_localConverter = None
-    _rpy2_Converter      = None
     
     def __init__(self):
         """
