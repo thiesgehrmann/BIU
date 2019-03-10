@@ -18,18 +18,18 @@ class R(object):
     x = pd.DataFrame([[1,2,3],[4,5,6]])
     r.push(x=x)
     r('y = x * 2')
-    y = r.get('x')
+    y = r.get('y')
     
     Or, altogether:
     ---------------
-    y = r('z=x*2', push=dict(x=x), get='y')
+    y = r('y=x*2', push=dict(x=x), get='y')
     
     Doing a lot at the same time:
     -----------------------------
     
     y, z = r('''
         y = x * 2
-        z = z + 2
+        z = x + 2
         ''', push=dict(x=x), get=['y', 'z'])
     
     
