@@ -2,12 +2,56 @@ from ... import utils
 from ... import ops
 from ... import settings as settings
 from ... import stats
+from ... import R
 
 np = utils.py.loadExternalModule("numpy")
 pd = utils.py.loadExternalModule("pandas")
 
 import os
-dir_path = os.path.dirname(os.path.realpath(__file__)) 
+dir_path = os.path.dirname(os.path.realpath(__file__))
+
+_defaults = dict(col_contr='contr',
+                 col_index='gene',
+                 col_pval='pvalue',
+                 col_qval='fdr',
+                 col_lfc='logFC',
+                 lfcThresh=0.5,
+                 alpha=0.05)
+
+###################################################################################
+
+def limma(formula, cov, expr, contrasts=None, random_effect=None, voom=True):
+    """
+    A wrapper for R differential expression
+    Inputs
+        formula:    String. An R-style formula
+        expr:       Pandas DataFrame of Expression data (columns are genes, rows are samples)
+                    Index of dataframe must correspond to index of covariates
+        covariates: Pandas Dataframe of Covariates (columns are covariates, rows are samples)
+                    Index of dataframe must correspond to index of expression
+        group:      The group in which we want to test contrasts (name of column in covariates DataFrame)
+        contrasts:  A dictionary of contrasts.
+                    e.g. { "c1" : "g2 - g1",
+                           "c2" : "g4 - g3",
+                           "c3" : "(g4-g3) - (g2-g1)"}
+
+                    Note. The way in which you define the contrasts changes the interpretation!
+                    If you say: A : X - Y, and find (from `significant_in`) a gene G is upregulated,
+                     it means that G is more highly expressed in X than in Y.
+        random_effect: String. The name of a column to define a random effect (e.g. per person).
+        voom: Boolean. Use voom normalization (Default true)
+        
+    returns:
+    A dataframe
+    """
+    r = R()
+    r.push(cov=cov, expr=expr, f=formula, re=random_effect, voom=voom)
+    r.exec('source(biu$limma.tools')
+    r.exec('diffex <- limma.rnaseq(formula(f), cov, expr, contrasts, re, voom)')
+    return r.get('diffex')
+#edef
+
+###################################################################################
 
 def voom(formula, expr, covariates, group, contrasts, out_dir=dir_path):
     """
@@ -115,7 +159,12 @@ def voom(formula, expr, covariates, group, contrasts, out_dir=dir_path):
     return R
 #edef
 
-def summary(diffex, alpha=0.05, lfcThresh=0.5, ov=False, col_contr='contr', col_pval='fdr', col_lfc='logFC', col_index='gene'):
+###################################################################################
+
+def summary(diffex, ov=False,
+            col_contr=_defaults['col_contr'], col_index=_defaults['col_index'],
+            col_pval=_defaults['col_pval'], col_qval=_defaults['col_qval'],
+            col_lfc=_defaults['col_lfc'], alpha=_defaults['alpha'], lfcThresh=_defaults['lfcThresh']):
     """
     summary: Returns a summary of the differential expression tests
     Inputs: 
@@ -147,7 +196,12 @@ def summary(diffex, alpha=0.05, lfcThresh=0.5, ov=False, col_contr='contr', col_
     
 #edef
 
-def overlaps(diffex, alpha=0.05, lfcThresh=0.5, col_contr='contr', col_pval='fdr', col_lfc='logFC', col_index='gene'):
+###################################################################################
+
+def overlaps(diffex,
+             col_contr=_defaults['col_contr'], col_index=_defaults['col_index'],
+             col_pval=_defaults['col_pval'], col_qval=_defaults['col_qval'],
+             col_lfc=_defaults['col_lfc'], alpha=_defaults['alpha'], lfcThresh=_defaults['lfcThresh'] ):
     """
     Overlaps: Returns a table of overlaps the differential expression tests
     Inputs: 
@@ -161,15 +215,19 @@ def overlaps(diffex, alpha=0.05, lfcThresh=0.5, col_contr='contr', col_pval='fdr
         col_contr: The column to use as the contrast column
     Output: List of genes significant by the specified conditions
     """
-    sigin = significant_in(diffex, alpha=alpha, lfcThresh=lfcThresh,
-                           col_contr=col_contr, col_pval=col_pval, col_lfc=col_lfc, col_index=col_index)
+    sigin = significant_in(diffex, alpha=alpha, lfcThresh=lfcThresh, col_contr=col_contr, col_index=col_index,
+                           col_pval=col_pval, col_qval=col_qval, col_lfc=col_lfc)
     ov = ops.lst.overlap(list(sigin.values()))
     ov = pd.DataFrame(ov, columns=sigin.keys(), index=sigin.keys())
     return ov
 #edef  
 
+###################################################################################
 
-def sigTests(diffex, alpha=0.05, lfcThresh=0.5, col_pval='fdr', col_lfc='logFC', col_contr='contr'):
+def sigTests(diffex,
+             col_contr=_defaults['col_contr'], col_index=_defaults['col_index'],
+             col_pval=_defaults['col_pval'], col_qval=_defaults['col_qval'],
+             col_lfc=_defaults['col_lfc'], alpha=_defaults['alpha'], lfcThresh=_defaults['lfcThresh'] ):
     """
     Return the set rows of significant tests.
     Input:
@@ -186,8 +244,12 @@ def sigTests(diffex, alpha=0.05, lfcThresh=0.5, col_pval='fdr', col_lfc='logFC',
     return diffex[(diffex[col_pval] < alpha) & (diffex[col_lfc].abs() > lfcThresh)]
 #edef
 
-def significant_in(diffex, contr=None, split_updown=False, alpha=0.05, lfcThresh=0.5,
-                   col_contr='contr', col_pval='fdr', col_lfc='logFC', col_index='gene'):
+###################################################################################
+
+def significant_in(diffex, contr=None, split_updown=False,
+                   col_contr=_defaults['col_contr'], col_index=_defaults['col_index'],
+                   col_pval=_defaults['col_pval'], col_qval=_defaults['col_qval'],
+                   col_lfc=_defaults['col_lfc'], alpha=_defaults['alpha'], lfcThresh=_defaults['lfcThresh'] ):
     """
     Return a dictionary of significant genes per contrast
     Inputs:
@@ -205,8 +267,8 @@ def significant_in(diffex, contr=None, split_updown=False, alpha=0.05, lfcThresh
         contr = [ contr ]
     #fi
     
-    sigs = sigTests(diffex,alpha=alpha, lfcThresh=lfcThresh,
-                    col_contr=col_contr, col_lfc=col_lfc, col_pval=col_pval)
+    sigs = sigTests(diffex, alpha=alpha, lfcThresh=lfcThresh, col_contr=col_contr, col_index=col_index,
+                    col_pval=col_pval, col_qval=col_qval, col_lfc=col_lfc)
     sigin = {}
     if split_updown:
         sigin = { (c,direction): sigs[(sigs[col_contr] == c) & ((sigs[col_lfc] > 0) if direction == 'up' else (sigs[col_lfc] <= 0) )][col_index].values
@@ -217,8 +279,12 @@ def significant_in(diffex, contr=None, split_updown=False, alpha=0.05, lfcThresh
     return sigin
 #edef
 
-def isSigIn(diffex, contr=None, logic=all, alpha=0.05, lfcThresh=0.5,
-                  col_contr='contr', col_index='gene', col_pval='fdr', col_lfc='logFC'):
+###################################################################################
+
+def isSigIn(diffex, contr=None, logic=all,
+            col_contr=_defaults['col_contr'], col_index=_defaults['col_index'],
+            col_pval=_defaults['col_pval'], col_qval=_defaults['col_qval'],
+            col_lfc=_defaults['col_lfc'], alpha=_defaults['alpha'], lfcThresh=_defaults['lfcThresh'] ):
     """
     isSigIn: Returns genes that are significant in a given set of contrasts.
     Inputs: 
@@ -237,15 +303,19 @@ def isSigIn(diffex, contr=None, logic=all, alpha=0.05, lfcThresh=0.5,
     if contr is None:
         contr = set(diffex[col_contr].values)
     #fi
-    relRes = sigTests(diffex, alpha=alpha, lfcThresh=lfcThresh, col_pval=col_pval,
-                      col_lfc=col_lfc, col_contr=col_contr)
+    relRes = sigTests(diffex, alpha=alpha, lfcThresh=lfcThresh, col_contr=col_contr, col_index=col_index,
+                      col_pval=col_pval, col_qval=col_qval, col_lfc=col_lfc)
     sigGeneGroups = ops.lst.group(relRes[[col_contr, col_index]].values, key=lambda x: x[1], value=lambda x: x[0])
     sigGenes = [ g for g in sigGeneGroups if logic([ (c in sigGeneGroups[g]) for c in contr ]) ]
     return sigGenes
 #edef
 
-def volcanoPlot(diffex, alpha=0.05, lfcThresh=0.5, contr=None, ax=None,
-                col_pval='pvalue', col_qval='fdr', col_lfc='logFC', col_contr='contr', **kwargs):
+###################################################################################
+
+def volcanoPlot(diffex,contr=None, ax=None,
+                col_contr=_defaults['col_contr'], col_index=_defaults['col_index'],
+                col_pval=_defaults['col_pval'], col_qval=_defaults['col_qval'],
+                col_lfc=_defaults['col_lfc'], alpha=_defaults['alpha'], lfcThresh=_defaults['lfcThresh'], **kwargs):
     """
     volcanoPlot: Plots volcanoplots for each contrast
     Inputs:
@@ -305,9 +375,12 @@ def volcanoPlot(diffex, alpha=0.05, lfcThresh=0.5, contr=None, ax=None,
     return fig, axes
 #edef
 
+###################################################################################
 
-def compair(diffex, contrA, contrB, alpha=0.05, lfcThresh=0.5,
-            col_contr='contr', col_index='gene', col_pval='pvalue', col_qval='fdr', col_lfc='logFC'):
+def compair(diffex, contrA, contrB,
+            col_contr=_defaults['col_contr'], col_index=_defaults['col_index'],
+            col_pval=_defaults['col_pval'], col_qval=_defaults['col_qval'],
+            col_lfc=_defaults['col_lfc'], alpha=_defaults['alpha'], lfcThresh=_defaults['lfcThresh'] ):
     """
     Compare a pair (compair) of contrasts, per gene
     Inputs:
@@ -352,8 +425,12 @@ def compair(diffex, contrA, contrB, alpha=0.05, lfcThresh=0.5,
     return D
 #edef
 
-def pairedVolcanoPlot(diffex, contrA, contrB, alpha=0.05, lfcThresh=0.5, only_significant=True, ax=None,
-                      color='stronger', col_contr='contr', col_index='gene', col_pval='pvalue', col_qval='fdr', col_lfc='logFC'):
+###################################################################################
+
+def pairedVolcanoPlot(diffex, contrA, contrB,only_significant=True, ax=None, color='stronger',
+                      col_contr=_defaults['col_contr'], col_index=_defaults['col_index'],
+                      col_pval=_defaults['col_pval'], col_qval=_defaults['col_qval'],
+                      col_lfc=_defaults['col_lfc'], alpha=_defaults['alpha'], lfcThresh=_defaults['lfcThresh'] ):
     """
     pairedVolcanoPlot: Plot two volcanoplots on top of each other, and join genes by lines
     Inputs:
@@ -375,8 +452,9 @@ def pairedVolcanoPlot(diffex, contrA, contrB, alpha=0.05, lfcThresh=0.5, only_si
         List of genes significant by the specified conditions
     """
     
-    cmp = compair(diffex, contrA, contrB, alpha=alpha, lfcThresh=lfcThresh,
-                  col_contr=col_contr, col_index=col_index, col_pval=col_pval, col_qval=col_qval, col_lfc=col_lfc)
+    cmp = compair(diffex, contrA, contrB, alpha=alpha,
+                  lfcThresh=lfcThresh, col_contr=col_contr, col_index=col_index,
+                  col_pval=col_pval, col_qval=col_qval, col_lfc=col_lfc)
     
     if only_significant:
         cmp = cmp[cmp.significant]

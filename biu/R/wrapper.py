@@ -1,9 +1,13 @@
+import os
+
 from .. import utils
+from .. import settings
+
 rpy2 = utils.py.loadExternalModule('rpy2')
 np   = utils.py.loadExternalModule('numpy')
 pd   = utils.py.loadExternalModule('pandas')
 
-
+from .converter import converter
 
 class R(object):
     """
@@ -34,31 +38,27 @@ class R(object):
     
     
     """
-    _tconverter          = None
-    _converter           = None
+    _converter = None
     
     def __init__(self):
         """
         Initialize the rpy2 wrapper
         """
-
-        from rpy2.robjects.conversion import converter as template_converter
-
-        from rpy2.robjects import numpy2ri
-        from rpy2.robjects import pandas2ri
-        template_converter += numpy2ri.converter
-        template_converter += pandas2ri.converter
-
-        self._tconverter = template_converter
-        self._converter  = rpy2.robjects.conversion.Converter('BIU converter', template=template_converter)
+        self._converter  = converter()
+        self.push(biu=self.library())
     #edef
     
-    def add_converter(self, converter):
+    def add_converter(self, obj_type, convert_func):
         """
         Add a converter to the object, if there is one missing.
+        
+        parameters:
+        -----------
+        obj_type: the type of the object that this converter relates to
+        convert_func: function. The function that should be applied
         """
-        self._tconverter += converter
-        self._converter  = rpy2.robjects.conversion.Converter('BIU converter', template=template_converter)
+
+        self._converter.py2rpy.register(obj_type, convert_func)
     #edef
         
     def push(self, **kwargs):
@@ -110,21 +110,21 @@ class R(object):
             
     #edef
     
-    def exec(self, cmd, push=None, get=None):
+    def exec(self, cmd, push=None, get=True):
         """
         Call R code, pushing values, and returning values if necessary
         
         parameters:
         -----------
-        
         cmd: The R code you want to execute
         push: Dictionary of name:value pairs that you want to introduce to R session
         get: List of R object values that you want to get back
         
         returns:
-        A value, or tuple of the get parameters you specified.
-        If you specified a single get
-        
+        ---------
+        if get is False, it returns nothing.
+        If get is True, it returns the returned value from the R code.
+        if get is not None, it returns a value, as specified by the get() function.
         """
         if push is None:
             push = {}
@@ -132,9 +132,12 @@ class R(object):
         
         self.push(**push)
         
-        rpy2.robjects.r(cmd)
+        res = rpy2.robjects.r(cmd)
         
-        if get is None:
+        
+        if isinstance(get, bool) and get:
+            return res
+        elif isinstance(get, bool) and (not get):
             return None
         elif isinstance(get, str):
             return self.get(get)
@@ -143,22 +146,44 @@ class R(object):
         #fi
     #edef
     
-    def __call__(self, cmd, push=None, get=None):
+    def __call__(self, cmd, push=None, get=True):
         """
         Call R code, pushing values, and returning values if necessary
         
         parameters:
         -----------
-        
         cmd: The R code you want to execute
         push: Dictionary of name:value pairs that you want to introduce to R session
         get: List of R object values that you want to get back
         
         returns:
-        A value, or tuple of the get parameters you specified.
-        If you specified a single get
-        
+        ---------
+        if get is False, it returns nothing.
+        If get is True, it returns the returned value from the R code.
+        if get is not None, it returns a value, as specified by the get() function.
         """
         return self.exec(cmd, push, get)
+    #edef
+    
+    @classmethod
+    def library(cls):
+        """
+        Provides an index of all R code files in the biu package.
+
+        These can be used in the rpy2 interface.
+
+        example usage:
+        --------------
+
+        r = biu.R()
+        r('names(biu)')
+        r('source(biu$limma.utils)')
+        """
+        lib_loc = settings.biuLocation + '/biu/R/lib'
+
+        D = { '.'.join(f.split('.')[:-1]) : '%s/%s' % (lib_loc, f) for f in os.listdir(lib_loc)
+                if (f.split('.')[-1] == 'R') and (f.split('.')[0] != '') }
+
+        return D
     #edef
 #eclass
