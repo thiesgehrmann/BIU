@@ -23,7 +23,7 @@ class AcquireFile(object):
         Specify a file in the Acquire pipeline
         """
         
-        self.dirname  = dirname
+        self.dirname  = os.path.abspath(os.path.expanduser(dirname)) if dirname is not None else dirname
         self.basename = basename
         
         if not(isinstance(self.basename, str) and self.basename):
@@ -38,12 +38,12 @@ class AcquireFile(object):
         self.dirname = os.path.abspath(os.path.expanduser(dirname))
     #edef
     
-    def provis_path(self, dirname):
+    def provis(self, dirname):
         """
         Get the provisional path, given a specified dirname.
         SUBJECT TO CHANGE
         """
-        return '%s/%s' % (dirname, self.basename)
+        return AcquireFile(dirname, self.basename)
     #edef
     
     @property
@@ -133,12 +133,12 @@ class AcquireFixedFile(AcquireFile):
         pass
     #edef
     
-    def provis_path(self, dirname):
+    def provis(self, dirname):
         """
         Get the provisional path, given a specified dirname.
-        SUBJECT TO CHANGE
+        FIXED FOR AcquireFixedFile
         """
-        return '%s/%s' % (self.dirname, self.basename)
+        return self
     #edef
 #eclass
 
@@ -179,12 +179,12 @@ class AcquireFinalFile(AcquireFile):
         pass
     #edef
     
-    def provis_path(self, dirname):
+    def provis(self, dirname):
         """
         Get the provisional path, given a specified dirname.
-        SUBJECT TO CHANGE
+        FIXED FOR AcquireFinalFile types
         """
-        return '%s/%s' % (self.dirname, self.basename)
+        return self
     #edef
 #eclass
 
@@ -255,11 +255,11 @@ class AcquireStep(object):
         #fi
     #edef
     
-    def path(self, where):
+    def provis(self, where):
         """
         The provisional path for the output of this step.
         """
-        return self.output.provis_path(where)
+        return self.output.provis(where)
     #edef
 #eclass 
 
@@ -317,7 +317,7 @@ class Acquire2(object):
     STATUS_SUCCESS = 0
     STATUS_FAILURE = 1
     
-    def __init__(self, file=None, where=settings.getDownloadDir(), redo=False, steps=None):
+    def __init__(self, file=None, where=None, redo=False, steps=None):
         """
         Initialize an Acquire2 object
         parameters:
@@ -327,6 +327,9 @@ class Acquire2(object):
         redo:  Redo the pipeline, regardless of whether it should be repeated or not.
         steps: For internal use.
         """
+        if where is None:
+            where = settings.getDownloadDir()
+        #fi
         self.where = os.path.abspath(os.path.expanduser(where))
         self.redo  = redo
 
@@ -383,7 +386,7 @@ class Acquire2(object):
             raise ValueError("No steps have been specified yet...")
         #fi
         
-        return self.steps[-1].path(self.where)
+        return self.steps[-1].provis(self.where).path
     #edef
     
     def acquire(self):
@@ -392,7 +395,7 @@ class Acquire2(object):
         
         Returns the output AcquireFile object for this pipeline.
         """
-        if self.output.exists and not self.redo:
+        if self.output.provis(self.where).exists and not self.redo:
             return self.output
         #fi
         
@@ -408,7 +411,7 @@ class Acquire2(object):
         dstr += ' Re-do steps: %s\n' % ('yes' if self.redo else 'no')
         dstr += " Current steps:\n"
         for step in self.steps:
-            dstr += '  * %s -> %s\n' % (step.name, step.path(self.where))
+            dstr += '  * %s -> %s\n' % (step.name, step.provis(self.where).path)
         #efor
         return dstr
     #edef

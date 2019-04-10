@@ -64,7 +64,7 @@ def expand_categorical(cov):
         if E[col].dtype.name != 'category':
             continue
         #fi
-        values = sorted(E[col].drop_duplicates().values)
+        values = sorted(E[col].cat.remove_unused_categories().cat.categories.values)
         for value in values:
             arr = np.zeros(len(E[col]))
             arr[np.where(E[col].values == value)] = 1
@@ -184,21 +184,34 @@ def associate_pair(X, Y):
     #edef
     
     def num_num(X, Y):
+        
+        X = X[np.isfinite(X) & np.isfinite(Y)]
+        Y = Y[np.isfinite(X) & np.isfinite(Y)]
+        
         X = (X - np.mean(X)) / np.std(X)
         Y = (Y - np.mean(Y)) / np.std(Y)
         X = sm.add_constant(X)
-        ols_res = sm.OLS(Y,X).fit()
-        return assoc_result('linreg', ols_res.params[1], ols_res.pvalues[1])
+
+        try: 
+            ols_res = sm.OLS(Y,X).fit()
+            return assoc_result('linreg', ols_res.params[1], ols_res.pvalues[1])
+        except Exception as e:
+            utils.msg.dbm("Encountered singular value. Cannot associate for this one. Returning no association.")
+            return assoc_result('linreg_singular', 0, 1)
+        #etry
     #edef
     
     assocs = { (True, True) : cat_cat,
                (True, False) : cat_num,
                (False, True) : num_cat,
                (False, False) : num_num}
-    X_no_na = X[~(pd.isna(X) | pd.isna(Y))]
-    Y_no_na = Y[~(pd.isna(X) | pd.isna(Y))]
     
+    # Remove NA and INfs
+    X_no_na = X[~pd.isna(X) & ~pd.isna(Y)]
+    Y_no_na = Y[~pd.isna(X) & ~pd.isna(Y)]
+                  
     return assocs[(X.dtype.name == 'category',Y.dtype.name == 'category')](X_no_na, Y_no_na)
+
 #edef
 
 ##############################################################################################
@@ -222,6 +235,9 @@ def associate(covariates, data=None, nc=6, plot=False, ax=None, method='fdr', **
     """
     E = None
     P = None
+    
+    covariates = expand_categorical(covariates)
+    
     if data is None:
         emat = np.zeros((len(covariates.columns), len(covariates.columns)))
         pmat = np.zeros((len(covariates.columns), len(covariates.columns)))

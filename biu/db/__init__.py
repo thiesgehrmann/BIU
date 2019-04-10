@@ -32,6 +32,7 @@ from .bbmri2 import BBMRI2 as BBMRI2 # A re-implementation of BBMRI
 from .goto2 import GOTO2 as GOTO2
 from .gnomad2 import Gnomad2 as Gnomad2
 from .cadd2 import CADD2 as CADD2
+from .reactome import Reactome as Reactome
 
 
 ## SUPER OLD ResourceManager/LazyObject databases
@@ -49,7 +50,8 @@ from .cadd2 import CADD2 as CADD2
 #from .genomeUtils import Genome as Genome
 #from .genomeUtils import listGenomes as listGenomes
 
-__datasets = [ GO, LLS, GOTO, Cosmic, HAGR, KEGG, DBSNP, BBMRI, CADD, ClinVar, UniProt, Gnomad, GWAS_Catalog, Iris, GTeX ]
+__datasets = [ GO, LLS, GOTO, Cosmic, HAGR, KEGG, DBSNP, BBMRI, CADD, ClinVar,
+               UniProt, Gnomad, GWAS_Catalog, Iris, GTeX, Reactome ]
 
 def versions(db = None):
     if db is None:

@@ -41,32 +41,22 @@ limma.extract.contrasts <- function(fit, contr.names=NULL){
 
     # Combine outputs
     
-    res <- if (!('contrasts' %in% names(fit))){
-            r <- data.frame(topTreat(fit, coef=contr.idx, n=Inf))
-            r$contr <- "main effect"
-            r$gene <- rownames(r)
-            r
-        } else {
-    
-            if (is.null(contr.names)){
-                contr.names <- colnames(fit$contrasts)
-            }
+    res <- NULL
+    if (is.null(contr.names)){
+        contr.names <- colnames(fit$contrasts)
+    }
 
-            all_test_res = NULL
-            for (contr.idx in 1:dim(fit$contrasts)[2]){
-                contr.name <- contr.names[contr.idx]
-                testRes <- data.frame(topTreat(fit, coef=contr.idx, n=Inf))
-                testRes$contr <- contr.name
-                testRes$gene  <- rownames(testRes)
-                if (is.null(all_test_res)){
-                    all_test_res <- testRes
-                } else {
-                    all_test_res <- rbind(all_test_res, testRes)
-                }
-            }
-            all_test_res
-    
+    for (contr.idx in 1:dim(fit$contrasts)[2]){
+        contr.name <- contr.names[contr.idx]
+        contr.res <- data.frame(topTreat(fit, coef=contr.idx, n=Inf))
+        contr.res$contr <- contr.name
+        contr.res$gene  <- rownames(contr.res)
+        if (is.null(res)){
+            res <- contr.res
+        } else {
+            res <- rbind(res, contr.res)
         }
+    }
 
     colnames(res)[colnames(res)=="P.Value"] <- "pvalue"
     colnames(res)[colnames(res)=="adj.P.Val"] <- "qvalue"
@@ -75,9 +65,44 @@ limma.extract.contrasts <- function(fit, contr.names=NULL){
     res
     }
 
+limma.extract.effects <- function(fit, effects=NULL) {
+    #' For the output from eBayes, extract all the tests, per effect defined in the formula (or provided in the effects list)
+    #' parameters:
+    #' -----------
+    #' fit2C: The output from eBayes
+    #' effects: A list of effects in which we are interested.
+    #'
+    #' Returns:
+    #' --------
+    #' A dataframe with test results
+
+    if (is.null(effects)){
+        effects <- colnames(fit$design)
+    }
+    
+    res = NULL
+    for (effect.name in effects){
+        effect.res <- data.frame(topTreat(fit, coef=effect.name, n=Inf))
+        effect.res$contr <- effect.name
+        effect.res$gene  <- rownames(effect.res)
+        if (is.null(res)){
+            res <- effect.res
+        } else {
+            res <- rbind(res, effect.res)
+        }
+    }
+    
+    colnames(res)[colnames(res)=="P.Value"] <- "pvalue"
+    colnames(res)[colnames(res)=="adj.P.Val"] <- "qvalue"
+    res$fdr <- p.adjust(res$pvalue, method='fdr')
+    
+    res
+    
+    }
+
 #########################################################################
 
-limma.metab <- function(formula, covar, metab, contrasts=NULL, random_effect=NULL){
+limma.metab <- function(formula, covar, metab, contrasts=NULL, effects=NULL, random_effect=NULL, verbose=FALSE){
     #'
     #'parameters:
     #'-----------
@@ -85,7 +110,10 @@ limma.metab <- function(formula, covar, metab, contrasts=NULL, random_effect=NUL
     #'covar: DataFrame Covariates (defined in covar)
     #'metab: Dataframe of Metabolite measurements (Normalized)
     #'contrasts: list. Which contrasts to evaluate (default NULL)
+    #'effects: list. Which effects are you interested in? (You cannot provide contrasts AND effects. You must choose one).
     #'random_effect: String. Add a random effect per group defined by column in covar 
+    #'verbose: Boolean. Return all the intermediate variables in a list
+
     
     C <- na.omit(droplevels(covar))
     E <- as.matrix(metab[match(rownames(C), rownames(metab)),])
@@ -121,12 +149,25 @@ limma.metab <- function(formula, covar, metab, contrasts=NULL, random_effect=NUL
     
     fit <- eBayes(fit)
 
-    limma.extract.contrasts(fit)
+    res <- if (! is.null(contrasts)){
+        limma.extract.contrasts(fit)
+        } else {
+        limma.extract.effects(fit, effects)
+        }
+
+    if (verbose){
+        return(list(res=res,
+                    fit=fit,
+                    contr.matrix=contr.matrix,
+                    dup.corr=dup.corr))
+    } else {
+        return(res)
+    }
 }
 
 #########################################################################
 
-limma.rnaseq <- function(formula, covar, expr, contrasts=NULL, random_effect=NULL, voom=TRUE){
+limma.rnaseq <- function(formula, covar, expr, contrasts=NULL, effects=NULL, random_effect=NULL, voom=TRUE, verbose=FALSE){
     #'
     #'parameters:
     #'-----------
@@ -134,7 +175,10 @@ limma.rnaseq <- function(formula, covar, expr, contrasts=NULL, random_effect=NUL
     #'covar: DataFrame Covariates (defined in covar)
     #'expr: Dataframe of count measurements
     #'contrasts: list. Which contrasts to evaluate (default NULL)
+    #'effects: list. Which effects are you interested in? (You cannot provide contrasts AND effects. You must choose one).
     #'random_effect: String. Add a random effect per group defined by column in covar 
+    #'voom: Boolean. Perform VOOM normalization
+    #'verbose: Boolean. Return all the intermediate variables in a list
     
     C <- na.omit(droplevels(covar))
     E <- expr[ rownames(expr) %in% rownames(C),]
@@ -151,12 +195,7 @@ limma.rnaseq <- function(formula, covar, expr, contrasts=NULL, random_effect=NUL
     # Add the sample names to the DGEList
     colnames(dge) <- rownames(E)
 
-    # Add covariates
-    for (cov in names(C)){
-      dge$samples[[cov]] <- C[[cov]]
-    }
-    
-    design <- model.matrix(formula, dge$samples)
+    design <- model.matrix(formula, C)
     
     dge <- calcNormFactors(dge)
     if (voom){
@@ -164,10 +203,7 @@ limma.rnaseq <- function(formula, covar, expr, contrasts=NULL, random_effect=NUL
     }
     
     dup.corr <- if (!is.null(random_effect)){
-                    print("Estimating correlation")
-                    d <- duplicateCorrelation(dge, design=design, block=dge$samples[,random_effect])
-                    print(d$consensus)
-                    d
+                    duplicateCorrelation(dge, design=design, block=C[,random_effect])
                 } else{
                     NULL
                 }
@@ -193,6 +229,20 @@ limma.rnaseq <- function(formula, covar, expr, contrasts=NULL, random_effect=NUL
            } else {fit}
     
     fit <- eBayes(fit)
+    
+    res <- if (! is.null(contrasts)){
+        limma.extract.contrasts(fit)
+        } else {
+        limma.extract.effects(fit, effects)
+        }
 
-    limma.extract.contrasts(fit)
+    if (verbose){
+        return(list(res=res,
+                    fit=fit,
+                    contr.matrix=contr.matrix,
+                    dup.corr=dup.corr))
+    } else {
+        return(res)
+    }
+    
     }

@@ -62,13 +62,14 @@ class GAF(object):
     #fi
   #edef
 
-  def enrich(self, yourSet, pathway=None, method=None, **kwargs):
+  def enrich(self, yourSet, pathway=None, abcd_values=False,  method=None, **kwargs):
     """
     Enrich: Check enrichment of GO pathways in a given set
 
     Inputs:
       - yourSet: List of Uniprot protein IDs to test
       - pathway: List of GO terms (or single term) to test (Defaults to all terms that your objectIDs are present in)
+      - abcd_values: Boolean. If True, it will return the actual element values in the contingency table, rather than just counts
       - method: Type of multiple testing correction procedure to use
       - **kwargs: Additional arguments for multple testing procedure
 
@@ -76,7 +77,7 @@ class GAF(object):
      - df : Pandas Data Frame of test results
     """
     if pathway is None:
-        pathway = self.annotations
+        pathway = [ p for prot in yourSet for p in self.getAnnots(prot) ]
     elif isinstance(pathway, str):
         pathway = [ pathway ]
     #fi
@@ -85,11 +86,11 @@ class GAF(object):
     B = self.objects
     for p in self.annotations:
         pathwayGenes = self.getAnnotated(p)
-        res = stats.enrichment.setEnrichment(yourSet, pathwayGenes, B)
-        R.append((p, res.method, res.c2statistic, res.oddsratio, res.pvalue))
+        res = stats.enrichment.setEnrichment(yourSet, pathwayGenes, B, abcd_values=abcd_values)
+        R.append((p, res.method, res.c2statistic, res.oddsratio, res.pvalue, res.table))
     #efor
 
-    df = pd.DataFrame(R, columns=['pathway', 'method', 'c2statistic', 'oddsratio', 'p'])
+    df = pd.DataFrame(R, columns=['pathway', 'method', 'c2statistic', 'oddsratio', 'p', 'table'])
     if method is not None:
       df['q'] = stats.p_adjust(df.p.values, method, **kwargs)
     #fi

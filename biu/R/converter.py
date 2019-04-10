@@ -19,6 +19,18 @@ def dict2ri(D):
 
 ##################################################################################
 
+def ri2dict(D):
+    """
+    Convert a StrVector to a dictionary
+    Note, that this conversion is not the inverse of dict2ri, as R values are always lists...
+    Thus, ri2dict(dict2ri({'a': 1})) -> { 'a': [1]}
+    """
+    
+    return dict(zip(D.names, map(list, list(D))))
+#edef
+
+##################################################################################
+
 def tuple2ri(T):
     """
     Convert a tuple to an array.
@@ -61,6 +73,8 @@ def converter():
     my_converter += pandas2ri.converter
     
     my_converter.py2rpy.register(dict, dict2ri)
+    #my_converter.rpy2py.register(rpy2.robjects.ListVector, ri2dict)
+    
     my_converter.py2rpy.register(tuple, tuple2ri)
     my_converter.py2rpy.register(type(None), none2ri)
 

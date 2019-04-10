@@ -36,7 +36,11 @@ def cast_str(series):
     --------
     A series with string type
     """
-    return series.apply(lambda v: str(v) if str(v).strip() != "" else None)
+    
+    s = series.copy()
+    s[~pd.isna(s)] = series[~series.isna()].apply(lambda v: str(v) if str(v).strip() != "" else None)
+    
+    return s
 #edef
 
 #########################################################################

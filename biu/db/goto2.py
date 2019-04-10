@@ -165,7 +165,7 @@ class GOTO2(Dataset2):
                         'AF_score', 'systolic_bp', 'diastolic_bp', 'SPPB', 'walking', 'chair_stand', 'remaining' ]
 
             for col in categorical:
-                D[col] = ops.series.cast_category(D[c])
+                D[col] = ops.series.cast_category(D[col])
             #efor
 
             for col in numeric:
@@ -177,9 +177,9 @@ class GOTO2(Dataset2):
         self._obj.register("metabolomics_cov", ["metab_biomat.csv", "metab_visit.csv"], lambda f: load_metab_cov(f))
         
         # Add all the Database tables, for now.
-        tgz = '/exports/molepi/tgehrmann/data/GOTO_data/GOTO-database-711cf1c7e3ff39b8f44a9015759c702752af3525.tar.gz'
+        tgz = '/exports/molepi/tgehrmann/data/GOTO_data/GOTO-database-af6d1286f96cc21f11cb68f89fbfa64027935a78.tar.gz'
         tgz = utils.Acquire2(tgz)
-        tgz = tgz.gunzip().untar('GOTO-database-711cf1c7e3ff39b8f44a9015759c702752af3525/tables')
+        tgz = tgz.gunzip().untar('GOTO-database-af6d1286f96cc21f11cb68f89fbfa64027935a78/tables')
         tables = [ 'accelerometry', 'aliquots', 'BIA_mobile', 'BIA_standing', 'biomaterial', 'cell_counts', 
                    'ckcl', 'dexa_hip', 'dexa_spine', 'dexa_whole_body', 'glycans', 'grip_strength', 'histology',
                    'MRI_spectroscopy', 'nightingale_metabolomics', 'person', 'respiratory', 'rna_seq', 'visit' ]
@@ -208,6 +208,73 @@ class GOTO2(Dataset2):
                                            for p in self.individuals }
         #fi
         return self.__samplesPerIndividual
+    #edef
+    
+    @property
+    def metab_cov(self):
+        """
+        A pandas dataframe with covariates for the metabolomics data.
+        """
+        from datetime import datetime
+        date_format = "%Y-%m-%d"
+        visits = self.db_visit[~self.db_visit.intervention].set_index('person_id')
+        dates = self.db_person.set_index('person_id').join(visits, rsuffix='.r')[['date_of_birth', 'sex', 'visit_date']]
+
+        def age(birth, visit):
+            days = (datetime.strptime(visit,date_format) - datetime.strptime(birth, date_format)).days
+            return days / 365.25
+        #edef
+
+        dates["baseline_age"] = dates.apply(lambda r: age(r.date_of_birth, r.visit_date), axis=1)
+
+        dates = dates.drop(columns=['date_of_birth'])
+
+        ##########################################
+        # Collect cell count features
+
+        cell_counts = self.db_cell_counts[['person_id', 'intervention', 'eosinophiles_percentage',
+                                           'basophiles_percentage', 'neutrophiles_percentages', 'lymphocyte_percentage',
+                                           'monocyte_percentage' ]]
+
+        ##########################################
+        # Collect visit features
+
+        fasted_visit = self.db_visit[[ 'person_id', 'intervention', 'length', 'weight',
+                                       'systolic_bp', 'diastolic_bp', 'SPPB',
+                                       'walking', 'chair_stand']].copy()
+
+        fasted_visit['fasted'] = True
+        fasted_visit = fasted_visit
+
+        activated_visit = fasted_visit.copy()
+        activated_visit['fasted'] = ~activated_visit['fasted']
+
+        visit_covar = pd.concat([fasted_visit, activated_visit])
+
+        ##########################################
+        # Get the Biomaterial ID
+        bm = self.db_biomaterial.set_index(['person_id', 'intervention', 'fasted'])[['biomaterial_id', 'type']]
+
+        #########################################
+        # Join them all together
+        metab_covar = cell_counts.join(dates[['baseline_age', 'sex']], on='person_id' )
+        metab_covar = visit_covar.join(metab_covar.set_index(['person_id', 'intervention']),
+                                       on=['person_id', 'intervention'])
+        metab_covar = metab_covar.set_index(['person_id', 'intervention', 'fasted'])
+        metab_covar = metab_covar.join(bm)
+        metab_covar = metab_covar.reset_index().set_index('biomaterial_id')
+
+
+        metab_covar['time_point'] = metab_covar.apply(lambda r: str(int(2*r.intervention + (1-r.fasted) + 1)), axis=1)
+        for col in metab_covar.columns:
+            if col in [ 'person_id', 'type', 'intervention', 'fasted', 'sex', 'time_point' ]:
+                metab_covar[col] = ops.series.cast_category(metab_covar[col])
+            else:
+                metab_covar[col] = ops.series.cast_float(metab_covar[col])
+            #fi
+        #efor
+        
+        return metab_covar
     #edef
 
     def filter(self, chrom, start, end, *pargs, **kwargs):

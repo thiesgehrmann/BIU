@@ -187,7 +187,7 @@ class KEGG(Dataset):
     #fi
   #edef
 
-  def enrich(self, yourSet, background=None, pathway=None, method=None, **kwargs):
+  def enrich(self, yourSet, background=None, pathway=None, abcd_values=False, method=None, **kwargs):
     """
     Enrich: Check enrichment of KEGG pathways in a given set
 
@@ -195,6 +195,7 @@ class KEGG(Dataset):
       - yourSet: List of Entrez Gene IDs to test
       - pathway: List of pathways (or single pathway) to test (Defaults to all pathways that your geneIDs are present in)
       - background: List of Entrez Gene IDs to use as background (e.g. set of all expressed genes)
+      - abcd_values: Boolean. If True, it will return the actual element values in the contingency table, rather than just counts
       - method: Type of multiple testing correction procedure to use
       - **kwargs: Additional arguments for biu.stats.p_adjust
 
@@ -222,16 +223,16 @@ class KEGG(Dataset):
     B = self.getGeneIDs()
     for p in pathway:
         pathwayGenes = set(self.getPathwayGeneIDs(p)) & background
-        res = stats.enrichment.setEnrichment(yourSet, pathwayGenes, B)
-        R.append((p, res.method, res.c2statistic, res.oddsratio, res.pvalue))
+        res = stats.enrichment.setEnrichment(yourSet, pathwayGenes, B, abcd_values=abcd_values)
+        R.append((p, res.method, res.c2statistic, res.oddsratio, res.pvalue, res.table))
     #efor
 
-    df = pd.DataFrame(R, columns=['pathway', 'method', 'c2statistic', 'oddsratio', 'p'])
+    df = pd.DataFrame(R, columns=['pathway', 'method', 'c2statistic', 'oddsratio', 'p', 'table'])
     if method is not None:
       df['q'] = stats.p_adjust(df.p.values, method, **kwargs)
     #fi
 
     return df
-#edef
+  #edef
 
 #eclass

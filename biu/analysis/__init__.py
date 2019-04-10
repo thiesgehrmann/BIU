@@ -11,3 +11,4 @@ Tools for analysis of different types of data:
 from . import rnaseq
 from . import covariates
 from . import trajectory
+from .trajectory import Trajectory

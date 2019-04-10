@@ -134,9 +134,8 @@ class R(object):
         
         res = rpy2.robjects.r(cmd)
         
-        
         if isinstance(get, bool) and get:
-            return res
+            return self._converter.rpy2py(res)
         elif isinstance(get, bool) and (not get):
             return None
         elif isinstance(get, str):

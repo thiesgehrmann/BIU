@@ -31,8 +31,8 @@ def subplots(flatten=True, ncols=1, nrows=1, dpi=300, **kwargs):
     fig, axes = plt.subplots(ncols=ncols, nrows=nrows, dpi=dpi, **kwargs)
     if hasattr(axes, '__len__') and flatten:
         axes = axes.flatten()
-    else:
-        axes = [axes]
+    elif not hasattr(axes, '__len__'):
+        axes = [ axes ]
     #fi
     return fig, axes
 #edef

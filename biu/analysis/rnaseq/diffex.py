@@ -462,7 +462,7 @@ def pairedVolcanoPlot(diffex, contrA, contrB,only_significant=True, ax=None, col
         
     if ax is None:
         fig, axes = utils.figure.subplots(ncols=1, nrows=1)
-        ax = axes[0]
+        ax = axes
     #fi
     
     ax.scatter(cmp[col_lfc][contrA].values, -np.log10(cmp[col_pval][contrA].values), c='blue', label=contrA, s=0.5)

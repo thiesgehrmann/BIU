@@ -189,3 +189,66 @@ def flat(df, fields=None, sep=None, ignore_unequal_rows=False):
 #edef
 
 #########################################################################
+
+def corrcoef(dataframe, axis=0, method='pearson'):
+    """
+    Calculate pearsons correlation coefficient for the columns in a dataframe.
+    Returns a matrix of correlation coefficients, and estimated p-values per correlation
+    
+    parameters:
+    -----------
+    dataframe: A pandas dataframe to calculate correlations for
+    axis: Which axis to perform the operation on.
+          0 : rows
+          1 : columns
+    method=['pearson', 'spearman' ] or callable which must return (r-correlation, and p-value) tuple
+    
+    returns:
+    --------
+    r: Correlation coefficients
+    p: p-values
+    
+    Found at: https://stackoverflow.com/a/24547964
+    """
+    
+    r, p = matrix.corrcoef(dataframe.values, axis, method=method)
+    idx = dataframe.index if axis==0 else dataframe.columns
+    r = pd.DataFrame(r, columns=idx, index=idx)
+    p = pd.DataFrame(p, columns=idx, index=idx)
+    
+    return r, p
+#edef
+
+####################################################################
+
+def corrcoef_between(dataframe1, dataframe2, axis=0, method='pearson'):
+    """
+    Calculate the correlation coefficient between columns/rows in two different matrices.
+    The opposite axis must have the same dimension in the two matrices.
+    
+    parameters:
+    -----------
+    dataframe1: A pandas dataframe 
+    dataframe2: A pandas dataframe
+    axis: Which axis to perform the operation on.
+          0 : rows
+          1 : columns
+    method=['pearson', 'spearman' ] or callable which must return (r-correlation, and p-value) tuple
+    
+    returns:
+    --------
+    r: Correlation coefficients
+    p: p-values
+    
+    Modified from: https://stackoverflow.com/a/24547964
+    """
+    
+    r, p = matrix.corrcoef_between(dataframe1.values, dataframe2.values, axis=axis, method=method)
+    idx = dataframe1.index if (axis == 0) else dataframe1.columns
+    col = dataframe2.index if (axis == 0) else dataframe2.columns
+
+    r = pd.DataFrame(r, columns=col, index=idx)
+    p = pd.DataFrame(p, columns=col, index=idx)
+    
+    return r, p
+#edef
