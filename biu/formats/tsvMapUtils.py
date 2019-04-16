@@ -53,13 +53,23 @@ class TSVMap(object):
   #edef
 
   def __str__(self):
-    dstr = "TSV Map object\n"
+    """
+    String representation of object.
+    """
+    dstr = "TSVMap object\n"
     dstr += " Filename: %s\n" % self.__fileName
     dstr += " %d -> %d\n" % (self.__mapFrom, self.__mapTo)
     dstr += " Pickled: %s\n" % ('Yes' if self.__pickle else 'No')
     dstr += " From entries: %d\n" % len(self.fromKeys)
     dstr += " To entries: %d\n" % len(self.toKeys)
     return dstr
+  #edef
+    
+  def __repr__(self):
+    """
+    String representation of object.
+    """
+    return str(self)
   #edef
 
   def __lookup(self, key, inverse, withEntry):

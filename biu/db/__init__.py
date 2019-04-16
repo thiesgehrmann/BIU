@@ -1,38 +1,34 @@
-## Old Dataset databases
-from .caddUtils import CADD as CADD
+## Old Dataset databases, existing only for backwards compatability
 
-from .clinVarUtils import ClinVar as ClinVar
-
-from .gnomadUtils import Gnomad as Gnomad
-
-from .gtexUtils import GTeX as GTeX
-
-from .uniprotUtils import UniProt as UniProt
-
-from .hagrUtils import HAGR as HAGR
-
-from .llsUtils import LLS as LLS
 from .bbmriUtils import BBMRI as BBMRI
-
-from .goto import GOTO as GOTO
-
+from .caddUtils import CADD as CADD
+from .gnomadUtils import Gnomad as Gnomad
 from .goUtils import GO as GO
+from .goto import GOTO as GOTO
+from .llsUtils import LLS as LLS
 
-from .keggUtils import KEGG as KEGG
 
+## Old dataset databases, not yet existing in dataset2 format
+from .clinVarUtils import ClinVar as ClinVar
 from .dbsnpUtils import DBSNP as DBSNP
+from .gtexUtils import GTeX as GTeX
+from .hagrUtils import HAGR as HAGR
+from .keggUtils import KEGG as KEGG
+from .uniprotUtils import UniProt as UniProt
 
 ### Dataset2 databases
 
-from .iris import Iris
-from .gwas_catalog import GWAS_Catalog
-from .cosmic import Cosmic as Cosmic
-from .lls2 import LLS2 as LLS2 # A re-implementation of LLS
 from .bbmri2 import BBMRI2 as BBMRI2 # A re-implementation of BBMRI
-from .goto2 import GOTO2 as GOTO2
-from .gnomad2 import Gnomad2 as Gnomad2
 from .cadd2 import CADD2 as CADD2
+from .cosmic import Cosmic as Cosmic
+from .gnomad2 import Gnomad2 as Gnomad2
+from .go2 import GO2 as GO2
+from .goto2 import GOTO2 as GOTO2
+from .gwas_catalog import GWAS_Catalog
+from .iris import Iris
+from .lls2 import LLS2 as LLS2 # A re-implementation of LLS
 from .reactome import Reactome as Reactome
+
 
 
 ## SUPER OLD ResourceManager/LazyObject databases
@@ -50,8 +46,11 @@ from .reactome import Reactome as Reactome
 #from .genomeUtils import Genome as Genome
 #from .genomeUtils import listGenomes as listGenomes
 
-__datasets = [ GO, LLS, GOTO, Cosmic, HAGR, KEGG, DBSNP, BBMRI, CADD, ClinVar,
-               UniProt, Gnomad, GWAS_Catalog, Iris, GTeX, Reactome ]
+
+__datasets = [ BBMRI, CADD, Gnomad, GO, GOTO, LLS, # Old format, also in new format
+               ClinVar, DBSNP, GTeX, HAGR, KEGG, UniProt, # Old format, not yet in new format
+               BBMRI2, CADD2, Cosmic, Gnomad2, GO2, GOTO2, GWAS_Catalog, Iris, LLS2, Reactome ] # New format
+               
 
 def versions(db = None):
     if db is None:

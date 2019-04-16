@@ -2,6 +2,8 @@ from ..structures import Dataset2
 from .. import formats
 from .. import utils
 
+pd = utils.py.loadExternalModule('pandas')
+
 ###############################################################################
 
 #https://www.ensembl.org/info/data/biomart/biomart_restful.html#wget
@@ -86,17 +88,18 @@ class BioMart(Dataset2):
         db = utils.Acquire2().wget(genQuery(url, database, attributes))
         self._obj.add_file("biomart.tsv", db)
         
+        self._obj.register('_table', ["biomart.tsv"], lambda f: pd.read_csv(f["biomart.tsv"], sep='\t',
+                                                                    index_col=False, dtype=object,
+                                                                    names=attributes))
+        
         ##################
         # Here there is a little trick to make sure that items like this are properly registered:
         # lambda f, const1=const1, const2=const2: func(f, const1, const2)
         # Internally in the Dataset, it is called as func(f), and the consts are constant.
         ##################
-        def load(f, idx):
-            return formats.TSVIndex(f["biomart.tsv"], idx, names=attributes, delimiter='\t')
-        #edef
         
         for idx, attr in enumerate(attributes):
-            self._obj.register(attr, ["biomart.tsv"], lambda f, idx=idx: load(f, idx))
+            self._obj.register(attr, ["biomart.tsv"], lambda f, idx=idx: formats.MappingIndex(self._table, idx))
         #efor
 
     #edef

@@ -762,7 +762,7 @@ class Acquire2(object):
         return self.add_step(step)
     #edef
 
-    def _sort(self, options=None):
+    def sort(self, options=None):
         """
         Sort the contents of a file using the unix sort command
         parameters:
@@ -895,6 +895,7 @@ class Acquire2(object):
 
         if not hasattr(function, '__call__'):
             raise ValueError("The provided function should be callable.")
+        #fi
         
         step = AcquireStep("Func", inputs, output, function)
         return self.add_step(step)

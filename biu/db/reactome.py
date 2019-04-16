@@ -445,7 +445,7 @@ class Reactome(Dataset2):
         R = []
         for p in pathway:
             pathway_genes = set([prot.id for prot in self.pathway[p].proteins ]) & background
-            res = stats.enrichment.setEnrichment(your_set, pathway_genes, background, abcd_values=abcd_values)
+            res = stats.enrichment.set_enrichment(your_set, pathway_genes, background, abcd_values=abcd_values)
             R.append((p, self.pathway[p].id, res.method, res.c2statistic, res.oddsratio, res.pvalue, res.table))
         #efor
 
@@ -457,26 +457,99 @@ class Reactome(Dataset2):
         return df
     #edef
     
-    def summary(self, your_set):
+    def summary(self, your_sets):
         """
         For a set of proteins, count the occurrence of each pathway.
 
         parameters:
         -----------
-        your_set: List[String] A list of uniprot protein identifiers
+        your_sets: List[String] | List[List[String]] | dict[string->List[String]]
+            A list of uniprot protein identifiers, or a list/dict of lists of uniprot identifiers
 
         Returns:
         Pandas Dataframe of pathway counts
+        
+        example usage:
+        
         """
 
-        pathways = [ pway for prot in your_set for pway in self.protein[prot].pathways ]
-        pathways = list(ops.lst.freq(pathways).items())
-        pathways = pd.DataFrame(pathways, columns=['pathway', 'count'])
-        pathways['description'] = pathways.pathway.apply(lambda p: p.description)
-        pathways['total_count'] = pathways.pathway.apply(lambda p: len(p.proteins))
-        pathways.pathway = pathways.pathway.apply(lambda p: p.id)
+        if not isinstance(your_sets, dict):
+            if isinstance(your_sets[0], str):
+                your_sets = { "count" : your_sets }
+            else:
+                your_sets = { "count_%d" % (i+1) : s for (i,s) in enumerate(your_sets) }
+            #fi
+        #fi
+        
+        tot_set = set(self.proteins)
+        your_sets = { k : list(set(your_sets[k]) & tot_set) for k in your_sets }
+        
+        p_counts = []
+        
+        for this_k in your_sets:
+            this_set = your_sets[this_k]
+            pathways = [ pway for prot in this_set for pway in self.protein[prot].pathways ]
+            pathways = [ (this_k, k, v) for (k,v) in  ops.lst.freq(pathways).items() ]
+            p_counts.extend(pathways)
+        #efor
+        p_counts = pd.DataFrame(p_counts, columns=[ 'set', 'pathway', 'count'])
+        p_counts.pathway = p_counts.pathway.apply(lambda p: p.id)
+        p_counts = pd.pivot_table(index='pathway', columns='set', values='count', data=p_counts)
+        p_counts = p_counts.fillna(0)
+        for this_k in your_sets:
+            if this_k not in p_counts.columns:
+                p_counts[this_k] = [0] * p_counts.shape[0]
+            #fi
+            p_counts[this_k] = p_counts[this_k].astype(int)
+        #efor
+        p_counts['total_count'] = [ len(self.pathway[p].proteins) for p in p_counts.index ] 
+        p_counts['description'] = [ self.pathway[p].description for p in p_counts.index ]
 
-        return pathways
+
+        return p_counts
+    #edef
+    
+    def annotate(self, your_sets):
+        """
+        For a set of proteins, Annotate them
+
+        parameters:
+        -----------
+        your_sets: List[String] | List[List[String]] | dict[string->List[String]]
+            A list of uniprot protein identifiers, or a list/dict of lists of uniprot identifiers
+
+        Returns:
+        Pandas Dataframe of pathway counts
+        
+        example usage:
+        
+        """
+
+        if not isinstance(your_sets, dict):
+            if isinstance(your_sets[0], str):
+                your_sets = { "annot" : your_sets }
+            else:
+                your_sets = { "annot_%d" % (i+1) : s for (i,s) in enumerate(your_sets) }
+            #fi
+        #fi
+        
+        tot_set = set(self.proteins)
+        your_sets = { k : set(your_sets[k]) & tot_set for k in your_sets }
+        
+        p_annot = []
+        
+        pathways = list(set([ pway for p in ops.lst.flatten(your_sets.values()) for pway in self.protein[p].pathways ]))
+        
+        for pway in pathways:
+            pway_set = set([ p.id for p in pway.proteins ])
+            counts = [ your_sets[k] & pway_set for k in your_sets ]
+            p_annot.append([pway.id, pway.description] + counts)
+        #efor
+        
+        
+        p_annot = pd.DataFrame(p_annot, columns=[ 'pathway', 'description'] + list(your_sets.keys()))
+
+        return p_annot
     #edef
     
 #eclass

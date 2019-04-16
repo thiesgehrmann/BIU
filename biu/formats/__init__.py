@@ -16,6 +16,8 @@ from .sqliteUtils import SQLite as SQLite
 from .sqlDictUtils import SQLDict as SQLDict
 
 from .tabixUtils import Tabix as Tabix
+
 from .tsvMapUtils import TSVMap as TSVMap
 from .tsvIndex import TSVIndex as TSVIndex
+from .mapping_index import MappingIndex as MappingIndex
 from .map import Map as Map

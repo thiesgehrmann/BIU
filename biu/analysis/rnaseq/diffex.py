@@ -281,6 +281,70 @@ def significant_in(diffex, contr=None, split_updown=False,
 
 ###################################################################################
 
+def gsea_rankings(diffex, rankby='logfc', contr=None, split_updown=False,
+                   col_contr=_defaults['col_contr'], col_index=_defaults['col_index'],
+                   col_pval=_defaults['col_pval'], col_qval=_defaults['col_qval'],
+                   col_lfc=_defaults['col_lfc'], alpha=_defaults['alpha'], lfcThresh=_defaults['lfcThresh'] ):
+    """
+    Return a dictionary of significant genes per contrast
+    Inputs:
+        rankby: 'logfc' | 'pvalue'. Sort by logFC or pvalue
+                if logfc  -> all tests with pvalue < alpha are given the lowest ranking
+                if pvalue -> all tests 
+        diffex: The output of a differential expression (e.g. voom)
+        contr: String or list of strings of contrast names (or None)
+        split_updown: Split the differential expressions by up/down expressed
+    Outputs:
+        dict of { contr : (genes, scores) } if split_updown is False
+        dict of { contr: { 'up' : (genes, scores), 'down' : (genes, scores) } } if split_updown is True
+    """
+    if contr is None:
+        contr = list(diffex[col_contr].drop_duplicates())
+    #fi
+    if isinstance(contr, str):
+        contr = [ contr ]
+    #fi
+    
+    diffex = diffex.copy()
+    diffex = diffex[~diffex[col_index].isna()]
+    
+    if rankby == 'logfc':
+        col_rank = col_lfc
+        diffex.loc[diffex[col_qval] >= alpha, col_lfc] = np.nan
+        
+    elif rankby == 'pvalue':
+        col_rank = col_qval
+        diffex[col_fdr] = diffex[col_fdr]
+        diffex[diffex[col_lfc] >= lfcThresh, col_fdr] = np.nan
+    else:
+        raise ValueError('Invalid rankby argument.')
+    #fi
+    
+    R = {}
+    
+    for c in contr:
+        DC = diffex[diffex.contr == c]
+        if split_updown:
+            r_up = -DC[col_rank].values
+            r_up[np.isnan(r_up)] = max(r_up[~np.isnan(r_up)])
+            
+            r_down = DC[col_rank].values
+            r_down[np.isnan(r_down)] = max(r_down[~np.isnan(r_down)])
+            
+            R[(c, 'up')] = (DC[col_index].values, r_up)
+            R[(c, 'down')] = (DC[col_index].values, r_down)
+        else:
+            r = np.abs(DC[col_rank].values)
+            r[np.isnan(r)] = max(r[~np.isnan(r)])
+            R[c] = (DC[col_index], r)
+        #fi
+    #efor
+    
+    return R
+#edef
+
+###################################################################################
+
 def isSigIn(diffex, contr=None, logic=all,
             col_contr=_defaults['col_contr'], col_index=_defaults['col_index'],
             col_pval=_defaults['col_pval'], col_qval=_defaults['col_qval'],
@@ -324,7 +388,6 @@ def volcanoPlot(diffex,contr=None, ax=None,
         lfcThresh: LogFC threshold
         contr: String or list of Strings. Which contrast to investigate? 
         ax: Matplotlib axes to plot on. Same length as contr
-        
         
         col_pval: The column to use as pvalue
         col_qval: The column to use as corrected pvalues
@@ -462,7 +525,7 @@ def pairedVolcanoPlot(diffex, contrA, contrB,only_significant=True, ax=None, col
         
     if ax is None:
         fig, axes = utils.figure.subplots(ncols=1, nrows=1)
-        ax = axes
+        ax = axes[0]
     #fi
     
     ax.scatter(cmp[col_lfc][contrA].values, -np.log10(cmp[col_pval][contrA].values), c='blue', label=contrA, s=0.5)
