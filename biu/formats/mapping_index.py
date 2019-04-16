@@ -130,7 +130,7 @@ class MappingIndex(object):
         """
         if key not in self.__idx:
             utils.msg.error("Item '%s' not in map." % key)
-            return self.__emptyResult
+            return self.__empty_result
         #fi
 
         return self.__idx[key]
