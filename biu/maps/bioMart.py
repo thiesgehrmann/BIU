@@ -32,7 +32,7 @@ class BioMart(Dataset2):
     versions = {
         "hsapiens_gene_trans_prot_geneid_hgnc" : {
             "database" : "hsapiens_gene_ensembl",
-            "attributes" : [ 'ensembl_gene_id', 'ensembl_transcript_id', 'ensembl_peptide_id', 'entrezgene', 'ucsc', 'hgnc_symbol' ]
+            "attributes" : [ 'ensembl_gene_id', 'ensembl_transcript_id', 'ensembl_peptide_id', 'entrezgene', 'uniprotswissprot', 'hgnc_symbol' ]
         },
         "mmusculus_gene_trans_prot_hgnc" : {
             "database" : "mmusculus_gene_ensembl",

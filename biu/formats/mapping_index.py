@@ -61,7 +61,7 @@ class MappingIndexObject(object):
     
     def __str__(self):
         dstr  = "MappingIndexObject\n"
-        for f in self._fields:
+        for f in self._fields[:10]:
             dstr += " %s : %s\n" % (f, self._field_values[f])
         #efor
         dstr += " Values:\n"

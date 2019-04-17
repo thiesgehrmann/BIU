@@ -395,15 +395,18 @@ class Acquire2(object):
         
         Returns the output AcquireFile object for this pipeline.
         """
-        if self.output.provis(self.where).exists and not self.redo:
-            return self.output
+        
+        output = self.output.provis(self.where)
+        
+        if output.exists and not self.redo:
+            return output
         #fi
         
         for step in self.steps:
             step.do(self.where, self.redo)
         #efor
         
-        return self.output
+        return output
     #edef
     
     def __str__(self):
