@@ -87,3 +87,47 @@ def deprecated(reason):
         raise TypeError(repr(type(reason)))
     #fi
 #edef
+
+##################################################################
+
+from collections import namedtuple
+
+class class_or_instance_method(object):
+    """
+    Defines a decorator that provides a class instance object if a function is called from a class instance,
+    or a class object if it is called as a classmethod.
+    
+    e.g.
+    
+    class test(object):
+        def __init__(self):
+            self.a = 10
+        @biu.utils.decorators.class_or_instance_method
+        def coi(obj, a=0):
+            if obj.is_instance:
+                print(obj.self.a)
+            else:
+                print(a)
+                
+    NOTE: the format of the coi() function:
+        def coi(obj,        # A named tuple (see below)
+                *pargs,      # Additional arguments to the function
+                **kwargs     # Additional, named arguments to the function)
+    
+    """
+    def __init__(self, f):
+        self.f = f
+        self._nt = namedtuple("class_or_instance", ["self", "is_instance"])
+    #edef
+
+    def __get__(self, instance, owner):
+        obj = self._nt(instance, True) if instance is not None else self._nt(owner, False)
+
+        def newfunc(*args, **kwargs):
+            return self.f(obj, *args, **kwargs)
+        #edef
+        return newfunc
+    #edef
+#eclass
+
+##################################################################

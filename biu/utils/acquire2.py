@@ -468,7 +468,7 @@ class Acquire2(object):
         """
         Use a local file with a specific name. Touch the file.
         """
-        step = AcquireStep("Touch", [], AcquireFile(file), lambda i,o: fs.touchFile(i[0].path))
+        step = AcquireStep("Touch", [], AcquireFile(dirname=None, basename=file), lambda i,o: fs.touchFile(o))
         return self.add_step(step)
     #edef
     
@@ -517,7 +517,7 @@ class Acquire2(object):
         return self.add_step(step)
     #edef
     
-    def curl(self, url, cookieURL=None, username=None, password=None, ext=None):
+    def curl(self, url, cookieURL=None, username=None, password=None, ext=None, args=None):
         """
         curl: Download a file using curl
         Inputs: url: The URL to retrieve
@@ -525,13 +525,15 @@ class Acquire2(object):
                 username: If logging in, the username
                 password: If logging in, the password
                 ext: Optionally specify a file extension
+                args: list of additional arguments. e.g.
+                    [('-H', 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8')]
         """
         
         ext         = '' if ext is None else ('.' + ext)
         curl_hash   = ops.lst.hash([ url, cookieURL, username, password ]) + ext
         output_file = AcquireFile(dirname=None, basename=curl_hash)
         
-        def _curl(output, url, cookieURL=None, username=None, password=None):
+        def _curl(output, url, cookieURL=None, username=None, password=None, args=None):
             """
             curl: Download a file using curl
             Inputs: url: The URL to retrieve
@@ -541,6 +543,12 @@ class Acquire2(object):
                     ext: Optionally specify a file extension
             Output: Acquire object
             """
+            
+            if args is not None:
+                args = ' '.join([ "%s '%s'" % (a[0],a[1]) if len(a) == 2 else "'%s'" % a[0]  for a in args ])
+            else:
+                args = ''
+            #fi
 
             cookieFile = None
             if (cookieURL is not None) or (username is not None) or (password is not None):
@@ -551,11 +559,11 @@ class Acquire2(object):
                     return p
                 #fi
             #fi
-            p = exe.runCommand("curl -L %s '%s' > '%s'" % ( '-c "%s"' % cookieFile if cookieFile is not None else  '', url, output), shell=True, verbose=True)
+            p = exe.runCommand("curl -L %s '%s' > '%s' %s" % ( '-c "%s"' % cookieFile if cookieFile is not None else  '', url, output, args), shell=True, verbose=True)
             return p
         #edef
         
-        step = AcquireStep("Curl(%s)" % url, [], output_file, lambda i, o: _curl(o, url, cookieURL, username, password))
+        step = AcquireStep("Curl(%s)" % url, [], output_file, lambda i, o: _curl(o, url, cookieURL, username, password, args))
         return self.add_step(step)
     #edef
     
@@ -836,13 +844,15 @@ class Acquire2(object):
         return self.add_step(step)
     #edef
     
-    def cmd(self, cmd, placeholder=None):
+    def cmd(self, cmd, placeholder=None, quote_char="'"):
         """
         Call a shell function on the file.
         parameters:
         ------------
         cmd: The shell command to execute.
         placeholder: A string that will be replaced with the filename.
+        
+        The stdout output of your command will be written to the next file.
         
         if placeholder is None, then the following command will be executed:
         `cmd filename`
@@ -852,22 +862,30 @@ class Acquire2(object):
         cmd("cat {} | tee './test.tee'", '{}')
             will result in:
         `cat filename | tee './test.tee'"`
+        
+        If there are multiple file names, then they will be included one after the other.
+        e.g.
+        
+        cmd {} -> cmd 'filename1' 'filename2' 'filename3'
         """
         inputs   = [self.output]
         out_file = self.output.basename + '.cmd'
         output   = AcquireFile(inputs[-1].dirname, out_file)
 
-        def _cmd(infile, outfile, placeholder):
+        def _cmd(infiles, outfile, cmd, placeholder, quote_char):
+            
+            infiles = ' '.join(["%s%s%s" % (quote_char, i, quote_char) for i in infiles])
+            
             if placeholder is not None:
-                cmd = cmd.replace(placeholder, infile)
+                cmd = cmd.replace(placeholder, infiles)
             else:
-                cmd = cmd + ' ' + infile
+                cmd = cmd + ' ' + infiles
             #fi
             p = exe.runCommand("%s > '%s'" % (cmd, outfile), shell=True, verbose=True)
             return p
         #edef
         
-        step = AcquireStep("CMD", inputs, output, lambda i,o: _cmd(i[0], o, cmd))
+        step = AcquireStep("CMD", inputs, output, lambda i,o: _cmd(i, o, cmd, placeholder, quote_char))
         return self.add_step(step)
     #edef
 

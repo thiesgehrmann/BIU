@@ -119,7 +119,7 @@ class HGNC(Dataset2):
             return utils.Acquire2.STATUS_SUCCESS
         #edef
     
-        f = biu.utils.Acquire2().curl('ftp://ftp.ebi.ac.uk/pub/databases/genenames/new/tsv/non_alt_loci_set.txt')
+        f = utils.Acquire2().curl('ftp://ftp.ebi.ac.uk/pub/databases/genenames/new/tsv/non_alt_loci_set.txt')
         f = f.func(lambda fin, fout: process_table(fin[0], fout))
         self._obj.add_file("hgnc.pkl", f)
         

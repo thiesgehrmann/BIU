@@ -4,10 +4,11 @@ library(edgeR)
 #########################################################################
 
 normalize.rin <- function(x){
+    ## https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2921808/
     ## Defining a function for Rank Inverse Normal transformation of a single measurement:
     single.RIN <- function(x){
         x <- rank(x, "keep")
-        x  <- (x - 0.5) / length(x)
+        x <- (x - 0.5) / length(x)
         return(qnorm(x))
     }
     if(is.matrix(x)){
@@ -102,7 +103,7 @@ limma.extract.effects <- function(fit, effects=NULL) {
 
 #########################################################################
 
-limma.metab <- function(formula, covar, metab, contrasts=NULL, effects=NULL, random_effect=NULL, verbose=FALSE){
+limma.metab <- function(formula, covar, metab, contrasts=NULL, effects=NULL, random_effect=NULL, rin=FALSE, ebayes=TRUE, verbose=FALSE){
     #'
     #'parameters:
     #'-----------
@@ -112,13 +113,17 @@ limma.metab <- function(formula, covar, metab, contrasts=NULL, effects=NULL, ran
     #'contrasts: list. Which contrasts to evaluate (default NULL)
     #'effects: list. Which effects are you interested in? (You cannot provide contrasts AND effects. You must choose one).
     #'random_effect: String. Add a random effect per group defined by column in covar 
+    #'rin: Boolean. Perform Rank Inverse Normal transformation
+    #'ebayes: Boolean, Use ebayes or not
     #'verbose: Boolean. Return all the intermediate variables in a list
 
     
     C <- na.omit(droplevels(covar))
     E <- as.matrix(metab[match(rownames(C), rownames(metab)),])
     E <- apply(E,2,scale)
-    E <- t(normalize.rin(E))
+    E <- if (rin){normalize.rin(E)} else {E}
+    E <- t(E)
+    
     design <- model.matrix(formula, C)
     
     dup.corr <- if (!is.null(random_effect)){
@@ -147,7 +152,7 @@ limma.metab <- function(formula, covar, metab, contrasts=NULL, effects=NULL, ran
                fit2C <- contrasts.fit(fit, contr.matrix)
            } else {fit}
     
-    fit <- eBayes(fit)
+    fit <- if (ebayes) {eBayes(fit)} else {treat(fit)}
 
     res <- if (! is.null(contrasts)){
         limma.extract.contrasts(fit)

@@ -156,8 +156,8 @@ class VCF2(object):
         Perform a filtering operation.
         You can filter on:
         
-        samples:           vcf.filter(samples=[a,b,c,d])
         region:            vcf.filter(chrom, start, end)
+        samples:           vcf.filter(samples=[a,b,c,d])
         filters:           vcf.filter(filters=[a,b,c])
         variant types:     vcf.filter(vartypes=[a,b,c])
             vartypes must be in ['snp', 'indel', 'cv' ]
@@ -338,20 +338,30 @@ class VCF2(object):
         return pd.DataFrame(gts, index=idxs, columns=self.samples).transpose()
     #edef
     
-    def summary(self):
+    @utils.decorators.class_or_instance_method
+    def summary(obj, variants=None):
         """
         Create a summary matrix for each variant in the object
         
         ASSUMES a MONO/DIPLOID ORGANISM!
         """
-        self.to_records()
+        
+        if variants is None:
+            if obj.is_instance:
+                obj.self.to_records()
+                variants = obj.self.records
+            else:
+                raise ValueError("To use this function as a classmethod, you must specify a list of variants you wish to summarize.")
+            #fi
+        #fi
+            
         
         counts  = []
         idxs = []
 
-        for var in self.records:
+        for var in variants:
             for i, alt in enumerate(var.ALT):
-                ident = self.make_identifier(var, i)
+                ident = obj.self.make_identifier(var, i)
                 pos = i+1
                 
                 #                   RR, RA, AA, R, A, O
@@ -376,10 +386,12 @@ class VCF2(object):
             #efor
         #efor
 
-        return pd.DataFrame(counts, index=idxs, columns=['RR','RA','AA','R','A', O])
+        return pd.DataFrame(counts, index=idxs, columns=['RR','RA','AA','R','A', 'O'])
     #edef
+    
 
-    def make_identifier(self, variant, alt_pos=0):
+    @classmethod
+    def make_identifier(cls, variant, alt_pos=0):
         """
         Make an identifier for a given variant.
         
@@ -390,8 +402,10 @@ class VCF2(object):
         returns:
         A string identifier for the variant
         """
-        return '%s:%d-%s-%s' % (str(variant.CHROM), variant.POS, variant.REF, variant.ALT[alt_pos])
+        return '%s-%d-%s-%s' % (str(variant.CHROM), variant.POS, variant.REF, variant.ALT[alt_pos])
     #edef
+
+        
     
     @staticmethod
     def genotype_info_field_indexes(altAlleleID, ref=0):
@@ -566,11 +580,13 @@ class VCF2_records(VCF2_master_type):
 
     def filter_samples(self, samples):
         raise Exception("Cannot filter samples in the VCF2_records representation. Please filter by samples first! See documentation.")
+    #edef
 
     def filter_region(self, chrom, start, end):
         # Quick and dirty first
         test = lambda v: (str(v.CHROM) == str(chrom)) and (v.POS >= start) and (v.POS <= end)
         return VCF2_records([ v for v in self.records if test(v) ], self.samples)
+    #edef
 
     def filter_n_alleles(self, n_alleles):
         test = lambda v: len(v.ALT) <= n_alleles
@@ -612,8 +628,7 @@ class VCF2_cyvcf2(VCF2_master_type):
     #edef
 
     def filter_samples(self, samples):
-        self._vcf.set_samples(samples)
-        return VCF2_cyvcf2(self._file, self.samples)
+        return VCF2_cyvcf2(self._file, samples)
     #edef
 
     def filter_region(self, chrom, start, end):

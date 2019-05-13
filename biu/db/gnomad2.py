@@ -10,11 +10,15 @@ from functools import reduce
 ###############################################################################
 
 class VCF_gnomad(formats.VCF2):
-    def summary(self, sub=[None,'AFR','AMR','ASJ','EAS','FIN','NFE','OTH','SAS']):
+    @utils.decorators.class_or_instance_method
+    def summary(obj, variants=None, sub=[None,'AFR','AMR','ASJ','EAS','FIN','NFE','OTH','SAS']):
         """
         Generate a summary for each sub-population
         
         """
+        
+        
+        
         utils.msg.dbm("Warning: This function, summary() is not behaving normally!")
 
         def mk_summary(var, alt_pos, sub):

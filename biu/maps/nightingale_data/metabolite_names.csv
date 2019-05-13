@@ -1,0 +1,236 @@
+db_name,unit,name
+bacace,mmol/l,Acetoacetate
+bace,mmol/l,Acetate
+bala,mmol/l,Alanine
+balb,signal area,Albumin
+bapoa1,g/l,Apolipoprotein A-I
+bapob,g/l,Apolipoprotein B
+bapobbyapoa1,ratio,Ratio of apolipoprotein B to apolipoprotein A-I
+bbohbut,mmol/l,3-hydroxybutyrate
+bcit,mmol/l,Citrate
+bcla,mmol/l,Conjugated linoleic acid
+bclabyfa,%,Ratio of conjugated linoleic acid to total fatty acids
+bcrea,mmol/l,Creatinine
+bdag,mmol/l,Diacylglycerol
+bdagbytg,ratio,Ratio of diacylglycerol to triglycerides
+bdha,mmol/l,Docosahexaenoic acid; 22:6
+bdhabyfa,%,Ratio of docosahexaenoic acid to total fatty acids
+bestc,mmol/l,Esterified cholesterol
+bfalen,,"Estimated description of fatty acid chain length, not actual carbon number"
+bfaw3,mmol/l,Omega-3 fatty acids
+bfaw3byfa,%,Ratio of omega-3 fatty acids to total fatty acids
+bfaw6,mmol/l,Omega-6 fatty acids
+bfaw6byfa,%,Ratio of omega-6 fatty acids to total fatty acids
+bfreec,mmol/l,Free cholesterol
+bglc,mmol/l,Glucose
+bgln,mmol/l,Glutamine
+bglol,mmol/l,Glycerol
+bgly,mmol/l,Glycine
+bgp,mmol/l,Glycoprotein acetyls (GlycA)
+bhdl2c,mmol/l,Total cholesterol in HDL2
+bhdl3c,mmol/l,Total cholesterol in HDL3
+bhdlc,mmol/l,Total cholesterol in HDL
+bhdld,nm,Mean diameter for HDL particles
+bhdltg,mmol/l,Triglycerides in HDL
+bhis,mmol/l,Histidine
+bidlc,mmol/l,Total cholesterol in IDL
+bidlce,mmol/l,Cholesterol esters in IDL
+bidlcepct,%,Cholesterol esters to total lipids ratio in IDL
+bidlcpct,%,Total cholesterol to total lipids ratio in IDL
+bidlfc,mmol/l,Free cholesterol in IDL
+bidlfcpct,%,Free cholesterol to total lipids ratio in IDL
+bidll,mmol/l,Total lipids in IDL
+bidlp,mol/l,Concentration of IDL particles
+bidlpl,mmol/l,Phospholipids in IDL
+bidlplpct,%,Phospholipids to total lipds ratio in IDL
+bidltg,mmol/l,Triglycerides in IDL
+bidltgpct,%,Triglycerides to total lipids ratio in IDL
+bile,mmol/l,Isoleucine
+biomaterial_id,,
+bla,mmol/l,Linoleic acid; 18:2
+blabyfa,%,Ratio of linoleic acid to total fatty acids
+blac,mmol/l,Lactate
+bldld,nm,Mean diameter for LDL particles
+bldltg,mmol/l,Triglycerides in LDL
+bleu,mmol/l,Leucine
+blhdlc,mmol/l,Total cholesterol in large HDL
+blhdlce,mmol/l,Cholesterol esters in large HDL
+blhdlcepct,%,Cholesterol esters to total lipids ratio in large HDL
+blhdlcpct,%,Total cholesterol to total lipids ratio in large HDL
+blhdlfc,mmol/l,Free cholesterol in large HDL
+blhdlfcpct,%,Free cholesterol to total lipids ratio in large HDL
+blhdll,mmol/l,Total lipids in large HDL
+blhdlp,mol/l,Concentration of large HDL particles
+blhdlpl,mmol/l,Phospholipids in large HDL
+blhdlplpct,%,Phospholipids to total lipds ratio in large HDL
+blhdltg,mmol/l,Triglycerides in large HDL
+blhdltgpct,%,Triglycerides to total lipids ratio in large HDL
+blldlc,mmol/l,Total cholesterol in large LDL
+blldlce,mmol/l,Cholesterol esters in large LDL
+blldlcepct,%,Cholesterol esters to total lipids ratio in large LDL
+blldlcpct,%,Total cholesterol to total lipids ratio in large LDL
+blldlfc,mmol/l,Free cholesterol in large LDL
+blldlfcpct,%,Free cholesterol to total lipids ratio in large LDL
+blldll,mmol/l,Total lipids in large LDL
+blldlp,mol/l,Concentration of large LDL particles
+blldlpl,mmol/l,Phospholipids in large LDL
+blldlplpct,%,Phospholipids to total lipds ratio in large LDL
+blldltg,mmol/l,Triglycerides in large LDL
+blldltgpct,%,Triglycerides to total lipids ratio in large LDL
+blvldlc,mmol/l,Total cholesterol in large VLDL
+blvldlce,mmol/l,Cholesterol esters in large VLDL
+blvldlcepct,%,Cholesterol esters to total lipids ratio in large VLDL
+blvldlcpct,%,Total cholesterol to total lipids ratio in large VLDL
+blvldlfc,mmol/l,Free cholesterol in large VLDL
+blvldlfcpct,%,Free cholesterol to total lipids ratio in large VLDL
+blvldll,mmol/l,Total lipids in large VLDL
+blvldlp,mol/l,Concentration of large VLDL particles
+blvldlpl,mmol/l,Phospholipids in large VLDL
+blvldlplpct,%,Phospholipids to total lipds ratio in large VLDL
+blvldltg,mmol/l,Triglycerides in large VLDL
+blvldltgpct,%,Triglycerides to total lipids ratio in large VLDL
+bmhdlc,mmol/l,Total cholesterol in medium HDL
+bmhdlce,mmol/l,Cholesterol esters in medium HDL
+bmhdlcepct,%,Cholesterol esters to total lipids ratio in medium HDL
+bmhdlcpct,%,Total cholesterol to total lipids ratio in medium HDL
+bmhdlfc,mmol/l,Free cholesterol in medium HDL
+bmhdlfcpct,%,Free cholesterol to total lipids ratio in medium HDL
+bmhdll,mmol/l,Total lipids in medium HDL
+bmhdlp,mol/l,Concentration of medium HDL particles
+bmhdlpl,mmol/l,Phospholipids in medium HDL
+bmhdlplpct,%,Phospholipids to total lipds ratio in medium HDL
+bmhdltg,mmol/l,Triglycerides in medium HDL
+bmhdltgpct,%,Triglycerides to total lipids ratio in medium HDL
+bmldlc,mmol/l,Total cholesterol in medium LDL
+bmldlce,mmol/l,Cholesterol esters in medium LDL
+bmldlcepct,%,Cholesterol esters to total lipids ratio in medium LDL
+bmldlcpct,%,Total cholesterol to total lipids ratio in medium LDL
+bmldlfc,mmol/l,Free cholesterol in medium LDL
+bmldlfcpct,%,Free cholesterol to total lipids ratio in medium LDL
+bmldll,mmol/l,Total lipids in medium LDL
+bmldlp,mol/l,Concentration of medium LDL particles
+bmldlpl,mmol/l,Phospholipids in medium LDL
+bmldlplpct,%,Phospholipids to total lipds ratio in medium LDL
+bmldltg,mmol/l,Triglycerides in medium LDL
+bmldltgpct,%,Triglycerides to total lipids ratio in medium LDL
+bmufa,mmol/l,"Monounsaturated fatty acids; 16:1, 18:1"
+bmufabyfa,%,Ratio of monounsaturated fatty acids to total fatty acids
+bmvldlc,mmol/l,Total cholesterol in medium VLDL
+bmvldlce,mmol/l,Cholesterol esters in medium VLDL
+bmvldlcepct,%,Cholesterol esters to total lipids ratio in medium VLDL
+bmvldlcpct,%,Total cholesterol to total lipids ratio in medium VLDL
+bmvldlfc,mmol/l,Free cholesterol in medium VLDL
+bmvldlfcpct,%,Free cholesterol to total lipids ratio in medium VLDL
+bmvldll,mmol/l,Total lipids in medium VLDL
+bmvldlp,mol/l,Concentration of medium VLDL particles
+bmvldlpl,mmol/l,Phospholipids in medium VLDL
+bmvldlplpct,%,Phospholipids to total lipds ratio in medium VLDL
+bmvldltg,mmol/l,Triglycerides in medium VLDL
+bmvldltgpct,%,Triglycerides to total lipids ratio in medium VLDL
+bpc,mmol/l,Phosphatidylcholine
+bphe,mmol/l,Phenylalanine
+bpufa,mmol/l,Polyunsaturated fatty acids
+bpufabyfa,%,Ratio of polyunsaturated fatty acids to total fatty acids
+bpureldlc,mmol/l,Total cholesterol in 3 LDL subclasses
+bpyr,mmol/l,Pyruvate
+bremnantc,mmol/l,"Remnant cholesterol (non-HDL, non-LDL -cholesterol)"
+bsfa,mmol/l,Saturated fatty acids
+bsfabyfa,%,Ratio of saturated fatty acids to total fatty acids
+bshdlc,mmol/l,Total cholesterol in small HDL
+bshdlce,mmol/l,Cholesterol esters in small HDL
+bshdlcepct,%,Cholesterol esters to total lipids ratio in small HDL
+bshdlcpct,%,Total cholesterol to total lipids ratio in small HDL
+bshdlfc,mmol/l,Free cholesterol in small HDL
+bshdlfcpct,%,Free cholesterol to total lipids ratio in small HDL
+bshdll,mmol/l,Total lipids in small HDL
+bshdlp,mol/l,Concentration of small HDL particles
+bshdlpl,mmol/l,Phospholipids in small HDL
+bshdlplpct,%,Phospholipids to total lipds ratio in small HDL
+bshdltg,mmol/l,Triglycerides in small HDL
+bshdltgpct,%,Triglycerides to total lipids ratio in small HDL
+bsldlc,mmol/l,Total cholesterol in small LDL
+bsldlce,mmol/l,Cholesterol esters in small LDL
+bsldlcepct,%,Cholesterol esters to total lipids ratio in small LDL
+bsldlcpct,%,Total cholesterol to total lipids ratio in small LDL
+bsldlfc,mmol/l,Free cholesterol in small LDL
+bsldlfcpct,%,Free cholesterol to total lipids ratio in small LDL
+bsldll,mmol/l,Total lipids in small LDL
+bsldlp,mol/l,Concentration of small LDL particles
+bsldlpl,mmol/l,Phospholipids in small LDL
+bsldlplpct,%,Phospholipids to total lipds ratio in small LDL
+bsldltg,mmol/l,Triglycerides in small LDL
+bsldltgpct,%,Triglycerides to total lipids ratio in small LDL
+bsm,mmol/l,Sphingomyelins
+bsvldlc,mmol/l,Total cholesterol in small VLDL
+bsvldlce,mmol/l,Cholesterol esters in small VLDL
+bsvldlcepct,%,Cholesterol esters to total lipids ratio in small VLDL
+bsvldlcpct,%,Total cholesterol to total lipids ratio in small VLDL
+bsvldlfc,mmol/l,Free cholesterol in small VLDL
+bsvldlfcpct,%,Free cholesterol to total lipids ratio in small VLDL
+bsvldll,mmol/l,Total lipids in small VLDL
+bsvldlp,mol/l,Concentration of small VLDL particles
+bsvldlpl,mmol/l,Phospholipids in small VLDL
+bsvldlplpct,%,Phospholipids to total lipds ratio in small VLDL
+bsvldltg,mmol/l,Triglycerides in small VLDL
+bsvldltgpct,%,Triglycerides to total lipids ratio in small VLDL
+btgbypg,ratio,Ratio of triglycerides to phosphoglycerides
+btotalc,mmol/l,Total cholesterol
+btotaltg,mmol/l,Total triglycerides
+btotcho,mmol/l,Total cholines
+btotfa,mmol/l,Total fatty acids
+btotpg,mmol/l,Total phosphoglycerides
+btyr,mmol/l,Tyrosine
+bunsat,degree,Degree of unsaturation
+bval,mmol/l,Valine
+bvldlc,mmol/l,Total cholesterol in VLDL
+bvldld,nm,Mean diameter for VLDL particles
+bvldltg,mmol/l,Triglycerides in VLDL
+bxlhdlc,mmol/l,Total cholesterol in very large HDL
+bxlhdlce,mmol/l,Cholesterol esters in very large HDL
+bxlhdlcepct,%,Cholesterol esters to total lipids ratio in very large HDL
+bxlhdlcpct,%,Total cholesterol to total lipids ratio in very large HDL
+bxlhdlfc,mmol/l,Free cholesterol in very large HDL
+bxlhdlfcpct,%,Free cholesterol to total lipids ratio in very large HDL
+bxlhdll,mmol/l,Total lipids in very large HDL
+bxlhdlp,mol/l,Concentration of very large HDL particles
+bxlhdlpl,mmol/l,Phospholipids in very large HDL
+bxlhdlplpct,%,Phospholipids to total lipds ratio in very large HDL
+bxlhdltg,mmol/l,Triglycerides in very large HDL
+bxlhdltgpct,%,Triglycerides to total lipids ratio in very large HDL
+bxlvldlc,mmol/l,Total cholesterol in very large VLDL
+bxlvldlce,mmol/l,Cholesterol esters in very large VLDL
+bxlvldlcepct,%,Cholesterol esters to total lipids ratio in very large VLDL
+bxlvldlcpct,%,Total cholesterol to total lipids ratio in very large VLDL
+bxlvldlfc,mmol/l,Free cholesterol in very large VLDL
+bxlvldlfcpct,%,Free cholesterol to total lipids ratio in very large VLDL
+bxlvldll,mmol/l,Total lipids in very large VLDL
+bxlvldlp,mol/l,Concentration of very large VLDL particles
+bxlvldlpl,mmol/l,Phospholipids in very large VLDL
+bxlvldlplpct,%,Phospholipids to total lipds ratio in very large VLDL
+bxlvldltg,mmol/l,Triglycerides in very large VLDL
+bxlvldltgpct,%,Triglycerides to total lipids ratio in very large VLDL
+bxsvldlc,mmol/l,Total cholesterol in very small VLDL
+bxsvldlce,mmol/l,Cholesterol esters in very small VLDL
+bxsvldlcepct,%,Cholesterol esters to total lipids ratio in very small VLDL
+bxsvldlcpct,%,Total cholesterol to total lipids ratio in very small VLDL
+bxsvldlfc,mmol/l,Free cholesterol in very small VLDL
+bxsvldlfcpct,%,Free cholesterol to total lipids ratio in very small VLDL
+bxsvldll,mmol/l,Total lipids in very small VLDL
+bxsvldlp,mol/l,Concentration of very small VLDL particles
+bxsvldlpl,mmol/l,Phospholipids in very small VLDL
+bxsvldlplpct,%,Phospholipids to total lipds ratio in very small VLDL
+bxsvldltg,mmol/l,Triglycerides in very small VLDL
+bxsvldltgpct,%,Triglycerides to total lipids ratio in very small VLDL
+bxxlvldlc,mmol/l,Total cholesterol in chylomicrons and extremely large VLDL
+bxxlvldlce,mmol/l,Cholesterol esters in chylomicrons and extremely large VLDL
+bxxlvldlcepct,%,Cholesterol esters to total lipids ratio in chylomicrons and extremely large VLDL
+bxxlvldlcpct,%,Total cholesterol to total lipids ratio in chylomicrons and extremely large VLDL
+bxxlvldlfc,mmol/l,Free cholesterol in chylomicrons and extremely large VLDL
+bxxlvldlfcpct,%,Free cholesterol to total lipids ratio in chylomicrons and extremely large VLDL
+bxxlvldll,mmol/l,Total lipids in chylomicrons and extremely large VLDL
+bxxlvldlp,mol/l,Concentration of chylomicrons and extremely large VLDL particles
+bxxlvldlpl,mmol/l,Phospholipids in chylomicrons and extremely large VLDL
+bxxlvldlplpct,%,Phospholipids to total lipds ratio in chylomicrons and extremely large VLDL
+bxxlvldltg,mmol/l,Triglycerides in chylomicrons and extremely large VLDL
+bxxlvldltgpct,%,Triglycerides to total lipids ratio in chylomicrons and extremely large VLDL
+ethanol,NA,QC tag: 'high ethanol'

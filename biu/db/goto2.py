@@ -218,16 +218,19 @@ class GOTO2(Dataset2):
         from datetime import datetime
         date_format = "%Y-%m-%d"
         visits = self.db_visit[~self.db_visit.intervention].set_index('person_id')
-        dates = self.db_person.set_index('person_id').join(visits, rsuffix='.r')[['date_of_birth', 'sex', 'visit_date']]
+        person = self.db_person.set_index('person_id').join(visits, rsuffix='.r')[['date_of_birth', 'sex', 'visit_date', 
+                                                                                   'couple_id', 'relation_to_participant']]
 
         def age(birth, visit):
             days = (datetime.strptime(visit,date_format) - datetime.strptime(birth, date_format)).days
             return days / 365.25
         #edef
 
-        dates["baseline_age"] = dates.apply(lambda r: age(r.date_of_birth, r.visit_date), axis=1)
+        person["baseline_age"] = person.apply(lambda r: age(r.date_of_birth, r.visit_date), axis=1)
+        person = person.rename(columns=dict(couple_id='household', relation_to_participant='longlived_fam'))
+        person.longlived_fam = person.longlived_fam.apply(lambda s: s == 'offspring')
 
-        dates = dates.drop(columns=['date_of_birth'])
+        person = person.drop(columns=['date_of_birth', 'visit_date'])
 
         ##########################################
         # Collect cell count features
@@ -257,7 +260,7 @@ class GOTO2(Dataset2):
 
         #########################################
         # Join them all together
-        metab_covar = cell_counts.join(dates[['baseline_age', 'sex']], on='person_id' )
+        metab_covar = cell_counts.join(person, on='person_id' )
         metab_covar = visit_covar.join(metab_covar.set_index(['person_id', 'intervention']),
                                        on=['person_id', 'intervention'])
         metab_covar = metab_covar.set_index(['person_id', 'intervention', 'fasted'])
@@ -267,7 +270,7 @@ class GOTO2(Dataset2):
 
         metab_covar['time_point'] = metab_covar.apply(lambda r: str(int(2*r.intervention + (1-r.fasted) + 1)), axis=1)
         for col in metab_covar.columns:
-            if col in [ 'person_id', 'type', 'intervention', 'fasted', 'sex', 'time_point' ]:
+            if col in [ 'person_id', 'type', 'intervention', 'fasted', 'sex', 'time_point', 'household', 'longlived_fam' ]:
                 metab_covar[col] = ops.series.cast_category(metab_covar[col])
             else:
                 metab_covar[col] = ops.series.cast_float(metab_covar[col])

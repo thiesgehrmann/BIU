@@ -160,7 +160,7 @@ class LLS2(Dataset2):
     #edef
 
 
-    def cgIDToLLNR(self, cgID):
+    def cgid2llnr(self, cgID):
         """
         Convert a cgID (sequencing identifier) to LLnr (study number)
         
@@ -178,7 +178,7 @@ class LLS2(Dataset2):
         return None
     #edef
 
-    def llnrTpcgID(self, llnr):
+    def llnr2cgid(self, llnr):
         """
         Convert a LLNR (study number) to cgID  (sequencing identifier)
         
@@ -188,14 +188,14 @@ class LLS2(Dataset2):
         
         returns: cgID
         """
-        possible = self.phenotypes[self.phenotypes.llnr == llnr].cgID.values
+        possible = self.phenotypes[self.phenotypes.LLnr == llnr].cgID.values
         if len(possible) > 0:
             return possible[0]
         #fi
         return None
     #edef
 
-    def passFams(self, pThresh=.90):
+    def pass_fams(self, pThresh=.90):
         """
         Determine which families pass the novel selection threshold.
         I.e. at least two siblings > pThresh %, and at least one parent > pThresh %
@@ -216,20 +216,20 @@ class LLS2(Dataset2):
         return famPass
     #edef
 
-    def passIndiv(self, pThresh=.90, relFams=None, sequenced=False):
+    def pass_indiv(self, pThresh=.90, relFams=None, sequenced=False):
         """
         Determine, in the families that pass the novel selection threshold, which individuals satisify the criteria.
         Inputs:
           pThresh: Float. Percenfile threshold to satisfy
-          relFams: Set of Integers. Family IDs to consider (default is None, then output of passFams is used
-          sequenced: Boolean. Only return IDs of individuals that have been sequenced. (Default False
+          relFams: Set of Integers. Family IDs to consider (default is None, then output of pass_fams is used)
+          sequenced: Boolean. Only return IDs of individuals that have been sequenced. (Default False)
         Output:
           Set of individual IDs.
         """
         # Select all individuals from that family
 
         if relFams is None:
-            relFams = self.passFams(pThresh)
+            relFams = self.pass_fams(pThresh)
         #fi
 
         pPer = self.percentiles

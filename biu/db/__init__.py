@@ -25,9 +25,11 @@ from .gnomad2 import Gnomad2 as Gnomad2
 from .go2 import GO2 as GO2
 from .goto2 import GOTO2 as GOTO2
 from .gwas_catalog import GWAS_Catalog
+from .hgnc import HGNC
 from .iris import Iris
 from .lls2 import LLS2 as LLS2 # A re-implementation of LLS
 from .reactome import Reactome as Reactome
+from .tfcat import TFCAT as TFCAT
 
 
 
@@ -49,7 +51,7 @@ from .reactome import Reactome as Reactome
 
 __datasets = [ BBMRI, CADD, Gnomad, GO, GOTO, LLS, # Old format, also in new format
                ClinVar, DBSNP, GTeX, HAGR, KEGG, UniProt, # Old format, not yet in new format
-               BBMRI2, CADD2, Cosmic, Gnomad2, GO2, GOTO2, GWAS_Catalog, Iris, LLS2, Reactome ] # New format
+               BBMRI2, CADD2, Cosmic, Gnomad2, GO2, GOTO2, GWAS_Catalog, HGNC, Iris, LLS2, Reactome, TFCAT ] # New format
                
 
 def versions(db = None):

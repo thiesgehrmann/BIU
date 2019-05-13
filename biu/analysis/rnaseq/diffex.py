@@ -179,14 +179,14 @@ def summary(diffex, ov=False,
     Output: List of genes significant by the specified conditions
     """
     S = diffex.copy()
-    S['significant'] = 1 * (S[col_pval].values < alpha) & (np.abs(S[col_lfc].values) > lfcThresh )
+    S['significant'] = 1 * (S[col_qval].values < alpha) & (np.abs(S[col_lfc].values) > lfcThresh )
     S['up']          = 1 * ((S.significant == 1) & (S[col_lfc] > 0))
     S['down']        = 1 * ((S.significant == 1) & (S[col_lfc] < 0))
     
     S = S.groupby(col_contr).agg(sum)[['significant','up','down']]
     
     if ov:
-        ov = overlaps(diffex, alpha=alpha, lfcThresh=lfcThresh, col_contr=col_contr, col_pval=col_pval, col_lfc=col_lfc, col_index=col_index)
+        ov = overlaps(diffex, alpha=alpha, lfcThresh=lfcThresh, col_contr=col_contr, col_pval=col_pval, col_qval=col_qval, col_lfc=col_lfc, col_index=col_index)
         S.columns = pd.MultiIndex.from_product([['summary'], S.columns])
         ov.columns = pd.MultiIndex.from_product([['overlaps'], ov.columns])
         return S.join(ov)
@@ -235,13 +235,13 @@ def sigTests(diffex,
         alpha: pvalue threshold
         lfcThresh: LogFC threshold
         
-        col_pval: The column to use as corrected pvalue
+        col_qval: The column to use as corrected pvalue
         col_lfc: The column to use as log fold change
         col_contr: The column to use as the contrast column
     Output:
         A subset of the significant rows in input diffex
     """
-    return diffex[(diffex[col_pval] < alpha) & (diffex[col_lfc].abs() > lfcThresh)]
+    return diffex[(diffex[col_qval] < alpha) & (diffex[col_lfc].abs() > lfcThresh)]
 #edef
 
 ###################################################################################
@@ -323,7 +323,7 @@ def gsea_rankings(diffex, rankby='logfc', contr=None, split_updown=False,
     R = {}
     
     for c in contr:
-        DC = diffex[diffex.contr == c]
+        DC = diffex[diffex[col_contr] == c]
         if split_updown:
             r_up = -DC[col_rank].values
             r_up[np.isnan(r_up)] = max(r_up[~np.isnan(r_up)])
@@ -422,8 +422,8 @@ def volcanoPlot(diffex,contr=None, ax=None,
     sigThresh = -np.log10(sigThresh)
     for idx, test in enumerate(tests):
         relRows = diffex[diffex[col_contr] == test]
-        sigRows = sigTests(relRows, alpha=alpha, lfcThresh=lfcThresh,
-                           col_pval=col_qval, col_lfc=col_lfc, col_contr=col_contr)
+        sigRows = sigTests(relRows, alpha=alpha, lfcThresh=lfcThresh, col_pval=col_pval,
+                           col_qval=col_qval, col_lfc=col_lfc, col_contr=col_contr)
         axes[idx].scatter(relRows[col_lfc], -np.log10(relRows[col_pval]), s=0.5, label=None)
         axes[idx].set_title(test)
         axes[idx].plot([rangeFC[0], rangeFC[1]], [sigThresh, sigThresh], linestyle=':', c='red', label='FDR corrected pvalue threshold')
@@ -475,8 +475,8 @@ def compair(diffex, contrA, contrB,
     
     D = diffex[diffex[col_contr].isin([contrA, contrB])].copy()
     D = D.pivot(index=col_index, columns=col_contr, values=[col_pval, col_qval, col_lfc])
-    D['significant'] = list(map(np.any, (D[col_qval].values < 0.05) & (D[col_lfc].abs().values > lfcThresh )))
-    D['sig_both']    = list(map(np.all, (D[col_qval].values < 0.05) & (D[col_lfc].abs().values > lfcThresh )))
+    D['significant'] = list(map(np.any, (D[col_qval].values < alpha) & (D[col_lfc].abs().values > lfcThresh )))
+    D['sig_both']    = list(map(np.all, (D[col_qval].values < alpha) & (D[col_lfc].abs().values > lfcThresh )))
     D['consistent']  = list(map(lambda x: ~np.logical_xor(*x), (D[col_lfc] > 0).values))
     D['up']          = list(map(np.all, (D[col_lfc].values > 0 )))
     D['down']        = list(map(np.all, (D[col_lfc].values < 0 )))
