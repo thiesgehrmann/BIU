@@ -376,7 +376,7 @@ def isSigIn(diffex, contr=None, logic=all,
 
 ###################################################################################
 
-def volcanoPlot(diffex,contr=None, ax=None,
+def volcanoPlot(diffex,contr=None, genes=None, ax=None,
                 col_contr=_defaults['col_contr'], col_index=_defaults['col_index'],
                 col_pval=_defaults['col_pval'], col_qval=_defaults['col_qval'],
                 col_lfc=_defaults['col_lfc'], alpha=_defaults['alpha'], lfcThresh=_defaults['lfcThresh'], **kwargs):
@@ -384,10 +384,12 @@ def volcanoPlot(diffex,contr=None, ax=None,
     volcanoPlot: Plots volcanoplots for each contrast
     Inputs:
         diffex : The table of tests (e.g. output from voom)
+        contr: String or list of Strings. Which contrast to investigate? 
+        genes: List[String] | None
+            Which genes to plot? None means plot all.
+        ax: Matplotlib axes to plot on. Same length as contr
         alpha: pvalue threshold
         lfcThresh: LogFC threshold
-        contr: String or list of Strings. Which contrast to investigate? 
-        ax: Matplotlib axes to plot on. Same length as contr
         
         col_pval: The column to use as pvalue
         col_qval: The column to use as corrected pvalues
@@ -422,16 +424,17 @@ def volcanoPlot(diffex,contr=None, ax=None,
     sigThresh = -np.log10(sigThresh)
     for idx, test in enumerate(tests):
         relRows = diffex[diffex[col_contr] == test]
+        relRows = relRows if genes is None else relRows[relRows[col_index].isin(genes)]
         sigRows = sigTests(relRows, alpha=alpha, lfcThresh=lfcThresh, col_pval=col_pval,
                            col_qval=col_qval, col_lfc=col_lfc, col_contr=col_contr)
         axes[idx].scatter(relRows[col_lfc], -np.log10(relRows[col_pval]), s=0.5, label=None)
         axes[idx].set_title(test)
-        axes[idx].plot([rangeFC[0], rangeFC[1]], [sigThresh, sigThresh], linestyle=':', c='red', label='FDR corrected pvalue threshold')
+        axes[idx].plot([rangeFC[0], rangeFC[1]], [sigThresh, sigThresh], linestyle=':', c='red', label='Adjusted pvalue threshold')
         axes[idx].plot([-lfcThresh, -lfcThresh], rangePV, linestyle=':', c='orange')
         axes[idx].plot([lfcThresh, lfcThresh], rangePV, linestyle=':', c='orange', label='logFC threshold')
         axes[idx].legend(loc='upper center')
         axes[idx].scatter(sigRows[col_lfc], -np.log10(sigRows[col_pval]), c='r', s=0.5)
-        axes[idx].set_ylabel('-log pvalue')
+        axes[idx].set_ylabel('-log10 pvalue')
         axes[idx].set_xlabel('log Fold Change')
     #efor
     
@@ -490,7 +493,7 @@ def compair(diffex, contrA, contrB,
 
 ###################################################################################
 
-def pairedVolcanoPlot(diffex, contrA, contrB,only_significant=True, ax=None, color='stronger',
+def pairedVolcanoPlot(diffex, contrA, contrB, genes=None, only_significant=True, ax=None, color='stronger',
                       col_contr=_defaults['col_contr'], col_index=_defaults['col_index'],
                       col_pval=_defaults['col_pval'], col_qval=_defaults['col_qval'],
                       col_lfc=_defaults['col_lfc'], alpha=_defaults['alpha'], lfcThresh=_defaults['lfcThresh'] ):
@@ -500,12 +503,14 @@ def pairedVolcanoPlot(diffex, contrA, contrB,only_significant=True, ax=None, col
         diffex: The table of tests (e.g. output from voom)
         contrA: Contrast A to display (in blue)
         contrB: Contrast B to display (in red)
-        alpha: pvalue threshold
-        lfcThresh: LogFC threshold
+        genes: List[String] | None
+            Which genes to plot. None means plot all.
         only_significant: Only plot genes that are significant in either one of the two contrasts
         color: How to color the plots between the two contrasts?
                See output from compair().
         ax: Matplotlib axes to plot on. Same length as contr
+        alpha: pvalue threshold
+        lfcThresh: LogFC threshold
         
         
         col_pval: The column to use as corrected pvalue
@@ -515,7 +520,9 @@ def pairedVolcanoPlot(diffex, contrA, contrB,only_significant=True, ax=None, col
         List of genes significant by the specified conditions
     """
     
-    cmp = compair(diffex, contrA, contrB, alpha=alpha,
+    diffex_sel = diffex if genes is None else diffex[diffex[col_index].isin(genes)]
+                                                        
+    cmp = compair(diffex_sel, contrA, contrB, alpha=alpha,
                   lfcThresh=lfcThresh, col_contr=col_contr, col_index=col_index,
                   col_pval=col_pval, col_qval=col_qval, col_lfc=col_lfc)
     
@@ -546,7 +553,7 @@ def pairedVolcanoPlot(diffex, contrA, contrB,only_significant=True, ax=None, col
     sigThresh = diffex[diffex[col_qval] < 0.05][col_pval].max()
     sigThresh = -np.log10(sigThresh)
     
-    ax.plot([rangeFC[0], rangeFC[1]], [sigThresh, sigThresh], linestyle=':', c='red', label='FDR corrected pvalue threshold', alpha=0.5, linewidth=2)
+    ax.plot([rangeFC[0], rangeFC[1]], [sigThresh, sigThresh], linestyle=':', c='red', label='Adjusted pvalue threshold', alpha=0.5, linewidth=2)
     ax.plot([-lfcThresh, -lfcThresh], rangePV, linestyle=':', c='orange', alpha=0.5, linewidth=2)
     ax.plot([lfcThresh, lfcThresh], rangePV, linestyle=':', c='orange', alpha=0.5, linewidth=2, label='logFC threshold')
 

@@ -3,6 +3,7 @@ from .. import formats
 from .. import utils
 from .. import stats
 from ..config import settings
+from .. import ops
 
 pd = utils.py.loadExternalModule("pandas")
 
@@ -233,6 +234,49 @@ class KEGG(Dataset):
     #fi
 
     return df
+  #edef
+    
+
+  def annotate(self, your_sets):
+      """
+      For a set of proteins, Annotate them
+
+      parameters:
+      -----------
+      your_sets: List[String] | List[List[String]] | dict[string->List[String]]
+          A list of entrezgenen identifiers, or a list/dict of lists of uniprot identifiers
+
+      Returns:
+      Pandas Dataframe of pathway counts
+
+      example usage:
+
+      """
+
+      if not isinstance(your_sets, dict):
+          if isinstance(your_sets[0], str):
+              your_sets = { "annot" : your_sets }
+          else:
+              your_sets = { "annot_%d" % (i+1) : s for (i,s) in enumerate(your_sets) }
+          #fi
+      #fi
+
+      tot_set = set(self.getGeneIDs())
+      your_sets = { k : set(your_sets[k]) & tot_set for k in your_sets }
+      p_annot = []
+
+      pathways = list(set([ pway for p in ops.lst.flatten(your_sets.values()) for pway in self.getGenePathways(p) ]))
+
+      for pway in pathways:
+          pway_set = set([ p for p in self.getPathwayGeneIDs(pway) ])
+          counts = [ your_sets[k] & pway_set for k in your_sets ]
+          p_annot.append([pway, self.getPathwayName(pway)] + counts)
+      #efor
+
+
+      p_annot = pd.DataFrame(p_annot, columns=[ 'pathway', 'description'] + list(your_sets.keys()))
+
+      return p_annot
   #edef
 
 #eclass
