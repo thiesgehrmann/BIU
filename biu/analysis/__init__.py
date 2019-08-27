@@ -8,6 +8,7 @@ Tools for analysis of different types of data:
  * trajectory: Analyze the movement of samples through PC space
 """
 
+from . import hierarchy
 from . import rnaseq
 from . import covariates
 from . import trajectory

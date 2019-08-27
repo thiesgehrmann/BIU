@@ -101,6 +101,27 @@ def reorder(df, **kwargs):
 
 #########################################################################
 
+def multimax(A, B, *pargs):
+    """
+    Determine the maximum value per cell in a group of dimension-matched dataframes
+    
+    Parameters:
+    -----------
+    A, B: pandas.DataFrame
+        
+    *pargs: More DataFrames
+    
+    Output:
+    -------
+    pandas.DataFrame, with index and columns of input A
+    """
+    I = [ A, B ] + list(pargs)
+    M = matrix.multimax(*[ a.values for a in I])
+    return pd.DataFrame(M, columns=A.columns, index=A.index)
+#edef
+
+#########################################################################
+
 def flat(df, fields=None, sep=None, ignore_unequal_rows=False):
     """
     Flatten a Pandas DataFrame, given columns with lists in them

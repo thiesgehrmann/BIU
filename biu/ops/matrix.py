@@ -103,6 +103,31 @@ def reorder(matrix, symmetric=False, by=None, **kwargs):
 
 ####################################################################
 
+def multimax(A, B, *pargs):
+    """
+    Determine the maximum value per cell in a group of dimension-matched matrices
+    
+    Parameters:
+    -----------
+    A, B: pd.ndArray
+        
+    *pargs: More matrices
+    
+    Output:
+    -------
+    np.ndarray
+    """
+    I = [ A, B ] + list(pargs)
+    shape = I[0].shape
+    for a in I:
+        assert a.shape == shape, "Dimensions of inputs do not match"
+    #efor
+    M = [ max(v) for v in list(zip(*[ a.flatten() for a in I ])) ]
+    return np.reshape(M, shape)
+#edef
+
+####################################################################
+
 def corrcoef(matrix, axis=0, method='pearson'):
     """
     Calculate pearsons correlation coefficient for a numpy matrix.
