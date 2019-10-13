@@ -444,7 +444,7 @@ class Reactome(Dataset2):
         R = []
         for p in pathway:
             pathway_genes = set([prot.id for prot in self.pathway[p].proteins ]) & background
-            res = stats.enrichment.set_enrichment(your_set, pathway_genes, background, abcd_values=abcd_values)
+            res = stats.enrichment.set_enrichment(your_set, pathway_genes, background)
             R.append((p, self.pathway[p].description, res.method, res.c2statistic, res.oddsratio, res.pvalue, res.table, res.table_values))
         #efor
 

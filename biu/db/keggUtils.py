@@ -223,7 +223,7 @@ class KEGG(Dataset):
     B = self.getGeneIDs()
     for p in pathway:
         pathwayGenes = set(self.getPathwayGeneIDs(p)) & background
-        res = stats.enrichment.set_enrichment(yourSet, pathwayGenes, B, abcd_values=abcd_values)
+        res = stats.enrichment.set_enrichment(yourSet, pathwayGenes, B)
         R.append((p, res.method, res.c2statistic, res.oddsratio, res.pvalue, res.table, res.table_values))
     #efor
 

@@ -129,7 +129,7 @@ class GAF(object):
         B = self.objects
         for p in pathway:
             pathway_genes = self.get_annotated(p)
-            res = stats.enrichment.set_enrichment(your_set, pathway_genes, B, abcd_values=abcd_values)
+            res = stats.enrichment.set_enrichment(your_set, pathway_genes, B)
             R.append((p, res.method, res.c2statistic, res.oddsratio, res.pvalue, res.table, res.table_values))
         #efor
   
