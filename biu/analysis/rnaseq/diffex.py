@@ -379,7 +379,8 @@ def isSigIn(diffex, contr=None, logic=all,
 def volcanoPlot(diffex,contr=None, genes=None, ax=None,
                 col_contr=_defaults['col_contr'], col_index=_defaults['col_index'],
                 col_pval=_defaults['col_pval'], col_qval=_defaults['col_qval'],
-                col_lfc=_defaults['col_lfc'], alpha=_defaults['alpha'], lfcThresh=_defaults['lfcThresh'], **kwargs):
+                col_lfc=_defaults['col_lfc'], alpha=_defaults['alpha'], lfcThresh=_defaults['lfcThresh'],
+                color_sig='#008837', color_insig='#c2a5cf', **kwargs):
     """
     volcanoPlot: Plots volcanoplots for each contrast
     Inputs:
@@ -395,6 +396,13 @@ def volcanoPlot(diffex,contr=None, genes=None, ax=None,
         col_qval: The column to use as corrected pvalues
         col_lfc: The column to use as log fold change
         col_contr: The column to use as the contrast column
+        
+        color_sig: Matplotlib color code
+            The color to use for significant genes
+        color_insig: Matplotlib color code
+            The color to use for insignificant genes
+            
+        **kwargs: Additional options to biu.utils.subplots
     Output:
         (Figure, axes)
     """
@@ -413,9 +421,17 @@ def volcanoPlot(diffex,contr=None, genes=None, ax=None,
     else:
         ncols = min(np.ceil(np.sqrt(len(tests))), 4)
         nrows = np.ceil(len(tests) / ncols)
+        if 'figsize' not in kwargs:
+            kwargs['figsize'] = (5*ncols, 5*nrows)
+        #fi
+        if 'sharey' not in kwargs:
+            kwargs['sharey'] = True
+        #fi
+        if 'sharex' not in kwargs:
+            kwargs['sharex'] = True
+        #fi
         fig, axes = utils.figure.subplots(ncols=int(ncols), nrows=int(nrows),
-                                          figsize = (5*ncols, 5*nrows),
-                                          sharey=True, sharex=True, **kwargs)
+                                          **kwargs)
     #fi
     lfc = diffex[col_lfc][np.isfinite(diffex[col_lfc].values)]
     rangeFC   = (lfc.min(), lfc.max())
@@ -427,13 +443,13 @@ def volcanoPlot(diffex,contr=None, genes=None, ax=None,
         relRows = relRows if genes is None else relRows[relRows[col_index].isin(genes)]
         sigRows = sigTests(relRows, alpha=alpha, lfcThresh=lfcThresh, col_pval=col_pval,
                            col_qval=col_qval, col_lfc=col_lfc, col_contr=col_contr)
-        axes[idx].scatter(relRows[col_lfc], -np.log10(relRows[col_pval]), s=0.5, label=None)
+        axes[idx].scatter(relRows[col_lfc], -np.log10(relRows[col_pval]), s=0.5, c=color_insig, label=None)
         axes[idx].set_title(test)
-        axes[idx].plot([rangeFC[0], rangeFC[1]], [sigThresh, sigThresh], linestyle=':', c='red', label='Adjusted pvalue threshold')
+        axes[idx].plot([rangeFC[0], rangeFC[1]], [sigThresh, sigThresh], linestyle=':', c='r', label='Adjusted pvalue threshold')
         axes[idx].plot([-lfcThresh, -lfcThresh], rangePV, linestyle=':', c='orange')
         axes[idx].plot([lfcThresh, lfcThresh], rangePV, linestyle=':', c='orange', label='logFC threshold')
         axes[idx].legend(loc='upper center')
-        axes[idx].scatter(sigRows[col_lfc], -np.log10(sigRows[col_pval]), c='r', s=0.5)
+        axes[idx].scatter(sigRows[col_lfc], -np.log10(sigRows[col_pval]), c=color_sig, s=0.5)
         axes[idx].set_ylabel('-log10 pvalue')
         axes[idx].set_xlabel('log Fold Change')
     #efor
@@ -496,7 +512,8 @@ def compair(diffex, contrA, contrB,
 def pairedVolcanoPlot(diffex, contrA, contrB, genes=None, only_significant=True, ax=None, color='stronger',
                       col_contr=_defaults['col_contr'], col_index=_defaults['col_index'],
                       col_pval=_defaults['col_pval'], col_qval=_defaults['col_qval'],
-                      col_lfc=_defaults['col_lfc'], alpha=_defaults['alpha'], lfcThresh=_defaults['lfcThresh'] ):
+                      col_lfc=_defaults['col_lfc'], alpha=_defaults['alpha'], lfcThresh=_defaults['lfcThresh'],
+                      contrA_color='b', contrB_color='r'):
     """
     pairedVolcanoPlot: Plot two volcanoplots on top of each other, and join genes by lines
     Inputs:
@@ -535,17 +552,18 @@ def pairedVolcanoPlot(diffex, contrA, contrB, genes=None, only_significant=True,
         ax = axes[0]
     #fi
     
-    ax.scatter(cmp[col_lfc][contrA].values, -np.log10(cmp[col_pval][contrA].values), c='blue', label=contrA, s=0.5)
-    ax.scatter(cmp[col_lfc][contrB].values, -np.log10(cmp[col_pval][contrB].values), c='red',  label=contrB, s=0.5)
+    ax.scatter(cmp[col_lfc][contrA].values, -np.log10(cmp[col_pval][contrA].values), c=contrA_color, label=contrA, s=0.5)
+    ax.scatter(cmp[col_lfc][contrB].values, -np.log10(cmp[col_pval][contrB].values), c=contrB_color, label=contrB, s=0.5)
     
     lines = ax.plot([cmp[col_lfc][contrA].values, cmp[col_lfc][contrB].values],
                     -np.log10([cmp[col_pval][contrA].values, cmp[col_pval][contrB].values]),
-                    alpha=0.5, linewidth=0.1)
+                    alpha=0.5, linewidth=0.1, c='grey')
     
-
-    for l, c in zip(lines, cmp[color]):
-        l.set_color('g' if 1*c > 0 else 'r')
-    #efor
+    if color is not None:
+        for l, c in zip(lines, cmp[color]):
+            l.set_color('g' if 1*c > 0 else 'r')
+        #efor
+    #fi
     
     lfc = diffex[col_lfc][np.isfinite(diffex[col_lfc].values)]
     rangeFC   = (lfc.min(), lfc.max())

@@ -413,7 +413,7 @@ class Reactome(Dataset2):
         return self.index.metabolites
     #edef
     
-    def enrich(self, your_set, background=None, pathway=None, abcd_values=False, method=None, **kwargs):
+    def enrich(self, your_set, background=None, pathway=None, method=None, **kwargs):
         """
         Enrich: Check enrichment of Reactome pathways in a given set
 
@@ -421,7 +421,6 @@ class Reactome(Dataset2):
           - your_set: List of Uniprot IDs to test
           - pathway: List of pathways (or single pathway) to test (Defaults to all pathways that your geneIDs are present in)
           - background: List of Entrez Gene IDs to use as background (e.g. set of all expressed genes)
-          - abcd_values: Boolean. If True, it will return the actual element values in the contingency table, rather than just counts
           - method: Type of multiple testing correction procedure to use
           - **kwargs: Additional arguments for biu.stats.p_adjust
 
@@ -446,10 +445,10 @@ class Reactome(Dataset2):
         for p in pathway:
             pathway_genes = set([prot.id for prot in self.pathway[p].proteins ]) & background
             res = stats.enrichment.set_enrichment(your_set, pathway_genes, background, abcd_values=abcd_values)
-            R.append((p, self.pathway[p].description, res.method, res.c2statistic, res.oddsratio, res.pvalue, res.table))
+            R.append((p, self.pathway[p].description, res.method, res.c2statistic, res.oddsratio, res.pvalue, res.table, res.table_values))
         #efor
 
-        df = pd.DataFrame(R, columns=['pathway', 'name', 'method', 'c2statistic', 'oddsratio', 'p', 'table'])
+        df = pd.DataFrame(R, columns=['pathway', 'name', 'method', 'c2statistic', 'oddsratio', 'p', 'table', 'table_values'])
         if method is not None:
             df['q'] = stats.p_adjust(df.p.values, method, **kwargs)
         #fi

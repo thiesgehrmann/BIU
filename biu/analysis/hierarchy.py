@@ -121,7 +121,7 @@ def modularity_ayroles_module(C, M):
     mask[M] = True
     X = np.sum(np.triu(C[mask,:][:,mask]))
     Y = np.sum(np.triu(C))
-    Z = np.sum(C[mask,:][:,~mask])    
+    Z = np.sum(C[mask,:][:,])    
 
     modularity = X/Y - (Z/(2*Y))**2
     
@@ -158,7 +158,7 @@ def modularity_haq_module(C, sigma, M):
 
 ####################################################################
 
-def modularity_cut(C, T, sigma=1, minsize=20, percentile=95):
+def modularity_cut(C, T, sigma=1, minsize=20, percentile=95, method='ayroles'):
     """
     Identify cutting points in a tree that satisfy certain modularity conditions
     
@@ -173,6 +173,10 @@ def modularity_cut(C, T, sigma=1, minsize=20, percentile=95):
         The minimum size of cluster to return
     percentile: float [0-100] Default:95
         Return only clusters with a modularity score in the top x% percentile
+    method: String in { 'ayroles', 'haq' }
+        The type of modularity to use:
+            ayroles: Modularity
+            haq: Weighted modularity
         
     returns:
     --------
@@ -183,12 +187,16 @@ def modularity_cut(C, T, sigma=1, minsize=20, percentile=95):
     C = np.exp((np.abs(C) - 1) / (sigma**2))
     
     for node_id in range(len(T)):
-        T[node_id].info["modularity_ayroles"] = modularity_ayroles_module(C, T[node_id].leaves)
+        if method.lower() == 'haq':
+            T[node_id].info["modularity"] = modularity_haq_module(C, sigma, T[node_id].leaves)
+        else:
+            T[node_id].info["modularity"] = modularity_ayroles_module(C, T[node_id].leaves)
+        #fi
     #efor
     
     modules = [ -1 ]
     
-    threshold = np.percentile([ n.info["modularity_ayroles"] for n in T if not n.info["is_leaf"] ], percentile)
+    threshold = np.percentile([ n.info["modularity"] for n in T if not n.info["is_leaf"] ], percentile)
     
     while True:
         next_modules = []
@@ -198,7 +206,7 @@ def modularity_cut(C, T, sigma=1, minsize=20, percentile=95):
                 continue
             #fi
             valid_children = [ c for c in T[node].children if
-                              (T[c].info["modularity_ayroles"] >= threshold) & (len(T[c].leaves) > minsize)]
+                              (T[c].info["modularity"] >= threshold) & (len(T[c].leaves) > minsize)]
             
             if len(valid_children) > 0:
                 next_modules.extend(valid_children)

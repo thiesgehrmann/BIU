@@ -28,8 +28,11 @@ from .gwas_catalog import GWAS_Catalog
 from .hgnc import HGNC
 from .iris import Iris
 from .lls2 import LLS2 as LLS2 # A re-implementation of LLS
+from .ncbi_taxonomy import NCBITaxonomy as NCBITaxonomy
 from .reactome import Reactome as Reactome
+from .stringdb import StringDB as StringDB
 from .tfcat import TFCAT as TFCAT
+
 
 
 
@@ -51,7 +54,8 @@ from .tfcat import TFCAT as TFCAT
 
 __datasets = [ BBMRI, CADD, Gnomad, GO, GOTO, LLS, # Old format, also in new format
                ClinVar, DBSNP, GTeX, HAGR, KEGG, UniProt, # Old format, not yet in new format
-               BBMRI2, CADD2, Cosmic, Gnomad2, GO2, GOTO2, GWAS_Catalog, HGNC, Iris, LLS2, Reactome, TFCAT ] # New format
+               BBMRI2, CADD2, Cosmic, Gnomad2, GO2, GOTO2, GWAS_Catalog, HGNC,
+               Iris, LLS2, NCBITaxonomy, Reactome, StringDB, TFCAT  ] # New format
                
 
 def versions(db = None):

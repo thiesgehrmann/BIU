@@ -1,14 +1,14 @@
 from .. import utils
 
 sstats = utils.py.loadExternalModule("scipy.stats")
-np     = utils.py.loadExternalModule('np')
+np     = utils.py.loadExternalModule('numpy')
 
 from collections import namedtuple
 
 from . import permutations
 
 @utils.decorators.deprecated("setEnrichment is deprecated. Use set_enrichment instead.")
-def setEnrichment(your_set, other_set, universe, abcd_values=False):
+def setEnrichment(your_set, other_set, universe):
     """
     Perform set enrichment using either a fisher exact test or the chi2 test.
     parameters:
@@ -28,12 +28,14 @@ def setEnrichment(your_set, other_set, universe, abcd_values=False):
            - b: What is in other_set but not in your_set
            - c: what is in your_set but not in other_set
            - d: What is in universe but not in your_set or other_set
+        * table_values: contingency table values [ [a,b],[c,d] ]
+           - As see above
         * method : fisher|c2statistic
     """
-    return set_enrichment(your_set, other_set, universe, abcd_values)
+    return set_enrichment(your_set, other_set, universe)
 #edef
 
-def set_enrichment(your_set, other_set, universe, abcd_values=False):
+def set_enrichment(your_set, other_set, universe):
     """
     Perform set enrichment using either a fisher exact test or the chi2 test.
     parameters:
@@ -53,11 +55,13 @@ def set_enrichment(your_set, other_set, universe, abcd_values=False):
            - b: What is in other_set but not in your_set
            - c: what is in your_set but not in other_set
            - d: What is in universe but not in your_set or other_set
+        * table_values: contingency table values [ [a,b],[c,d] ]
+           - As see above
         * method : fisher|chi2
     """
 
     
-    resTuple = namedtuple("setEnrichmentResult", [ 'oddsratio', 'c2statistic', 'pvalue', 'table', 'method'])
+    resTuple = namedtuple("setEnrichmentResult", [ 'oddsratio', 'c2statistic', 'pvalue', 'table', 'table_values', 'method'])
 
     universe  = set(universe)
     your_set  = set(your_set) & universe
@@ -83,11 +87,8 @@ def set_enrichment(your_set, other_set, universe, abcd_values=False):
             oddsratio = np.inf
         #fi
     #fi
-    if abcd_values:
-        return resTuple(oddsratio, chi2, p, [[a,b],[c,d]], method)
-    else:
-        return resTuple(oddsratio, chi2, p, table, method)
-    #fi
+
+    return resTuple(oddsratio, chi2, p, table, [[a,b],[c,d]], method)
 #edef
 
 def gsea(scores, membership, sort=True, sort_abs=True, p=1, side='both',
