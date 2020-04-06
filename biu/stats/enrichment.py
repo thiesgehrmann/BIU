@@ -3,6 +3,10 @@ from .. import utils
 sstats = utils.py.loadExternalModule("scipy.stats")
 np     = utils.py.loadExternalModule('numpy')
 
+plt = utils.py.loadExternalModule('matplotlib.pylab') 
+fc  = utils.py.loadExternalModule('fastcluster')
+sp  = utils.py.loadExternalModule('scipy')
+
 from collections import namedtuple
 
 from . import permutations
@@ -192,3 +196,134 @@ def gsea(scores, membership, sort=True, sort_abs=True, p=1, side='both',
     #ewhile
     return nt(es, permutations.pvalue(es, perm_es, side=side), i, index_i)
 #edef
+
+##############################################################################
+
+class EnrichmentNetwork(object):
+    """
+    Make a network visualization from the results of an enrichment.
+    """
+    def __init__(self, enrichments, q_col='q', table_col='table', table_values_col='table_values'):
+        """
+        
+        parameters:
+        -----------
+        enrichments: pandas.DataFame
+          Output from an enrichment. e.g. biu.db.KEGG.enrich, or biu.db.Reactome.enrich.
+        q_col: String
+            The name of the column with the corrected p-values
+        table_col: String
+            The name of the column with the contingency table
+        table_values_col: String
+            The name of the column with the object names in  the contingency table (gene names rather than counts)
+          
+        Properties:
+        -----------
+        nodes: the original enrichments
+        edges: The distance between terms
+        
+        draw(): Draw the network.
+        """
+        def distance(a,b):
+            if a == b:
+                return 0
+            #fi
+            return 1/(np.log10(len(a&b) + 1)+1)
+        #edef
+
+        feat = enrichments[[q_col, table_col, table_values_col]].rename(columns={
+            q_col: 'q',
+            table_col : 'table',
+            table_values_col : 'table_values'}).copy()
+        feat['total'] = feat.table_values.apply(lambda x: x[0][0] | x[0][1])
+        feat['n'] = feat.table.apply(lambda x: x[0][0])
+
+        values = feat.total.to_dict()
+
+        D = np.zeros([feat.shape[0]]*2)
+
+        for i, (node_i, values_i) in enumerate(values.items()):
+            for j, (node_j, values_j) in enumerate(values.items()):
+                D[i,j] = D[j,i] = distance(values_i, values_j)
+            #efor
+        #efor
+        
+        self._enrichments = enrichments
+        self._nodes = feat
+        self._edges = D
+    #edef
+    
+    @property
+    def nodes(self):
+        return self._nodes
+    #edef
+    
+    @property
+    def edges(self):
+        return self._edges
+    #edef
+    
+    def _embed(self, network):
+        from sklearn.manifold import MDS
+        E = MDS(n_components=2, dissimilarity='precomputed').fit_transform(self.edges)
+        return E
+    #edef
+    
+    def draw(self, distance_threshold=0.3, ax=None, cmap=plt.get_cmap('plasma'), nodes=None, n_clusters=1):
+
+        from sklearn.manifold import MDS
+        from sklearn.manifold import Isomap
+        import fastcluster
+        import scipy as sp
+
+        E = self._embed(self._edges)
+
+        self._nodes['x'] = E[:,0]
+        self._nodes['y'] = E[:,1]
+
+        if ax is None:
+            fig, axes = biu.utils.figure.subplots(figsize=(10,10), dpi=300)
+            ax = axes[0]
+        #fi
+
+        color = self._nodes.q.apply(lambda x: -np.log10(x)) / -np.log10(Rs.q.min())
+        ax.scatter(self._nodes.x, self._nodes.y, s=self._nodes.n*4, edgecolor='k', c=cmap(color))
+        for i, r in self._nodes.iterrows():
+            ax.text(r.x, r.y, str(i))
+        #efor
+
+        #L = fc.linkage(sp.spatial.distance.squareform(self.edges, checks=False), method='complete')
+        L = fc.linkage(E, metric='euclidean', method='complete')
+        clusters = biu.ops.lst.flatten(sp.cluster.hierarchy.cut_tree(L, n_clusters=n_clusters))
+
+        for i,j in np.ndindex(self.edges.shape):
+            if i > j:
+                continue
+            #fi
+
+            if self.edges[i,j] < distance_threshold:
+                if clusters[i] == clusters[j]:
+                     ax.plot([E[i,0],E[j,0]], [E[i,1],E[j,1]], zorder=-1, c='#565656', alpha=0.5)
+                else:
+                    ax.plot([E[i,0],E[j,0]], [E[i,1],E[j,1]], zorder=-2, c='#eaeaea')
+                #fi
+            #fi
+        #efor
+        
+        xlim, ylim = (ax.get_xlim(), ax.get_ylim())
+        plotlim = ylim[0] + (ylim[1]-ylim[0])/10
+        
+        sizes = np.array([ 10, 25, 50, 100, 200, 300 ])
+        sizes = sizes[ sizes <= max(self._nodes.n) ]
+        stepsize = (ylim[1]-ylim[0])/10 / len(sizes)
+        
+        plt.scatter([xlim[0]+(xlim[1]-xlim[1])*0.1] * len(sizes),
+                    ylim[0] + (1 + np.array(range(len(sizes))))[::-1]*stepsize,
+                    c='k', edgecolor='k', s=sizes*4)
+        
+        dendfig, dendaxes = biu.utils.figure.subplots(figsize=(20,5))
+        dend = sp.cluster.hierarchy.dendrogram(L, ax=dendaxes[0], labels=self.nodes.index, )
+
+        return ax.get_figure()
+    #edef
+#eclass

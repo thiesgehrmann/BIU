@@ -12,4 +12,5 @@ from . import hierarchy
 from . import rnaseq
 from . import covariates
 from . import trajectory
+from . import metabolomics
 from .trajectory import Trajectory

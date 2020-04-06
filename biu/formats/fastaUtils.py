@@ -27,7 +27,14 @@ class Fasta(object):
         self.__entries = data
       elif hasattr(data, "__iter__"):
         utils.dbm("Fasta input source is a list of sequences.")
-        self.__entries = { s.name : s if isinstance(s, Sequence) else Sequence(str(i), s, seqType)  for i,s in enumerate(data) }
+        self.__entries = {}
+        for i,s in enumerate(data):
+            if isinstance(s, Sequence):
+                self.__entries[s.name] = s
+            else:
+                self.__entries[str(i)] = Sequence(str(i), s, seqType)
+            #fi
+        #efor
       #fi
     #fi
   #edef
@@ -38,6 +45,10 @@ class Fasta(object):
     dstr += " Entries: %d\n" % len(self.__entries)
     dstr += " Primary type: %s\n" % self.primaryType
     return dstr
+  #edef
+    
+  def __repr__(self):
+    return str(self)
   #edef
 
   @property

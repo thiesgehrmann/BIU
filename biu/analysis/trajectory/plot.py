@@ -363,6 +363,10 @@ def plot(data, conditions=None, samples=None, dim=2, pca=True,
         component1 = data.columns[component1] if (component1 not in data.columns) and (isinstance(component1, int)) else component1
         component2 = data.columns[component2] if (component2 not in data.columns) and (isinstance(component2, int)) else component2
     #fi
+    
+    if samples is not None:
+        data = data.loc[samples]
+    #fi
 
     if ax is None:
         fig, axes = utils.figure.subplots(ncols=1, nrows=1)

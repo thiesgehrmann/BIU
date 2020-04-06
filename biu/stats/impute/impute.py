@@ -2,6 +2,7 @@ from ... import utils
 from ... import ops
 
 sklearn = utils.py.loadExternalModule('sklearn')
+np      = utils.py.loadExternalModule('numpy')
 
 #################################################################################
 
@@ -26,21 +27,29 @@ def impute_find_train(df, col):
 
 #################################################################################
 
-def impute_numeric_nn(train, pred, col):
+
+def impute_numeric_nn(train, pred, col, n_neighbors=3):
     """
     A nearest neighbour imputation scheme.
     """
     from sklearn.neighbors import NearestNeighbors
-    nbrs = NearestNeighbors(n_neighbors=1, algorithm='ball_tree').fit(train.drop(columns=[col]))
+    nbrs = NearestNeighbors(n_neighbors=n_neighbors, algorithm='ball_tree').fit(train.drop(columns=[col]))
+    distances, nnbrs = nbrs.kneighbors(pred.drop(columns=[col]).values,
+                            n_neighbors)
+    nnbrs = nnbrs.reshape((pred.shape[0]*n_neighbors))
     
-    nnbrs = ops.lst.flatten(nbrs.kneighbors(pred.drop(columns=[col]).values, 1, return_distance=False))
-    return train[col].values[nnbrs]
+    values = train[col].values[nnbrs].reshape((pred.shape[0],n_neighbors))
+    
+    norm_distances = distances / np.sum(distances, axis=1).reshape((distances.shape[0],1))
+
+    return np.mean(np.multiply(values, norm_distances), axis=1)
+    
 #edef
 
 #################################################################################
     
 
-def impute_numeric(df, columns=None, maxiter=10, imputer='nn'):
+def impute_numeric(df, columns=None, maxiter=10, imputer='nn', **kwargs):
     """
     Perform an imputation on numerical data
     
@@ -50,6 +59,7 @@ def impute_numeric(df, columns=None, maxiter=10, imputer='nn'):
     columns: The columns to impute (if None, then all columns with Nan values will be imputed)
     maxiter: The maximum number of iterations to perform in the imputation.
     imputer: String|Function. The imputer to use. Must be in ['nn'], or an object with __call__ attribute.
+    **kwargs: Dict. Options to the imputer function.
     
     returns:
     Pandas Dataframe with imputed columns
@@ -75,12 +85,12 @@ def impute_numeric(df, columns=None, maxiter=10, imputer='nn'):
     last_imputed = df.copy()
     
     for i in range(maxiter):
-        
+        print('\rImputation Iteration %2d/%2d' % (i+1, maxiter), end='')
         for col in columns:
             train_data = impute_find_train(imputed, col)
             pred_data  = imputed.loc[df[col].isna()][train_data.columns]
 
-            imputed[col][df[col].isna()] = imputer(train_data, pred_data, col)
+            imputed[col][df[col].isna()] = imputer(train_data, pred_data, col, **kwargs)
 
         #efor
         

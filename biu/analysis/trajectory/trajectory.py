@@ -121,6 +121,7 @@ class Trajectory(object):
                          reorder=reorder, reorder_by=reorder_by, pca_fit=self.pca_fit)
     #edef
     
+    @utils.decorators.deprecated("axis_of_effect has been replaced with mean_axis_of_effect_2.")
     def axis_of_effect(self, cond1, cond2, components=None):
         """
         Determine the trajectory of the mean axis of effect between two conditions, per individual
@@ -265,7 +266,7 @@ class Trajectory(object):
         #edef
     #eclass
     
-    def mean_axis_of_effect2(self, cond1, cond2, components=None, ax=None, **kwargs):
+    def mean_axis_of_effect2(self, cond1, cond2, components=None, ax=None, samples=None, **kwargs):
         """
         Determine the trajectory of the mean axis of effect between two conditions
         Intputs:
@@ -275,6 +276,7 @@ class Trajectory(object):
                         If you only want to investigate the trajectory in a specific set of components,
                         specify them here. Starts at 0
             ax: Matplotlib axis. if not None, then plot the axis here.
+            samples: The samples you want to use
             c:  Matplotlib color. If plotting, then draw with this color
         Outputs:
             Mean_Axis_Of_Effect object
@@ -284,9 +286,11 @@ class Trajectory(object):
             components = list(range(len(self.pdata.columns.levels[0])))
         #fi
         components = np.array(components, dtype='int')
+        
+        data = self.pdata if samples is None else self.pdata.loc[samples]
 
-        center_1 = self.pdata.swaplevel(0,1, axis=1).mean()[cond1].values
-        center_2 = self.pdata.swaplevel(0,1, axis=1).mean()[cond2].values
+        center_1 = data.swaplevel(0,1, axis=1).mean()[cond1].values
+        center_2 = data.swaplevel(0,1, axis=1).mean()[cond2].values
         
         return self.Mean_Axis_Of_Effect(center_1, center_2, components, cond1, cond2)
     #edef

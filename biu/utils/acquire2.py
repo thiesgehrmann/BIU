@@ -520,7 +520,11 @@ class Acquire2(object):
     def curl(self, url, cookieURL=None, username=None, password=None, ext=None, args=None):
         """
         curl: Download a file using curl
-        Inputs: url: The URL to retrieve
+        Inputs: url: String|Dict The URL to retrieve
+                    If string raw url
+                    If dict: To allow for dynamic, on-demand url resolution.
+                        { 'url': function() -> url string, 'hashstring': array_or_string_to_use_as_hash }
+                    
                 cookieURL : The URL of a login page
                 username: If logging in, the username
                 password: If logging in, the password
@@ -530,7 +534,18 @@ class Acquire2(object):
         """
         
         ext         = '' if ext is None else ('.' + ext)
-        curl_hash   = ops.lst.hash([ url, cookieURL, username, password ]) + ext
+        if type(url) is dict:
+            if ('url' not in url) or ('hashstring' not in url):
+                msg.error("Dictionary provided to curl must contain 'url' and 'hashstring' keys.")
+            #fi
+
+            hash_string = ops.lst.flatten([url['hashstring']])
+            url         = url['url']
+        else:
+            hash_string = [ url, cookieURL, username, password ]
+        #fi
+        
+        curl_hash   = ops.lst.hash(hash_string) + ext
         output_file = AcquireFile(dirname=None, basename=curl_hash)
         
         def _curl(output, url, cookieURL=None, username=None, password=None, args=None):
@@ -559,11 +574,18 @@ class Acquire2(object):
                     return p
                 #fi
             #fi
+            
+            # For dynamic, on-demand resolution of the URL
+            if hasattr(url, '__call__'):
+                url = url()
+            #fi
+            
             p = exe.runCommand("curl -L %s '%s' > '%s' %s" % ( '-c "%s"' % cookieFile if cookieFile is not None else  '', url, output, args), shell=True, verbose=True)
             return p
         #edef
         
-        step = AcquireStep("Curl(%s)" % url, [], output_file, lambda i, o: _curl(o, url, cookieURL, username, password, args))
+        step = AcquireStep("Curl(%s)" % 'ondemand_url' if hasattr(url, '__call__') else str(url),
+                           [], output_file, lambda i, o: _curl(o, url, cookieURL, username, password, args))
         return self.add_step(step)
     #edef
     

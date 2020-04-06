@@ -213,6 +213,16 @@ class VCF2(object):
         return self.__class__(vcf_object=vcf_object, filter_stack=self._filter_stack + filter_list)
     #edef
     
+    def select_records(self, record_indexes, filter_name="select_records", filter_params=[]):
+        """
+        Given a list of record indexes (integers), return a new VCF object which contains only those records
+        """
+        
+        records_obj = VCF2_records([ self._vcf.records[i] for i in record_indexes ], self._vcf.samples)
+        filt = VCF_filter(filter_name, filter_params)
+        return self.__class__(vcf_object=records_obj, filter_stack=self._filter_stack + [ filt ])
+    #edef
+    
     def summary(altPos=None, refPos=None):
         """
         Make a table, per variant, of the frequency, etc.
