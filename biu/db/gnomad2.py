@@ -10,19 +10,46 @@ from functools import reduce
 ###############################################################################
 
 class VCF_gnomad(formats.VCF2):
-    @utils.decorators.class_or_instance_method
-    def summary(obj, variants=None, sub=[None,'AFR','AMR','ASJ','EAS','FIN','NFE','OTH','SAS']):
-        """
-        Generate a summary for each sub-population
-        
-        """
-        
-        
-        
-        utils.msg.dbm("Warning: This function, summary() is not behaving normally!")
+    def genotype_matrix(self):
+        raise NotImplementedError("This function is not available for the GNOMAD dataset.")
+    #edef
+#eclass
 
+class GnomadBiuVariant(formats.BiuVariant):
+     def summary(self, altpos=None, sub=[None,'AFR','AMR','ASJ','EAS','FIN','NFE','OTH','SAS']):
+        """
+        Make a summary of the variants at this variant
+        ASSUMES A MONOPLOID/DIPLOID ORGANISM!
+        parameters:
+        self: BiuVariant Variant object
+        altpos: Integer, List[Integer]
+            Which alternative allele indexes to consider
+        sub: List[String]
+            Which subpopulations to consider:
+            None : World
+            'AFR'
+            'AMR'
+            'ASJ'
+            'EAS'
+            'FIN'
+            'NFE'
+            'OTH'
+            'SAS'
+            
+        Returns: DataFrame
+        """
+        
+        counts  = []
+        idxs = []
+        
+        if altpos is None:
+            altpos = list(range(len(self.ALT)))
+        elif isinstance(altpos, int):
+            altpos = [altpos]
+        #fi
+        
         def mk_summary(var, alt_pos, sub):
-            ID  = self.make_identifier(var, alt_pos)
+            ID  = self.make_identifier(alt_pos)
             dat = []
             for sub_name in sub:
                 if sub_name is None:
@@ -37,9 +64,7 @@ class VCF_gnomad(formats.VCF2):
             
         
         def all_summary(var, altp):
-            
-            
-            gcIndexes = self.genotype_info_field_indexes(altp+1)
+            gcIndexes = formats.VCF2.genotype_info_field_indexes(altp+1)
             
             gcmale    = [ var.INFO.get("GC_Male")[i] for i in gcIndexes ] if (var.INFO.get("GC_Male") is not None) else [0, 0, 0]
             gcfemale  = [ var.INFO.get("GC_Female")[i] for i in gcIndexes ] if (var.INFO.get("GC_Female") is not None) else [0, 0, 0]
@@ -78,7 +103,7 @@ class VCF_gnomad(formats.VCF2):
             # See http://gnomad.broadinstitute.org/faq for the different subpopulations
 
             gc = "GC_%s" % sub
-            gcIndexes = self.genotype_info_field_indexes(altp+1)
+            gcIndexes = formats.VCF2.genotype_info_field_indexes(altp+1)
             gc        = [ var.INFO[gc][i] for i in gcIndexes ] if (var.INFO.get(gc) is not None) else [0, 0, 0]
             
             total = var.INFO.get('AN_%s' % sub)
@@ -88,28 +113,22 @@ class VCF_gnomad(formats.VCF2):
             ra = gc[1]
             a  = 0
             aa = gc[2]
-            u  = total = 2*(rr+ra+aa)
+            u  = total - 2*(rr+ra+aa)
             
             af = var.INFO.get("AF_%s" % sub)[altp] if len(var.ALT) > 1 else var.INFO.get("AF_%s" % sub)
             
             return [rr, r, ra, a, aa, u, af]
         #edef
         
-        self.to_records()
-        
-        S = [ mk_summary(v, alt_pos, sub) for v in self.records for alt_pos in range(len(v.ALT)) ]
+        S = [ mk_summary(self, alt_pos, sub) for alt_pos in range(len(self.ALT)) ]
         
         sub_names = [ 'ALL' if s is None else s for s in sub ]
-        cols = ["ID"] + [ "%s_%s" % (sub, allele)
+        cols = ["index"] + [ "%s_%s" % (sub, allele)
                          for sub in sub_names
                              for allele in  ["RR", "R", "RA", "A", "AA", "O", "AF"]
                         ]
-        S = pd.DataFrame(S, columns=cols).set_index("ID")
+        S = pd.DataFrame(S, columns=cols).set_index("index")
         return S
-    #edef
-
-    def genotype_matrix(self):
-        raise NotImplementedError("This function is not available for the GNOMAD ddataset.")
     #edef
 #eclass
         
@@ -141,7 +160,8 @@ class Gnomad2(Dataset2):
         self._obj.add_file("var.vcf.bgz", utils.Acquire2().curl(v_data['vcf']))
         self._obj.add_file("var.vcf.bgz.tbi", utils.Acquire2().curl(v_data['tbi']))
         self._obj.register("vcf", ["var.vcf.bgz", "var.vcf.bgz.tbi"],
-                           lambda f: VCF_gnomad(f["var.vcf.bgz"], tabix=True))
+                           lambda f: VCF_gnomad(f["var.vcf.bgz"], tabix=True,
+                                               internal_variant_representation=GnomadBiuVariant))
         
         cov_entry_fields = [ "chrom", "pos", "mean", "median", "q1", "q5", "q10", "q15", "q20", "q25", "q30", "q50", "q100" ]
     
@@ -156,7 +176,7 @@ class Gnomad2(Dataset2):
             self._obj.add_file(cov_tbi_file, cov_tbi)
             
             self._obj.register("cov_%s" % chrom, [cov_file, cov_tbi_file],
-                               lambda f, n=cov_file: biu.formats.Tabix(f[n], fieldNames=cov_entry_fields))
+                               lambda f, n=cov_file: formats.Tabix(f[n], fieldNames=cov_entry_fields))
         #efor
     
         self._add_str_func(lambda s: "Version: %s" % self.version)

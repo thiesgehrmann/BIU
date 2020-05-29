@@ -1,10 +1,493 @@
 import os
 
-from .. import utils
+from biu import utils
 
 cyvcf2 = utils.py.loadExternalModule('cyvcf2')
 np     = utils.py.loadExternalModule('numpy')
 pd     = utils.py.loadExternalModule('pandas')
+
+class MyOwnVariant(object):
+    def __init__(self, data):
+        
+        if not isinstance(data, str):
+            self._str, self._CHROM, self._POS, self._ID, self._REF, self._ALT, self._QUAL, self._FILTER, self._INFO, self._FORMAT, self._samples = data
+        else:
+        
+            fields = data.strip().split('\t')
+            self._str    = data
+            self._CHROM  = fields[0]
+            self._POS    = int(fields[1])
+            self._ID     = fields[2]
+            self._REF    = fields[3]
+            self._ALT    = fields[4].split(',')
+            self._QUAL   = fields[5]
+            self._FILTER = fields[6].split(',')
+
+            self._FILTER = None if self._FILTER[0].lower() in ['.', 'pass'] else self._FILTER
+
+            self._INFO   = dict([ x.split('=') for x in fields[7].split(';') ])
+            if len(fields) > 8:
+                self._FORMAT  = fields[8].split(':')
+                self._samples = dict(zip(self._FORMAT, zip(*[p.split(':') for p in fields[9:] ])))
+            else:
+                self._FORMAT  = []
+                self._samples = {}
+            #fi
+        #fi
+    #edef
+    
+    def copy(self):
+        return MyOwnVariant([ x.copy() for x in [ self._str, self._CHROM, self._POS, self._ID, self._REF, self._ALT, self._QUAL, self._FILTER, self._INFO, self._FORMAT, self._samples] ])
+    #edef
+
+    @property
+    def INFO(self):
+        return self._INFO
+    #edef
+    
+    @property
+    def FILTER(self):
+        return self._FILTER
+    #edef
+    
+    @property
+    def FORMAT(self):
+        return self._FORMAT
+    #edef
+    
+    @property
+    def CHROM(self):
+        return self._CHROM
+    #edef
+    
+    @property
+    def POS(self):
+        return self._POS
+    
+    @property
+    def REF(self):
+        return self._REF
+    #edef
+    
+    @property
+    def ALT(self):
+        return self._ALT
+    #edef
+    
+    @property
+    def ID(self):
+        return self._ID
+    #edef
+    
+    @property
+    def QUAL(self):
+        return self._QUAL
+    #edef
+    
+    @property
+    def genotypes(self):
+        gt = self.format('GT')
+        ret = []
+        
+        def fmt(h):
+            if h == '.':
+                return -1
+            else:
+                return int(h)
+            #fi
+        #edef
+        
+        for g in gt:
+            phased = '|' in g
+            ret.append([ fmt(h) for h in g.split('|' if phased else '/')] + [phased])
+        #efor
+        return ret
+    #edef
+    
+    @property
+    def ploidy(self):
+        gt = self.format('GT')
+        ret = []
+        
+        for g in gt:
+            phased = '|' in g
+            ret.append(len(g.split('|' if phased else '/')))
+        #efor
+        return ret
+    #edef
+    
+    @property
+    def gt_phases(self):
+        return [ '|' in gt for gt in self.format('GT') ]
+    #edef
+    
+    def format(self, field, vtype=None):
+        if field in self._FORMAT:
+            return self._samples[field]
+        else:
+            raise Exception("FUCK")
+        #fi
+    #edef
+    
+    def set_format(self, field, value):
+        nsamples = len(self._samples[self._FORMAT[0]])
+        if len(value) != nsamples:
+            raise Exception("NOT THE RIGHT # of SAMPLES")
+        else:
+            self._samples[field] = value
+        #fi
+    #edef
+    
+    @property
+    def is_snp(self):
+        "boolean indicating if the variant is a SNP."
+        if len(self.REF) > 1: return False
+        for alt in self.ALT:
+            if alt not in ["A", "C", "G", "T"]:
+                return False
+            #fi
+        #efor
+        return len(self.ALT) >= 1
+    #edef
+
+    @property
+    def is_indel(self):
+        "boolean indicating if the variant is an indel."
+        is_sv = self.is_sv
+
+        if len(self.REF) > 1 and not is_sv: return True
+
+        for alt in self.ALT:
+            if alt == ".":
+                return True
+            #fi
+            if len(alt) != len(self.REF):
+                if not is_sv:
+                    return True
+                #fi
+            #fi
+        return False
+
+    @property
+    def is_transition(self):
+        "boolean indicating if the variant is a transition."
+        if len(self.ALT) != 1:
+            return False
+        #fi
+
+        if not self.is_snp:
+            return False
+        #fi
+
+        ref = self.REF
+            # just one alt allele
+        alt_allele = self.ALT[0]
+        if ((ref == 'A' and alt_allele == 'G') or
+            (ref == 'G' and alt_allele == 'A') or
+            (ref == 'C' and alt_allele == 'T') or
+            (ref == 'T' and alt_allele == 'C')):
+                return True
+        #fi
+        return False
+    #edef
+
+    @property
+    def is_deletion(self):
+        "boolean indicating if the variant is a deletion."
+        if len(self.ALT) > 1:
+            return False
+        #fi
+
+        if not self.is_indel:
+            return False
+        #fi
+        if len(self.ALT) == 0:
+            return True
+        alt = self.ALT[0]
+        if alt is None or alt == ".":
+            return True
+        #fi
+        
+        if len(self.REF) > len(alt):
+            return True
+        #fi
+        return False
+        #fi
+    #edef
+
+    @property
+    def is_sv(self):
+        "boolean indicating if the variant is an SV."
+        return self.INFO.get('SVTYPE',None) is not None
+    #edef
+
+
+    @property
+    def var_type(self):
+        "type of variant (snp/indel/sv)"
+        if self.is_snp:
+            return "snp"
+        elif self.is_indel:
+            return "indel"
+        elif self.is_sv:
+            return "sv"
+        else:
+            return "unknown"
+        #fi
+    #edef
+
+    @property
+    def var_subtype(self):
+        if self.is_snp:
+            if self.is_transition:
+                return "ts"
+            #fi
+            if len(self.ALT) == 1:
+                return "tv"
+            #fi
+            return "unknown"
+
+        elif self.is_indel:
+            if self.is_deletion:
+                return "del"
+            if len(self.ALT) == 1:
+                return "ins"
+            else:
+                return "unknown"
+
+        svt = self.INFO.get("SVTYPE")
+        if svt is None:
+            return "unknown"
+        if svt == "BND":
+            return "complex"
+        if self.INFO.get('IMPRECISE') is None:
+            return svt
+        return self.ALT[0].strip('<>')
+
+    @property
+    def start(self):
+        "0-based start of the variant."
+        return self.POS
+    #edef
+
+    @property
+    def end(self):
+        "end of the variant. the INFO field is parsed for SVs."
+        return self.POS + len(self.ALT[0])
+    #edef
+    
+    def __str__(self):
+        info = ';'.join('%s=%s' % (k,v) for (k,v) in self._INFO.items())
+        people = '\t'.join([ ':'.join(x) for x in zip(*[self._samples[k] for k in self._FORMAT])])
+        return '\t'.join([self.CHROM, str(self.POS), self._ID, self._REF, ','.join(self.ALT),
+                         self._QUAL, '.' if self._FILTER is None else ','.join(self._FILTER),
+                         info, ':'.join(self._FORMAT), people])
+    #edef
+
+
+    #aaf
+    #
+    #    alternate allele frequency across samples in this VCF.
+    #
+    #call_rate
+    #
+    #    proprtion of samples that were not UKNOWN.
+    #
+    #
+    #gt_alt_depths
+    #
+    #    get the count of alternate reads as a numpy array.
+    #
+    #gt_alt_freqs
+    #
+    #    get the freq of alternate reads as a numpy array.
+    #
+    #gt_bases
+    #
+    #    numpy array indicating the alleles in each sample.
+    #
+    #gt_depths
+    #
+    #    get the read-depth for each sample as a numpy array.
+    #
+    #gt_phases
+    #
+    #    get a boolean indicating wether each sample is phased as a numpy array.
+    #
+    #gt_phred_ll_het
+    #
+    #    get the PL of het for each sample as a numpy array.
+    #
+    #gt_phred_ll_homalt
+    #
+    #    get the PL of hom_alt for each sample as a numpy array.
+    #
+    #gt_phred_ll_homref
+    #
+    #    get the PL of Hom ref for each sample as a numpy array.
+    #
+    #gt_quals
+    #
+    #    get the GQ for each sample as a numpy array.
+    #
+    #gt_ref_depths
+    #
+    #    get the count of reference reads as a numpy array.
+    #
+    #gt_types
+    #
+    #    gt_types returns a numpy array indicating the type of each sample.
+    #
+    #    HOM_REF=0, HET=1. For gts012=True HOM_ALT=2, UKNOWN=3
+    #
+    #
+    #num_called
+    #
+    #    number of samples that were not UKNOWN.
+    #
+    #num_het
+    #
+    #    number heterozygous samples at this variant.
+    #
+    #num_hom_alt
+    #
+    #    number homozygous alternate samples at this variant.
+    #
+    #num_hom_ref
+    #
+    #    number homozygous reference samples at this variant.
+    #
+    #num_unknown
+    #
+    #    number unknown samples at this variant.
+    #
+    #ploidy
+    #
+    #    get the ploidy of each sample for the given record.
+    #
+    #
+    #set_pos(self, int pos0)
+    #
+    #    set the POS to the given 0-based position
+
+#eclass
+
+###################################################################
+
+class BiuVariant(object):
+    
+    _var = None
+    
+    def __init__(self, data):
+        if isinstance(data, cyvcf2.cyvcf2.Variant) or isinstance(data, MyOwnVariant):
+            self._var = data
+        elif isinstance(data, str):
+            self._var = MyOwnVariant(data)
+        #fi
+    #edef
+    
+    def __getattr__(self, name):
+        if name == 'set_format':
+            self.switch()
+        #fi
+        
+        return getattr(self._var, name)
+    #edefp
+    
+    def switch(self):
+        """Switch the internal representation to the slower, more flexible one"""
+        if not isinstance(self._var, MyOwnVariant):
+            self._var = MyOwnVariant(str(self._var).strip())
+        #fi
+        return self
+    #edef
+    
+    def copy(self):
+        return self.__class__(self._var)
+    #edef
+    
+    def __dir__(self):
+        """
+        To allow tab-completion for the registered objects.
+        """
+        return object.__dir__(self) + object.__dir__(self._var)
+    #edef
+    
+    def __repr__(self):
+        return "%s(%s:%d %s/%s)" % (self.__class__.__name__, self._var.CHROM,
+                                    self._var.POS, self._var.REF, ",".join(self._var.ALT))
+    #edef
+    
+    def __str__(self):
+        return str(self._var)
+    #edef
+    
+    def make_identifier(self, alt_pos=0):
+        """
+        Make an identifier for a given variant.
+        
+        parameters:
+        self: a BiuVariant object.
+        alt_pos: Integer. Which alternative allele to use in the identifier
+        
+        returns:
+        A string identifier for the variant
+        """
+        return '%s-%d-%s-%s' % (str(self.CHROM), self.POS, self.REF, self.ALT[alt_pos])
+    #edef
+    
+    def summary(self, altpos=None):
+        """
+        Make a summary of the variants at this variant
+        ASSUMES A MONOPLOID/DIPLOID ORGANISM!
+        parameters:
+        self: BiuVariant Variant object
+        altpos: Integer, List[Integer]
+            Which alternative allele indexes to consider
+            
+        Returns: DataFrame
+        """
+        
+        counts  = []
+        idxs = []
+        
+        if altpos is None:
+            altpos = list(range(len(self.ALT)))
+        elif isinstance(altpos, int):
+            altpos = [altpos]
+        #fi
+        
+        for i in altpos:
+            alt = self.ALT[i]
+            ident = self.make_identifier(i)
+            pos = i+1
+
+            #                   RR, RA, AA, R, A, O
+            v_count = np.array([ 0,  0,  0, 0, 0, 0])
+            n_genotypes = len(self.genotypes)
+
+            for gt in self.genotypes:
+                if len(gt) == 2: # Monoploid!
+                    v_count[3+(gt[0]==pos)] += 1
+                elif len(gt) == 3: # Diploid
+                    v_count[(gt[0]==pos)+(gt[1]==pos)] += 1
+                else: #Polyploid! Don't count this sample!
+                    pass
+                #fi
+            #efor
+
+            # Set the Other count
+            v_count[-1] = n_genotypes - sum(v_count)
+
+            counts.append(v_count)
+            idxs.append(ident)
+        #efor
+
+        return pd.DataFrame(counts, index=idxs, columns=['RR','RA','AA','R','A', 'O'])
+    #edef
+#eclass
+
+###################################################################
 
 class VCF_filter(object):
     """
@@ -34,9 +517,11 @@ class VCF_filter(object):
     #edef
 #eclass
 
+###################################################################
+
 class VCF2(object):
     """
-    A cyvcf2 wrapper for general queryinf of tabixed, and non-tabixed files.
+    A cyvcf2 wrapper for general querying of tabixed, and non-tabixed files.
     
     Internally, the data is represented in one of three ways:
      * VCF_records: Essentially a wrapper around a list of VCF records.
@@ -83,7 +568,9 @@ class VCF2(object):
     HOM_ALT = 2
     UNKNOWN = 3
     
-    def __init__(self, file=None, tabix=True, samples=None, filter_stack=None, vcf_object=None):
+    def __init__(self, file=None, tabix=True, samples=None,
+                 filter_stack=None, vcf_object=None,
+                 internal_variant_representation=BiuVariant):
         """
         Initialize a VCF2 object.
         
@@ -113,13 +600,13 @@ class VCF2(object):
             #if tabix & os.path.exists(file + '.tbi'):
             #    self._vcf = VCF2_cyvcf2_tabix(file, samples=samples)
             #else:
-            self._vcf = VCF2_cyvcf2(file, samples=samples)
+            self._vcf = VCF2_cyvcf2(file, samples=samples, internal_variant_representation=internal_variant_representation)
             #fi
         else:
             raise ValueError("Incorrectly specified initialization.")
         #fi
         
-
+        self._internal_variant_representation = internal_variant_representation
         self._filter_stack = [] if filter_stack is None else filter_stack
     #edef
 
@@ -151,7 +638,7 @@ class VCF2(object):
         
     
     def filter(self, chrom=None, start=None, end=None, samples=None, filters=None,
-               vartypes=None, n_alleles=None):
+               vartypes=None, n_alleles=None, samples_format=None):
         """
         Perform a filtering operation.
         You can filter on:
@@ -162,6 +649,9 @@ class VCF2(object):
         variant types:     vcf.filter(vartypes=[a,b,c])
             vartypes must be in ['snp', 'indel', 'cv' ]
         # variant alleles: vcf.filter(n_alleles=2)
+        
+        Filter samples based on a format filtering operation
+        vcf.filter(samples_format=(['FT', lambda x: len(set(x.split('|')) & set(['VQLOW'])) == 0]))
         
         You can chain filtering steps as you wish:
             vcf.filter(chrom, start, end).filter(n_alleles=2)
@@ -197,12 +687,20 @@ class VCF2(object):
             filter_list.append(filt)
         #fi
         
+        if samples_format is not None:
+            for (field, test) in samples_format:
+                filt = VCF_filter('samples_format', [field, test])
+                filter_list.append(filt)
+            #efor
+        #fi
+        
         filter_functions = {
             "samples" :   lambda obj: obj.filter_samples,
             "region" :    lambda obj: obj.filter_region,
             "filters" :   lambda obj: obj.filter_filter,
             "vartypes" :  lambda obj: obj.filter_vartype,
-            "n_alleles" : lambda obj: obj.filter_n_alleles
+            "n_alleles" : lambda obj: obj.filter_n_alleles,
+            "samples_format" : lambda obj: obj.filter_samples_format
         }
         
         vcf_object = self._vcf
@@ -236,7 +734,8 @@ class VCF2(object):
         Convert the internal representation to a VCF_records representation
         """
         if not isinstance(self._vcf, VCF2_records):
-            records_obj = VCF2_records(self._vcf.records, self._vcf.samples)
+            records = [ self._internal_variant_representation(v) for v in self._vcf.records]
+            records_obj = VCF2_records(records, self._vcf.samples)
             self._vcf = records_obj
         #fi
     #edef
@@ -303,6 +802,9 @@ class VCF2(object):
         --------
         A cyvcf2.VCF.Variant object if the variant exists. Otherwise None
         """
+        
+        pos = int(pos)
+        
         V = self._vcf.filter_region(chrom, pos, pos)
         
         ref = ref.lower()
@@ -364,39 +866,9 @@ class VCF2(object):
                 raise ValueError("To use this function as a classmethod, you must specify a list of variants you wish to summarize.")
             #fi
         #fi
-            
         
-        counts  = []
-        idxs = []
-
-        for var in variants:
-            for i, alt in enumerate(var.ALT):
-                ident = obj.self.make_identifier(var, i)
-                pos = i+1
-                
-                #                   RR, RA, AA, R, A, O
-                v_count = np.array([ 0,  0,  0, 0, 0, 0])
-                n_genotypes = len(var.genotypes)
-                
-                for gt in var.genotypes:
-                    if len(gt) == 2: # Monoploid!
-                        v_count[3+(gt[0]==pos)] += 1
-                    elif len(gt) == 3: # Diploid
-                        v_count[(gt[0]==pos)+(gt[1]==pos)] += 1
-                    else: #Polyploid! Don't count this sample!
-                        pass
-                    #fi
-                #efor
-                
-                # Set the Other count
-                v_count[-1] = n_genotypes - sum(v_count)
-                
-                counts.append(v_count)
-                idxs.append(ident)
-            #efor
-        #efor
-
-        return pd.DataFrame(counts, index=idxs, columns=['RR','RA','AA','R','A', 'O'])
+        S = [ v.summary() for v in variants ]
+        return pd.concat(S)
     #edef
     
 
@@ -415,8 +887,6 @@ class VCF2(object):
         return '%s-%d-%s-%s' % (str(variant.CHROM), variant.POS, variant.REF, variant.ALT[alt_pos])
     #edef
 
-        
-    
     @staticmethod
     def genotype_info_field_indexes(altAlleleID, ref=0):
         """
@@ -530,10 +1000,11 @@ class VCF2(object):
 ##############################################################################
 
 class VCF2_master_type(object):
-    def __init__(self, records=None, samples=None):
+    def __init__(self, records=None, samples=None, internal_variant_representation=BiuVariant):
         self._vcf          = None
         self._records      = records
         self._samples      = samples
+        self._internal_variant_representation = internal_variant_representation
     #edef
     
     @property
@@ -570,10 +1041,15 @@ class VCF2_master_type(object):
 class VCF2_records(VCF2_master_type):
     def __init__(self, *pargs, **kwargs):
         super(VCF2_records, self).__init__(*pargs, **kwargs)
+        
+        self._records = [ self._internal_variant_representation(r) if isinstance(r, cyvcf2.cyvcf2.Variant) else r
+                             for r in self.records ]
+        
     #edef
     
     def filter_vartype(self, vartypes):
-        return VCF2_records([ v for v in self.records if v.var_type in vartypes ], self.samples)
+        return VCF2_records([ v for v in self.records if v.var_type in vartypes ], self.samples,
+                            internal_variant_representation=self._internal_variant_representation)
     #edef
 
     def filter_filter(self, filters):
@@ -585,7 +1061,8 @@ class VCF2_records(VCF2_master_type):
             return not any([f in filters for f in var.FILTER])
         #edef
         
-        return VCF2_records([ v for v in self.records if test(v) ], self.samples)
+        return VCF2_records([ v for v in self.records if test(v) ], self.samples,
+                            internal_variant_representation=self._internal_variant_representation)
     #edef
 
     def filter_samples(self, samples):
@@ -595,12 +1072,60 @@ class VCF2_records(VCF2_master_type):
     def filter_region(self, chrom, start, end):
         # Quick and dirty first
         test = lambda v: (str(v.CHROM) == str(chrom)) and (v.POS >= start) and (v.POS <= end)
-        return VCF2_records([ v for v in self.records if test(v) ], self.samples)
+        return VCF2_records([ v for v in self.records if test(v) ], self.samples,
+                            internal_variant_representation=self._internal_variant_representation)
     #edef
 
     def filter_n_alleles(self, n_alleles):
         test = lambda v: len(v.ALT) <= n_alleles
-        return VCF2_records([ v for v in self.records if test(v) ], self.samples)
+        return VCF2_records([ v for v in self.records if test(v) ], self.samples,
+                            internal_variant_representation=self._internal_variant_representation)
+    #edef
+    
+    def filter_samples_format(self, field, test):
+        """
+        Filter samples on a test on a format field.
+        All samples that do not pass this filter are set to the missing genotype
+        Variants in which no individual has the variant are removed from the list also.
+        
+        parameters:
+        self: VCF2_records object
+        field: string
+        test: function
+        
+        """
+        
+        new_records = []
+        
+        for r in self.records:
+            # It is IMPERATIVE THAT THE VARIANT IS in "MyOwnVariant" format here!!!
+            new = r.switch().copy()
+            
+            GT = r.format('GT')
+            PL = r.ploidy
+            F  = r.format(field)
+            
+            new_gt = []
+            for gt, pl, f in zip(GT, PL, F):
+                if test(f):
+                    new_gt.append(gt)
+                else:
+                    new_gt.append('/'.join(['.']*pl))
+                #fi
+            #efor
+            
+            new.set_format('GT', new_gt)
+            
+            for gt in new.genotypes:
+                if any([x > 0 for x in gt[:-1]]):
+                    new_records.append(new)
+                    break
+                #fi
+            #efor
+        #efor
+        
+        return VCF2_records(new_records, self.samples,
+                            internal_variant_representation=self._internal_variant_representation)
     #edef
 
 #eclass
@@ -618,7 +1143,7 @@ class VCF2_cyvcf2(VCF2_master_type):
     @property
     def records(self):
         if self._records is None:
-            self._records = [ v for v in self._vcf ]
+            self._records = [ self._internal_variant_representation(v) for v in self._vcf ]
         #fi
         
         return self._records
@@ -630,23 +1155,45 @@ class VCF2_cyvcf2(VCF2_master_type):
     #edef
     
     def filter_vartype(self, vartypes):
-        return VCF2_records(self.records, self.samples).filter_vartype(vartypes)
+        return VCF2_records([ r for r in self.records], self.samples,
+                            internal_variant_representation=self._internal_variant_representation).filter_vartype(vartypes)
     #edef
 
     def filter_filter(self, filters):
-        return VCF2_records(self.records, self.samples).filter_filter(filters)
+        return VCF2_records([ r for r in self.records], self.samples,
+                            internal_variant_representation=self._internal_variant_representation).filter_filter(filters)
     #edef
 
     def filter_samples(self, samples):
-        return VCF2_cyvcf2(self._file, samples)
+        return VCF2_cyvcf2(self._file, samples,
+                           internal_variant_representation=self._internal_variant_representation)
     #edef
 
     def filter_region(self, chrom, start, end):
         region = '%s:%s-%s' % (str(chrom), str(int(start)), str(int(end)))
-        return VCF2_records([ v for v in self._vcf(region) ], self.samples)
+        return VCF2_records([ r for r in self._vcf(region) ], self.samples,
+                            internal_variant_representation=self._internal_variant_representation)
     #edef
 
     def filter_n_alleles(self, n_alleles):
-        return VCF2_records(self.records, self.samples).filter_n_alleles(n_alleles)
+        return VCF2_records([ r for r in self.records], self.samples,
+                            internal_variant_representation=self._internal_variant_representation).filter_n_alleles(n_alleles)
+    #edef
+    
+    def filter_samples_format(self, field, test):
+        """
+        Filter samples on a test on a format field.
+        All samples that do not pass this filter are set to the missing genotype
+        
+        parameters:
+        self: VCF2_records object
+        field: string
+        test: function
+        
+        """
+        return VCF2_records([ r for r in self.records], self.samples,
+                            internal_variant_representation=self._internal_variant_representation).filter_samples_format(field, test)
     #edef
 #eclass
+
+###################################################################

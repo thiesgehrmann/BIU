@@ -6,11 +6,11 @@ from .gnomadUtils import Gnomad as Gnomad
 from .goUtils import GO as GO
 from .goto import GOTO as GOTO
 from .llsUtils import LLS as LLS
+from .dbsnpUtils import DBSNP as DBSNP
 
 
 ## Old dataset databases, not yet existing in dataset2 format
 from .clinVarUtils import ClinVar as ClinVar
-from .dbsnpUtils import DBSNP as DBSNP
 from .gtexUtils import GTeX as GTeX
 from .hagrUtils import HAGR as HAGR
 from .keggUtils import KEGG as KEGG
@@ -21,6 +21,7 @@ from .uniprotUtils import UniProt as UniProt
 from .bbmri2 import BBMRI2 as BBMRI2 # A re-implementation of BBMRI
 from .cadd2 import CADD2 as CADD2
 from .cosmic import Cosmic as Cosmic
+from .dbsnp2 import DBSNP2 as DBSNP2 # a re-implementation of DBSNP
 from .gnomad2 import Gnomad2 as Gnomad2
 from .go2 import GO2 as GO2
 from .goto2 import GOTO2 as GOTO2
