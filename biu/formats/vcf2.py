@@ -1,6 +1,6 @@
 import os
 
-from biu import utils
+from .. import utils
 
 cyvcf2 = utils.py.loadExternalModule('cyvcf2')
 np     = utils.py.loadExternalModule('numpy')
@@ -98,6 +98,7 @@ class MyOwnVariant(object):
         #edef
         
         for g in gt:
+            g = g[0]
             phased = '|' in g
             ret.append([ fmt(h) for h in g.split('|' if phased else '/')] + [phased])
         #efor
@@ -110,6 +111,7 @@ class MyOwnVariant(object):
         ret = []
         
         for g in gt:
+            g = g[0]
             phased = '|' in g
             ret.append(len(g.split('|' if phased else '/')))
         #efor
@@ -118,23 +120,31 @@ class MyOwnVariant(object):
     
     @property
     def gt_phases(self):
-        return [ '|' in gt for gt in self.format('GT') ]
+        return [ '|' in gt[0] for gt in self.format('GT') ]
     #edef
     
     def format(self, field, vtype=None):
         if field in self._FORMAT:
-            return self._samples[field]
+            return ( v.split(';') for v in self._samples[field] )
         else:
             raise Exception("FUCK")
         #fi
     #edef
     
     def set_format(self, field, value):
+        """
+        PARAMETERS:
+        field: String
+        value: list[String|Int|object]
+        """
         nsamples = len(self._samples[self._FORMAT[0]])
         if len(value) != nsamples:
             raise Exception("NOT THE RIGHT # of SAMPLES")
         else:
-            self._samples[field] = value
+            value = [
+                [v] if isinstance(v,str) or (not hasattr(v, '__iter__')) else v for v in value
+            ]
+            self._samples[field] = [ ';'.join([str(v) for v in val]) for val in value ]
         #fi
     #edef
     
@@ -381,8 +391,12 @@ class BiuVariant(object):
     def __init__(self, data):
         if isinstance(data, cyvcf2.cyvcf2.Variant) or isinstance(data, MyOwnVariant):
             self._var = data
+        elif isinstance(data, BiuVariant):
+            self._var = data._var
         elif isinstance(data, str):
             self._var = MyOwnVariant(data)
+        else:
+            print('Unknown variant type: %s' % type(data))
         #fi
     #edef
     
@@ -734,8 +748,9 @@ class VCF2(object):
         Convert the internal representation to a VCF_records representation
         """
         if not isinstance(self._vcf, VCF2_records):
-            records = [ self._internal_variant_representation(v) for v in self._vcf.records]
-            records_obj = VCF2_records(records, self._vcf.samples)
+            #records = [ self._internal_variant_representation(v) for v in self._vcf.records]
+            #print(records)
+            records_obj = VCF2_records(self._vcf.records, self._vcf.samples)
             self._vcf = records_obj
         #fi
     #edef
@@ -1088,6 +1103,9 @@ class VCF2_records(VCF2_master_type):
         All samples that do not pass this filter are set to the missing genotype
         Variants in which no individual has the variant are removed from the list also.
         
+        NOTE: The value of the field in question will ALWAYS BE A LIST (split on ';')
+              THIS IS REGARDLESS OF HOW MANY VALUES THERE SHOULD BE IN THE FORMAT
+        
         parameters:
         self: VCF2_records object
         field: string
@@ -1098,7 +1116,7 @@ class VCF2_records(VCF2_master_type):
         new_records = []
         
         for r in self.records:
-            # It is IMPERATIVE THAT THE VARIANT IS in "MyOwnVariant" format here!!!
+            # It is IMPERATIVE THAT THE VARIANT IS IN "MyOwnVariant" format here!!!
             new = r.switch().copy()
             
             GT = r.format('GT')

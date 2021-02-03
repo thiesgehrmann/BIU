@@ -10,6 +10,77 @@ np  = utils.py.loadExternalModule('numpy')
 
 #########################################################################
 
+def droplevels(DF):
+    """
+    Droplevels - drop unused categories in each categorical column in a dataframe.
+    Identical to the R droplevels function
+    
+    parameters:
+    -----------
+    DF: pandas.DataFrame
+        The Dataframe you want to drop levels for
+    
+    Returns:
+    --------
+    A dataframe with unused levels dropped.
+    """
+    DF = DF.copy()
+    
+    for col in DF.columns:
+        if str(DF[col].dtype) == 'category':
+            DF[col] = DF[col].cat.remove_unused_categories()
+        #fi
+    #efor
+    return DF
+#edef
+
+
+
+def format_vertical_headers(df):
+    """Display a dataframe with vertical column headers
+    
+    parameters:
+    -----------
+    df: pandas.Dataframe
+        The dataframe you want to apply the rotation of labels on
+    
+    returns:
+    dataframe with rotated table header
+    """
+    styles = [dict(selector="th", props=[('width', '40px')]),
+              dict(selector="th.col_heading",
+                   props=[("writing-mode", "vertical-rl"),
+                          ('transform', 'rotateZ(180deg)'), 
+                          ('height', '290px'),
+                          ('vertical-align', 'top')])]
+    return (df.fillna('').style.set_table_styles(styles))
+#edef
+
+
+def dataframe_sort(df, func):
+    """
+    sort: Sort a dataframe in a more flexible way than sort_values
+    
+    parameters:
+    -----------
+    df: pandas.Dataframe
+        The dataframe you want to apply the sorting on
+    func: callable or string
+        if callable: A function that returns a sortable value from a dataframe row
+        if string: the column name to sort by
+    
+    returns:
+    sorted dataframe
+    """
+    if not callable(func):
+        col  = func
+        func = lambda x: x[col]
+    #fi
+    order = [ i[0] for i in sorted(enumerate(df.apply(func, axis=1)), key=lambda x: x[1]) ]
+    return df.iloc[order]
+#edef
+
+
 def detect_categorical(df, ret_types=False):
     """
     Detects and sets categorical columns in a dataframe.

@@ -103,11 +103,11 @@ limma.extract.effects <- function(fit, effects=NULL) {
 
 #########################################################################
 
-limma.metab <- function(formula, covar, metab, contrasts=NULL, effects=NULL, random_effect=NULL, rin=FALSE, ebayes=TRUE, verbose=FALSE){
+limma.metab <- function(F, covar, metab, contrasts=NULL, effects=NULL, random_effect=NULL, rin=FALSE, ebayes=TRUE, verbose=FALSE){
     #'
     #'parameters:
     #'-----------
-    #'formula: The formula to evaluate
+    #'F: The formula to evaluate
     #'covar: DataFrame Covariates (defined in covar)
     #'metab: Dataframe of Metabolite measurements (Normalized)
     #'contrasts: list. Which contrasts to evaluate (default NULL)
@@ -117,14 +117,15 @@ limma.metab <- function(formula, covar, metab, contrasts=NULL, effects=NULL, ran
     #'ebayes: Boolean, Use ebayes or not
     #'verbose: Boolean. Return all the intermediate variables in a list
 
+    vars_in_f <- c(labels(terms(formula(F))),random_effect)
     
-    C <- na.omit(droplevels(covar))
+    C <- na.omit(droplevels(covar[,vars_in_f]))
     E <- as.matrix(metab[match(rownames(C), rownames(metab)),])
     E <- apply(E,2,scale)
     E <- if (rin){normalize.rin(E)} else {E}
     E <- t(E)
     
-    design <- model.matrix(formula, C)
+    design <- model.matrix(F, C)
     
     dup.corr <- if (!is.null(random_effect)){
                     dup.corr <- duplicateCorrelation(E, design=design, block=C[,random_effect])
@@ -172,11 +173,11 @@ limma.metab <- function(formula, covar, metab, contrasts=NULL, effects=NULL, ran
 
 #########################################################################
 
-limma.rnaseq <- function(formula, covar, expr, contrasts=NULL, effects=NULL, random_effect=NULL, voom=TRUE, verbose=FALSE){
+limma.rnaseq <- function(F, covar, expr, contrasts=NULL, effects=NULL, random_effect=NULL, voom=TRUE, verbose=FALSE){
     #'
     #'parameters:
     #'-----------
-    #'formula: The formula to evaluate
+    #'F: The formula to evaluate
     #'covar: DataFrame Covariates (defined in covar)
     #'expr: Dataframe of count measurements
     #'contrasts: list. Which contrasts to evaluate (default NULL)
@@ -185,33 +186,44 @@ limma.rnaseq <- function(formula, covar, expr, contrasts=NULL, effects=NULL, ran
     #'voom: Boolean. Perform VOOM normalization
     #'verbose: Boolean. Return all the intermediate variables in a list
     
-    C <- na.omit(droplevels(covar))
+    pb <- txtProgressBar(min = 0, max = 11, style = 3)
+    
+    vars_in_f <- c(labels(terms(formula(F))),random_effect)
+    
+    C <- na.omit(droplevels(covar[,vars_in_f]))
     E <- expr[ rownames(expr) %in% rownames(C),]
 
     # Make sure that the data frames are in the same order!
     C <- C[order(rownames(C)),]
     E <- E[order(rownames(E)),]
+    
+    setTxtProgressBar(pb, 1)
 
     ##############################################################
     # Prepare the Diff. Ex. data structures
 
     # Put gene expression matrix into DGEList object. Remove the sample column
     dge <- DGEList(t(E))
+    setTxtProgressBar(pb, 2)
     # Add the sample names to the DGEList
     colnames(dge) <- rownames(E)
 
-    design <- model.matrix(formula, C)
+    design <- model.matrix(F, C)
+    setTxtProgressBar(pb, 3)
     
     dge <- calcNormFactors(dge)
+    setTxtProgressBar(pb, 4)
     if (voom){
         dge <- voom(dge, design)
     }
+    setTxtProgressBar(pb, 5)
     
     dup.corr <- if (!is.null(random_effect)){
                     duplicateCorrelation(dge, design=design, block=C[,random_effect])
                 } else{
                     NULL
                 }
+    setTxtProgressBar(pb, 6)
 
     contr.matrix <- if (! is.null(contrasts)){
                         cm  <- makeContrasts(contrasts=as.vector(contrasts), levels=design)
@@ -222,6 +234,7 @@ limma.rnaseq <- function(formula, covar, expr, contrasts=NULL, effects=NULL, ran
                     } else {
                         NULL
                     }
+    setTxtProgressBar(pb, 7)
 
     # Fit limma
     fit <- if (!is.null(random_effect)){
@@ -229,17 +242,21 @@ limma.rnaseq <- function(formula, covar, expr, contrasts=NULL, effects=NULL, ran
             } else{
                 lmFit(dge, design)
             }
+    setTxtProgressBar(pb, 8)
     fit <- if (!is.null(contr.matrix)){
                 contrasts.fit(fit, contr.matrix)
            } else {fit}
+    setTxtProgressBar(pb, 9)
     
     fit <- eBayes(fit)
+    setTxtProgressBar(pb, 10)
     
     res <- if (! is.null(contrasts)){
         limma.extract.contrasts(fit)
         } else {
         limma.extract.effects(fit, effects)
         }
+    setTxtProgressBar(pb, 11)
 
     if (verbose){
         return(list(res=res,

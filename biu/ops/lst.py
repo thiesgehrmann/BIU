@@ -18,7 +18,7 @@ def freq(lst):
   return F
 #edef
 
-def group(lst, key=lambda x: x[0]):
+def group(lst, key=lambda x: x[0], value=lambda x: x):
   """
     Group items based on a certain key.
     Input: lst: an iterable list of tuple (or indexable values)
@@ -28,7 +28,7 @@ def group(lst, key=lambda x: x[0]):
   F = {}
   for item in lst:
     k = key(item)
-    F[k] = F.get(k, []) + [item]
+    F[k] = F.get(k, []) + [value(item)]
   #efor
   return F
 #edef

@@ -44,6 +44,10 @@ class XLSX(object):
     #fi
   #edef
 
+  def __repr__(self):
+    return str(self)
+  #edef
+
   def __str__(self):
     dstr  = "XLSX object\n"
     dstr += " Where: %s\n" % (self._fileName if self._fileName is not None else hex(id(self)))

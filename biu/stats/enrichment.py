@@ -1,4 +1,5 @@
 from .. import utils
+from .. import ops
 
 sstats = utils.py.loadExternalModule("scipy.stats")
 np     = utils.py.loadExternalModule('numpy')
@@ -269,7 +270,7 @@ class EnrichmentNetwork(object):
         return E
     #edef
     
-    def draw(self, distance_threshold=0.3, ax=None, cmap=plt.get_cmap('plasma'), nodes=None, n_clusters=1):
+    def draw(self, distance_threshold=0.3, ax=None, cmap=plt.get_cmap('plasma'), nodes=None, n_clusters=1, min_qval=None):
 
         from sklearn.manifold import MDS
         from sklearn.manifold import Isomap
@@ -282,11 +283,15 @@ class EnrichmentNetwork(object):
         self._nodes['y'] = E[:,1]
 
         if ax is None:
-            fig, axes = biu.utils.figure.subplots(figsize=(10,10), dpi=300)
+            fig, axes = utils.figure.subplots(figsize=(10,10), dpi=300)
             ax = axes[0]
         #fi
+        
+        if min_qval is None:
+            min_qval = self._nodes.q.min()
+        #fi
 
-        color = self._nodes.q.apply(lambda x: -np.log10(x)) / -np.log10(Rs.q.min())
+        color = self._nodes.q.apply(lambda x: -np.log10(x)) / -np.log10(min_qval)
         ax.scatter(self._nodes.x, self._nodes.y, s=self._nodes.n*4, edgecolor='k', c=cmap(color))
         for i, r in self._nodes.iterrows():
             ax.text(r.x, r.y, str(i))
@@ -294,7 +299,7 @@ class EnrichmentNetwork(object):
 
         #L = fc.linkage(sp.spatial.distance.squareform(self.edges, checks=False), method='complete')
         L = fc.linkage(E, metric='euclidean', method='complete')
-        clusters = biu.ops.lst.flatten(sp.cluster.hierarchy.cut_tree(L, n_clusters=n_clusters))
+        clusters = ops.lst.flatten(sp.cluster.hierarchy.cut_tree(L, n_clusters=n_clusters))
 
         for i,j in np.ndindex(self.edges.shape):
             if i > j:
@@ -321,7 +326,7 @@ class EnrichmentNetwork(object):
                     ylim[0] + (1 + np.array(range(len(sizes))))[::-1]*stepsize,
                     c='k', edgecolor='k', s=sizes*4)
         
-        dendfig, dendaxes = biu.utils.figure.subplots(figsize=(20,5))
+        dendfig, dendaxes = utils.figure.subplots(figsize=(20,5))
         dend = sp.cluster.hierarchy.dendrogram(L, ax=dendaxes[0], labels=self.nodes.index, )
 
         return ax.get_figure()

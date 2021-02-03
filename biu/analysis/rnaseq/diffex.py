@@ -20,7 +20,7 @@ _defaults = dict(col_contr='contr',
 
 ###################################################################################
 
-def limma(formula, cov, expr, contrasts=None, random_effect=None, voom=True):
+def limma(formula, cov, expr, contrasts=None, effects=None, random_effect=None, voom=True):
     """
     A wrapper for R differential expression
     Inputs
@@ -38,6 +38,7 @@ def limma(formula, cov, expr, contrasts=None, random_effect=None, voom=True):
                     Note. The way in which you define the contrasts changes the interpretation!
                     If you say: A : X - Y, and find (from `significant_in`) a gene G is upregulated,
                      it means that G is more highly expressed in X than in Y.
+        effects: List[String]. The effects you want to extract (superceded by contrasts).
         random_effect: String. The name of a column to define a random effect (e.g. per person).
         voom: Boolean. Use voom normalization (Default true)
         
@@ -45,9 +46,9 @@ def limma(formula, cov, expr, contrasts=None, random_effect=None, voom=True):
     A dataframe
     """
     r = R()
-    r.push(cov=cov, expr=expr, f=formula, re=random_effect, voom=voom)
+    r.push(cov=cov, expr=expr, f=formula, re=random_effect, voom=voom, contrasts=contrasts, effects=effects)
     r.exec('source(biu$limma.tools')
-    r.exec('diffex <- limma.rnaseq(formula(f), cov, expr, contrasts, re, voom)')
+    r.exec('diffex <- limma.rnaseq(formula(f), cov, expr, contrasts, effects=effects  random_effect=re, voom)')
     return r.get('diffex')
 #edef
 
@@ -416,7 +417,7 @@ def volcanoPlot(diffex,contr=None, genes=None, ax=None,
     axes = None
     if ax is not None:
         axes = ax if hasattr(ax, '__len__') else [ ax ]
-        assert len(ax) == len(tests)
+        assert len(ax) >= len(tests)
         fig = axes[0].get_figure()
     else:
         ncols = min(np.ceil(np.sqrt(len(tests))), 4)
@@ -513,7 +514,7 @@ def pairedVolcanoPlot(diffex, contrA, contrB, genes=None, only_significant=True,
                       col_contr=_defaults['col_contr'], col_index=_defaults['col_index'],
                       col_pval=_defaults['col_pval'], col_qval=_defaults['col_qval'],
                       col_lfc=_defaults['col_lfc'], alpha=_defaults['alpha'], lfcThresh=_defaults['lfcThresh'],
-                      contrA_color='b', contrB_color='r'):
+                      contrA_color='#c2a5cf', contrB_color='#008837', s=0.5):
     """
     pairedVolcanoPlot: Plot two volcanoplots on top of each other, and join genes by lines
     Inputs:
@@ -528,11 +529,12 @@ def pairedVolcanoPlot(diffex, contrA, contrB, genes=None, only_significant=True,
         ax: Matplotlib axes to plot on. Same length as contr
         alpha: pvalue threshold
         lfcThresh: LogFC threshold
-        
-        
+        contrA_color: Contrast A color
+        contrB_color: Contrast B color
         col_pval: The column to use as corrected pvalue
         col_lfc: The column to use as log fold change
         col_contr: The column to use as the contrast column
+        s : The size of the 
     Output:
         List of genes significant by the specified conditions
     """
@@ -552,12 +554,14 @@ def pairedVolcanoPlot(diffex, contrA, contrB, genes=None, only_significant=True,
         ax = axes[0]
     #fi
     
-    ax.scatter(cmp[col_lfc][contrA].values, -np.log10(cmp[col_pval][contrA].values), c=contrA_color, label=contrA, s=0.5)
-    ax.scatter(cmp[col_lfc][contrB].values, -np.log10(cmp[col_pval][contrB].values), c=contrB_color, label=contrB, s=0.5)
+    ax.scatter(cmp[col_lfc][contrA].values, -np.log10(cmp[col_pval][contrA].values),
+               c=contrA_color, label=contrA, s=s, zorder=2)
+    ax.scatter(cmp[col_lfc][contrB].values, -np.log10(cmp[col_pval][contrB].values),
+               c=contrB_color, label=contrB, s=s, zorder=2)
     
     lines = ax.plot([cmp[col_lfc][contrA].values, cmp[col_lfc][contrB].values],
                     -np.log10([cmp[col_pval][contrA].values, cmp[col_pval][contrB].values]),
-                    alpha=0.5, linewidth=0.1, c='grey')
+                    alpha=0.5, linewidth=0.1, c='grey', zorder=1)
     
     if color is not None:
         for l, c in zip(lines, cmp[color]):
@@ -577,7 +581,7 @@ def pairedVolcanoPlot(diffex, contrA, contrB, genes=None, only_significant=True,
 
     ax.legend()
     
-    ax.set_title('Paired volcano plot\n%s (blue) vs %s (red)' % (contrA, contrB))
+    ax.set_title('Paired volcano plot\n%s vs %s' % (contrA, contrB))
     ax.set_xlabel('Log Fold Change')
     ax.set_ylabel('- log10 pvalue')
     

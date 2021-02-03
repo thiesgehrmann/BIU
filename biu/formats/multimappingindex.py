@@ -34,6 +34,22 @@ class MultiMappingIndex(Dataset2):
             raise Exception('Object is not a file or a pandas dataframe')
         #fi
         
+        import re
+        def clean(s):
+            s = str(s)
+            # Remove invalid characters
+            s = re.sub('[^0-9a-zA-Z_]', '', s)
+            
+            if s[0] in '1234567890':
+                s = 'c' + s
+            #fi
+            
+            return s
+        #edef
+        
+        obj = obj.copy()
+        obj = obj.rename(columns={c: clean(c) for c in obj.columns})
+        
         object.__setattr__(self, '_table', obj)
         
         if keys is None:
@@ -46,6 +62,8 @@ class MultiMappingIndex(Dataset2):
             #fi
         #efor
     #edef
+    
+    
     
     def __str__(self):
         """

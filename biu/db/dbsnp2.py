@@ -38,7 +38,7 @@ class DBSNP2(Dataset2):
         self._obj.register("vcf", ["vcf.vcf.gz", "vcf.vcf.gz.tbi"], lambda f: formats.VCF2(f["vcf.vcf.gz"], tabix=True))
         
         self._obj.add_file("info", utils.Acquire2().touch("info_dict.dbsnp.sqldict.sqlite"))
-        self._obj.register("info", ["info"], lambda f: formats.SQLDict(f["info"]))
+        self._obj.register("_info", ["info"], lambda f: formats.SQLDict(f["info"]))
     #edef
     
     def filter(self, *pargs, **kwargs):
@@ -50,7 +50,7 @@ class DBSNP2(Dataset2):
     # Tabix doesn't seem to work...
         res = None
         if isinstance(c, int):
-            res = self.id_ookup(c)
+            res = self.id_lookup(c)
         elif isinstance(c, str):
             c = c.lower()
             if (c[:2] == 'rs') or (c[:2] == 'ss'):
