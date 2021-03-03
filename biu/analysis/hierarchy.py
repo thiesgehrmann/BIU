@@ -259,7 +259,7 @@ def cutpoints_to_partitions(T, CP, order=None):
 
 ####################################################################
 
-def cutpoints_to_colors(T, CP, cmap=plt.get_cmap('Dark2')):
+def cutpoints_to_colors(T, CP, cmap=None):
     """
     Determine colors for clusters in the dendrogram.
     
@@ -270,6 +270,7 @@ def cutpoints_to_colors(T, CP, cmap=plt.get_cmap('Dark2')):
         The nodes defining the clusters
     cmap: matplotlib color map
         Which colors to use for the clusters
+        If None -> plt.get_cmap('Dark2')
     
     returns:
     --------
@@ -278,7 +279,7 @@ def cutpoints_to_colors(T, CP, cmap=plt.get_cmap('Dark2')):
     C = [ 'b' for n in T ]
     nleaves = len([n for n in T if n.info["is_leaf"]])
     
-    
+    cmap = plt.get_cmap('Dark2') if cmap is None else cmap
     
     clusters = CP
     for i, cluster in enumerate(clusters):

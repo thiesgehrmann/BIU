@@ -14,7 +14,7 @@ def dict2ri(D):
     if not isinstance(D, dict):
         raise ValueError("Expected dict. Got '%s'." % str(type(D)))
     #fi
-    return rpy2.robjects.ListVector(D)
+    return rpy2.robjects.ListVector(D.items())
 #edef
 
 ##################################################################################
@@ -69,14 +69,17 @@ def converter():
     
     my_converter  = rpy2.robjects.conversion.Converter('BIU converter')
     
-    my_converter += numpy2ri.converter
-    my_converter += pandas2ri.converter
+    my_converter.rpy2py.register(rpy2.rinterface.ListSexpVector, lambda x: x)
     
     my_converter.py2rpy.register(dict, dict2ri)
-    #my_converter.rpy2py.register(rpy2.robjects.ListVector, ri2dict)
+    my_converter.rpy2py.register(rpy2.robjects.ListVector, ri2dict)
     
     my_converter.py2rpy.register(tuple, tuple2ri)
     my_converter.py2rpy.register(type(None), none2ri)
+    
+    my_converter += rpy2.robjects.default_converter
+    my_converter += numpy2ri.converter
+    my_converter += pandas2ri.converter
 
     return my_converter
 #edef

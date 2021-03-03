@@ -298,7 +298,7 @@ def _trajectoryPlot2D_embed(pdata, conditions, component1, component2, cmap, ax,
 #edef
 
 def plot(data, conditions=None, samples=None, dim=2, pca=True,
-         component=0, component1=0, component2=1, ax=None, cmap=plt.get_cmap('Set2'),
+         component=0, component1=0, component2=1, ax=None, cmap=None,
          display_1d='grid', display_2d='super', reorder=True, reorder_by=None, pca_fit=None):
     """
     Make a 1/2D PC trajectoryplot of samples
@@ -348,6 +348,8 @@ def plot(data, conditions=None, samples=None, dim=2, pca=True,
         If you have one dataframe, D with data, and another dataframe with column information (columns with index and condition), then:
           trajectoryPlot(D, labels)
     """
+    
+    cmap = plt.get_cmap('Set2') if cmap is None else cmap
     
     pca_var_explained = None
     if pca:

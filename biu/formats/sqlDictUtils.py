@@ -45,7 +45,7 @@ class SQLDict:
   #edef
 
   def _store(self, key, value):
-    self._cache[key] = value
+    self._cache[str(key)] = value
     return self._sqlDict.execute("REPLACE INTO data(id, value) VALUES (?, ?);", [str(key), json.dumps(value)])
   #edef
 
@@ -134,17 +134,17 @@ class SQLDict:
   #edef
 
   def keys(self):
-    self._loadCache()
+    self.load()
     return self._cache.keys()
   #edef
 
   def values(self):
-    self._loadCache()
+    self.load()
     return self._cache.values()
   #edef
 
   def items():
-    self._loadCache()
+    self.load()
     return self._cache.items()
  
 #eclass

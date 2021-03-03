@@ -60,7 +60,7 @@ class Trajectory(object):
     #edef
     
     def plot(self, conditions=None, samples=None, dim=2, pca=True,
-             component=0, component1=0, component2=1, ax=None, cmap=plt.get_cmap('Set2'),
+             component=0, component1=0, component2=1, ax=None, cmap=None,
              display_1d='grid', display_2d='super', reorder=True, reorder_by=None, pca_fit=None):
         """
         Make a 1/2D PC trajectoryplot of samples

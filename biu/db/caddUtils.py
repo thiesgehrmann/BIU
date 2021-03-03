@@ -5,7 +5,7 @@ from ..config import settings as settings
 
 from .. import utils
 
-import numpy as np
+np = utils.py.loadExternalModule('numpy')
 
 ###############################################################################
 

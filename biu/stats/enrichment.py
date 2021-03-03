@@ -270,7 +270,7 @@ class EnrichmentNetwork(object):
         return E
     #edef
     
-    def draw(self, distance_threshold=0.3, ax=None, cmap=plt.get_cmap('plasma'), nodes=None, n_clusters=1, min_qval=None):
+    def draw(self, distance_threshold=0.3, ax=None, cmap=None, nodes=None, n_clusters=1, min_qval=None):
 
         from sklearn.manifold import MDS
         from sklearn.manifold import Isomap
@@ -292,6 +292,7 @@ class EnrichmentNetwork(object):
         #fi
 
         color = self._nodes.q.apply(lambda x: -np.log10(x)) / -np.log10(min_qval)
+        cmap = plt.get_cmap('plasma') if cmap is None else cmap
         ax.scatter(self._nodes.x, self._nodes.y, s=self._nodes.n*4, edgecolor='k', c=cmap(color))
         for i, r in self._nodes.iterrows():
             ax.text(r.x, r.y, str(i))

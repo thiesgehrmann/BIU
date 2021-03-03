@@ -1,5 +1,3 @@
-import pandas as pd
-
 from ..structures import Dataset2
 from .. import utils
 from .. import formats

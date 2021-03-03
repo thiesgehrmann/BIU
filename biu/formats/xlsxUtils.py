@@ -9,9 +9,9 @@ class XLSX(object):
   _xlBook = None
   _data = None
 
-  def __init__(self, fileName):
+  def __init__(self, fileName, *pargs, **kwargs):
     self._fileName = fileName
-    self._xlBook = xl.load_workbook(fileName)
+    self._xlBook = xl.load_workbook(fileName, *pargs, **kwargs)
     self._data = {}
   #edef
 
@@ -35,6 +35,11 @@ class XLSX(object):
   def isSheetLoaded(self, sheetName):
     return sheetName in self._data
   #edef
+    
+  def __iter__(self):
+    return self._xlBook.sheetnames.__iter__()
+  #edef
+    
 
   def __getitem__(self, sheetName):
     if (sheetName not in self._data):

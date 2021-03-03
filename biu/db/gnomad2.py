@@ -3,7 +3,7 @@ from .. import formats
 from .. import utils
 
 pd = utils.py.loadExternalModule("pandas")
-import numpy as np
+np = utils.py.loadExternalModule('numpy')
 
 from functools import reduce
 

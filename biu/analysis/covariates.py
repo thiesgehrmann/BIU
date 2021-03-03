@@ -77,16 +77,18 @@ def expand_categorical(cov):
 
 ##############################################################################################
 
-def order_categories(categories, cont=None, statistic=np.mean):
+def order_categories(categories, cont=None, statistic=None):
     """
     Order categories based on a statistic of a continuous variable associated with the category
     Inputs:
         categories: a list of length n of categorical labels for n objects
         cont: a list of n continuous values for n objects
-        statistic: function to calculate statistic
+        statistic: function to calculate statistic (default is np.mean)
     Outputs:
         for all n objects, an integer with the position in the order
     """
+    
+    statistic = np.mean if statistic is None else statistic
     
     if isinstance(categories, pd.Series):
         categories = categories.values

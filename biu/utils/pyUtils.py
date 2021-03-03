@@ -67,7 +67,7 @@ def loadExternalModule(module, attr=None):
         if attr is not None:
             lmod = getattr(lmod, attr)
         #fi
-    except ImportError as e:
+    except (ImportError, AttributeError) as e:
         lmod = AbsentModule(module, e)
     #fi
 
