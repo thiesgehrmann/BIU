@@ -1,4 +1,5 @@
 import collections
+import datetime
 
 from .. import utils
 
@@ -54,6 +55,18 @@ def none2ri(N):
 
 ##################################################################################
 
+def datetime2ri(D):
+    """
+    Convert a datetime object to an R object
+    """
+    import rpy2.robjects.packages as rpackages
+    base = rpackages.importr("base") 
+    rdate = base.as_POSIXlt(D.strftime("%Y-%m-%d %H:%M:%S"), format="%Y-%m-%d %H:%M:%S")
+    return rdate
+#edef
+
+##################################################################################
+
 def converter():
     """
     Return an rpy2 converter that automatically converts several formats
@@ -76,6 +89,7 @@ def converter():
     
     my_converter.py2rpy.register(tuple, tuple2ri)
     my_converter.py2rpy.register(type(None), none2ri)
+    my_converter.py2rpy.register(datetime.datetime, datetime2ri)
     
     my_converter += rpy2.robjects.default_converter
     my_converter += numpy2ri.converter

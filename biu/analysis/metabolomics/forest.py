@@ -18,6 +18,7 @@ def forest_group(group_name, test_names, tests, conditions, ax,
     group_name: String
     test_names: List[String]
     tests: Dataframe
+    conditions: list
     col_effect: String
     col_std: String
     col_qvalue: String
@@ -94,7 +95,8 @@ def forest(test_groups, tests, conditions=None,
            condition_markers=['s', 's', 's', 'D', 'D', 'D'],
            test_left_offset=None,
            test_right_offset=1,
-           ticks=[-1,-0.5,0,0.5,1], ax=None, se_multiplier=1.96):
+           ticks=[-1,-0.5,0,0.5,1], ax=None, se_multiplier=1.96,
+           legend_loc='lower left', legend=True):
 
     
     if conditions is None:
@@ -111,8 +113,8 @@ def forest(test_groups, tests, conditions=None,
         test_height = 0.025/2 * len(conditions)
     #fi
     
-    forest_xlim = [ min(tests.effect - tests[col_std]) - test_left_offset,
-                    max(tests.effect + tests[col_std]) + test_right_offset ]
+    forest_xlim = [ min(tests[col_effect] - tests[col_std]) - test_left_offset,
+                    max(tests[col_effect] + tests[col_std]) + test_right_offset ]
     
 
     
@@ -166,6 +168,19 @@ def forest(test_groups, tests, conditions=None,
     ax.set_xlim(forest_xlim)
     ax.set_ylim([-test_height/3-0.01, top])
     ax.axis('off')
+    
+    if legend:
+        from matplotlib.lines import Line2D
+        legend_elements = [
+            Line2D([0], [0],
+                   marker=condition_markers[i%len(condition_markers)],
+                   color='k',
+                   markerfacecolor=condition_colors[i%len(condition_colors)],
+                   label=conditions[i], markersize=condition_marker_size)
+            for i in range(len(conditions))
+        ]
+        ax.legend(handles=legend_elements, loc=legend_loc)
+    #fi
     
     return ax.get_figure()
 #edef

@@ -3,6 +3,9 @@
 import os
 import gzip
 
+import glob
+import datetime
+
 from . import exeUtils as exe
 from . import msgUtils as msg
 
@@ -65,3 +68,10 @@ def gzopen(fileName, mode="r", gzmode='t', **kwargs):
 #edef
 
 ###############################################################################
+
+def most_recent_file(pattern, suffix):
+    def datekey(fname):
+        return datetime.datetime.strptime(fname.split('.')[-2], '%Y%m%d')
+    #edef
+    return sorted(glob.glob('%s.*.%s'% (pattern, suffix)), key=datekey)[-1]
+#edef

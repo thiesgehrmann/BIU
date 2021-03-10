@@ -40,6 +40,35 @@ lm.remove.effects <- function(F, D, L){
     DL.spread
     }
 
+lm.remove.effects.indiv <- function(F, D, L){
+    #' Returns the residuals of an lm model.
+    #' A single model is learned PER measurement'
+    #' parameters:
+    #' -----------
+    #' F: Formula
+    #' D: The data from which you want to remove the effects described in F
+    #'    Rows are samples, columns are measurements (e.g. mrna transcripts or metabolites)
+    #' L: Covariates, corresponding to the variables in L
+    #'
+    #'
+
+    D <- droplevels(D)
+    L <- droplevels(L)
+    
+    R <- data.frame(matrix(0L, dim(D)[1], dim(D)[2]))
+    rownames(R) <- rownames(D)
+    colnames(R) <- colnames(D)
+
+    Lm <- L
+    Fm <- update(F, meas ~ .)
+    for (meas in names(D)){
+        Lm$meas <- D[[meas]]
+        m <- lm(Fm, data=Lm)
+        R[meas] <- residuals(m)
+    }
+    
+    R
+    }
 
 library(lme4)
 lmer.remove.effects <- function(F, D, L){

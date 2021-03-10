@@ -30,6 +30,7 @@ from .goto2 import GOTO2 as GOTO2
 from .gwas_catalog import GWAS_Catalog
 from .hgnc import HGNC
 from .iris import Iris
+from .isala import ISALA
 from .lls2 import LLS2 as LLS2 # A re-implementation of LLS
 from .ncbi_taxonomy import NCBITaxonomy as NCBITaxonomy
 from .reactome import Reactome as Reactome
