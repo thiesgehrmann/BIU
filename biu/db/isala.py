@@ -279,7 +279,9 @@ class ISALA(Dataset2):
             if pd.api.types.is_numeric_dtype(re[hue]):
                 norm = plt.Normalize(re[hue].min(), re[hue].max())
                 sm = plt.cm.ScalarMappable(cmap=palette, norm=norm)
-                ax.get_legend().remove()
+                if ax.get_legend() is not None:
+                    ax.get_legend().remove()
+                #fi
                 ax.figure.colorbar(sm)
             else:
                 ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.15), ncol= 2)
