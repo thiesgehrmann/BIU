@@ -5,6 +5,10 @@ from .. import ops
 from .. import R
 
 pd = utils.py.loadExternalModule("pandas")
+sns = utils.py.loadExternalModule("seaborn")
+plt = utils.py.loadExternalModule('matplotlib.pylab')
+
+###############################################################################
 
 def _load_all_q(excel):
     X = formats.XLSX(excel, data_only=True)
@@ -45,7 +49,39 @@ def _load_all_q(excel):
 
     float_cols = [
         'Q1.BMI',
-        'Q2.BMI'
+        'Q2.BMI',
+         'Q1.Q28_1.Freq_Dairy_Probio',
+         'Q1.Q28_2.Freq_Yoghurt_Probio',
+         'Q1.Q28_3.Freq_Capsules_Probio',
+         'Q1.Q29_1.Freq_Dairy',
+         'Q1.Q29_2.Freq_FermFood',
+         'Q1.Q29_3.Freq_EtOH',
+         'Q1.Q29_4.Freq_Meat',
+         'Q1.Q29_5.Freq_Animal_Prod',
+         'Q1.Q29_6.Freq_Fish',
+         'Q1.Q29_7.Freq_Sugar_Beverages',
+         'Q1.Q29_8.Freq_Light_Beverages',
+         'Q1.Q29_9.Freq_Fruit',
+         'Q1.Q29_10.Freq_Vegetables',
+         'Q2.Q10_1.Portion_24h_Dairy',
+         'Q2.Q10_2.Portion_24h_Fermented_Food',
+         'Q2.Q10_3.Portion_24h_Alcohol',
+         'Q2.Q10_4.Portion_24h_Meat',
+         'Q2.Q10_5.Portion_24h_Fish',
+         'Q2.Q10_6.Portion_24h_Coffee',
+         'Q2.Q10_7.Portion_24h_Sugar_Beverages',
+         'Q2.Q10_8.Portion_24h_Light_Beverages',
+         'Q2.Q10_9.Portion_24h_Fruit_Fibers',
+         'Q2.Q10_10.Portion_24h_Vegetable_Fibers',
+         'Q2.Q11_1.Portion_24h_Cold_Pasta',
+         'Q2.Q11_2.Portion_24h_Whole_Grain_Bread',
+         'Q2.Q11_3.Portion_24h_Sourdough',
+         'Q2.Q11_4.Portion_24h_Quinoa',
+         'Q2.Q11_5.Portion_24h_Seeds',
+         'Q2.Q11_6.Portion_24h_Nuts',
+         'Q2.Q11_7.Portion_24h_Chocolat',
+         'Q2.Q11_8.Portion_24h_Candy',
+         'Q2.Q11_9.Portion_24h_Salty_Snacks',
     ]
     int_cols = [
         'Q0.Leeftijd',
@@ -77,6 +113,14 @@ def _load_all_q(excel):
         'A.Intercourse_yes',
         'A.Intercourse_no',
         'A.Intercourse_unknown',
+        'Q1.Q50.Was_pregnant',
+        'Q1.Q6.Has_children',
+         'Q2.Q8_1.Intake_Probio_Dairy_24h',
+         'Q2.Q8_4.Intake_Probio_Yoghurt_24h',
+         'Q2.Q8_5.Intake_Probio_Capsules_24h',
+         'Q2.Q8_6.No_Intake_Probio',
+         'Q2.Q13.Intake_probiotics',
+         'Q2.Delta_BMI',
     ]
 
     for col in Q.columns:
@@ -96,6 +140,8 @@ def _load_all_q(excel):
 
     return Q
 #edef
+
+###############################################################################
 
 class ISALA(Dataset2):
     """
@@ -162,4 +208,91 @@ class ISALA(Dataset2):
                                    isala_r_get <- D${value:s}
             """.format(file=x[f], value=v)))
     #edef
+    
+    def plot_embedding(self, hue=None, palette='viridis', data='TSNE',
+                       sample_meta=None, meta=None, meta_match='participant',
+                       legend=False, title=None, d1='D1', d2='D2', *pargs, **kwargs):
+        """
+        plot_embedding
+        
+        parameters:
+        -----------
+        hue : string|list|None
+            Describes colors for each point
+            if string, then column in sample_meta or meta
+            if list, then list of strings or numbers, of length equal to data
+            if None, then no color is plotted
+        palette : string
+            color palette to use for hue, valid for plt.get_cmap
+        data: pd.DataFrame|'TSNE'|'UMAP'|'PCA'
+            dataset with embedding points to plot
+            if pd.Dataframe, then use this data.
+            if 'TSNE', use tsne embedding
+            if 'UMAP', use umap embedding
+            otherwise, use PCA embedding
+        sample_meta : pd.DataFrame
+            A dataframe with contains information PER SAMPLE IN DATA
+        meta: pd.DataFrame
+            A dataframe which contains information per sample, but is indexed on a different column
+        meta_match : String
+            The column by which meta is indexed, but exists in sample_meta
+        legend: bool
+            Plot a legend or not
+        title: String
+            Title for the plot
+        d1,d2: Strings
+            The names of the first and second components of the embedding to use
+        *pargs, **kwargs : dicts
+            additional arguments for seaborn.scatterplot
+        
+        """
+        
+        if sample_meta is None:
+            sample_meta = self.HQS
+        #fi
+        
+        if meta is None:
+            meta = self.Q
+        #fi
+        
+        if isinstance(data, str):
+            data = data.lower()
+            data = self.TRAG if data == 'tsne' else self.URAG if data == 'umap' else self.PRAG
+        #fi
+        
+        re = data.copy()
+        if hue is not None:
+            try:
+                if hue in sample_meta.columns:
+                    re[hue] = sample_meta[hue]
+                elif hue in meta.columns:
+                    re[hue] = meta.loc[sample_meta[meta_match]][hue].values
+            except TypeError:
+                    re['hue'] = hue
+                    hue = 'hue'
+                #etry
+            #fi
+        #fi
+        ax = sns.scatterplot(x=d1, y=d2, palette=palette, hue=hue, data=re, s=2, *pargs, **kwargs)
+
+        if legend:
+            if pd.api.types.is_numeric_dtype(re[hue]):
+                norm = plt.Normalize(re[hue].min(), re[hue].max())
+                sm = plt.cm.ScalarMappable(cmap=palette, norm=norm)
+                ax.get_legend().remove()
+                ax.figure.colorbar(sm)
+            else:
+                ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.15), ncol= 2)
+            #fi
+        elif hue is not None:
+            ax.get_legend().remove()
+        #fi
+
+        if title:
+            ax.set_title(title)
+        #fi
+    #edef
+    
 #eclass
+
+###############################################################################

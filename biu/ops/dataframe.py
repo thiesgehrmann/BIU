@@ -7,6 +7,7 @@ skd = utils.py.loadExternalModule('sklearn.decomposition')
 skm = utils.py.loadExternalModule('sklearn.manifold')
 pd  = utils.py.loadExternalModule('pandas')
 np  = utils.py.loadExternalModule('numpy')
+umap = utils.py.loadExternalModule('numpy')
 
 #########################################################################
 
@@ -103,7 +104,7 @@ def detect_categorical(df, ret_types=False):
     for col in df.columns:
         S = df[col]
         if series.is_categorical(S):
-            new_df[col] = series.cast_category(S)
+            new_df[col] = S.astype('category')
             types[col] = 'category'
         else:
             new_df[col] = series.cast_float(S)
@@ -155,7 +156,24 @@ def tsne(data, **kwargs):
         DataFrame/matrix of TSNE reduction
     """
     trans = skm.TSNE(**kwargs).fit_transform(data)
-    trans = pd.DataFrame(trans, index=data.index, columns=[ 'TSNE_%d' % (i+1) for i in range(trans.shape[1])])
+    trans = pd.DataFrame(trans, index=data.index, columns=[ 'D%d' % (i+1) for i in range(trans.shape[1])])
+    return trans
+
+#edef
+
+#########################################################################
+
+def UMAP(data, **kwargs):
+    """
+    Perform UMAP on a matrix/dataframe
+    Inputs:
+        data: Dataframe/matrix/ndarray
+        **kwargs: Options for UMAP
+    Outputs:
+        DataFrame/matrix of UMAP reduction
+    """
+    trans = umap.UMAP(**kwargs).fit_transform(data)
+    trans = pd.DataFrame(trans, index=data.index, columns=[ 'D%d' % (i+1) for i in range(trans.shape[1])])
     return trans
 
 #edef

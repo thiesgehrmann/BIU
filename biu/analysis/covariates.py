@@ -63,6 +63,8 @@ def expand_categorical(cov):
     for col in E.columns:
         if E[col].dtype.name != 'category':
             continue
+        elif all([ isinstance(x, bool) for x in E[col] if not pd.isna(x) ]):
+            continue
         #fi
         values = sorted(E[col].cat.remove_unused_categories().cat.categories.values)
         for value in values:
@@ -211,8 +213,21 @@ def associate_pair(X, Y):
     # Remove NA and INfs
     X_no_na = X[~pd.isna(X) & ~pd.isna(Y)]
     Y_no_na = Y[~pd.isna(X) & ~pd.isna(Y)]
+    
+    xtype = X.dtype.name == 'category'
+    ytype = Y.dtype.name == 'category'
+    
+    if all([ isinstance(x, bool) for x in X_no_na ]):
+        xtype = False
+        X_no_na = X_no_na.astype(bool)
+    #fi
+    
+    if all([ isinstance(y, bool) for y in Y_no_na ]):
+        ytype = False
+        Y_no_na = Y_no_na.astype(bool)
+    #fi
                   
-    return assocs[(X.dtype.name == 'category',Y.dtype.name == 'category')](X_no_na, Y_no_na)
+    return assocs[(xtype,ytype)](X_no_na, Y_no_na)
 
 #edef
 

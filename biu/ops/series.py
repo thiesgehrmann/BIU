@@ -25,7 +25,7 @@ def cast_category(series):
 
 def cast_str(series):
     """
-    Cast a pandas series to numerical type.
+    Cast a pandas series to a string type.
     Takes care of nan values.
     
     parameters:
@@ -91,7 +91,9 @@ def is_categorical(series):
     --------
     True if categorical, False otherwise
     """
-    if hasattr(series, 'str') or (series.dtype.name == 'object'):
+    if (series.dtype.name == 'category'):
+        return True
+    elif hasattr(series, 'str') or (series.dtype.name == 'object'):
         not_na = series.str.isnumeric()[~pd.isna(series)]
         if all(not_na):
             return False
