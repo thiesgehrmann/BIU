@@ -82,6 +82,20 @@ def _load_all_q(excel):
          'Q2.Q11_7.Portion_24h_Chocolat',
          'Q2.Q11_8.Portion_24h_Candy',
          'Q2.Q11_9.Portion_24h_Salty_Snacks',
+         'Q1.Q28_1.Monthly_Dairy_Probio',
+         'Q1.Q28_2.Monthly_Yoghurt_Probio',
+         'Q1.Q28_3.Monthly_Capsules_Probio',
+         'Q1.Q29_1.Monthly_Dairy',
+         'Q1.Q29_2.Monthly_FermFood',
+         'Q1.Q29_3.Monthly_EtOH',
+         'Q1.Q29_4.Monthly_Meat',
+         'Q1.Q29_5.Monthly_Animal_Prod',
+         'Q1.Q29_6.Monthly_Fish',
+         'Q1.Q29_7.Monthly_Sugar_Beverages',
+         'Q1.Q29_8.Monthly_Light_Beverages',
+         'Q1.Q29_9.Monthly_Fruit',
+         'Q1.Q29_10.Monthly_Vegetables',
+         'Q1.Q56_3.Monthly_Vaginal_Probio_3Months',
     ]
     int_cols = [
         'Q0.Leeftijd',
@@ -181,6 +195,12 @@ class ISALA(Dataset2):
         'URA'   : (pd.read_pickle,   utils.fs.most_recent_file('/home/thies/repos/UA_isala/processed/embedding.umap.hqra',  'pkl')),
         'URAG'  : (pd.read_pickle,   utils.fs.most_recent_file('/home/thies/repos/UA_isala/processed/embedding.umap.hqrag',  'pkl')),
         
+        'TRA_bc'   : (pd.read_pickle,   utils.fs.most_recent_file('/home/thies/repos/UA_isala/processed/embedding.tsne.hqra_bc',  'pkl')),
+        'TRAG_bc'  : (pd.read_pickle,   utils.fs.most_recent_file('/home/thies/repos/UA_isala/processed/embedding.tsne.hqrag_bc',  'pkl')),
+        
+        'URA_bc'   : (pd.read_pickle,   utils.fs.most_recent_file('/home/thies/repos/UA_isala/processed/embedding.umap.hqra_bc',  'pkl')),
+        'URAG_bc'  : (pd.read_pickle,   utils.fs.most_recent_file('/home/thies/repos/UA_isala/processed/embedding.umap.hqrag_bc',  'pkl')),
+        
         'rds_D'  : (None, '/home/thies/repos/UA_isala/data/16S/isala_cross_amplicon_20210225.rds'),
         'rds_DG' : (None, '/home/thies/repos/UA_isala/data/16S/isala_cross_amplicon_20210225_genus.rds'),
     }
@@ -211,10 +231,10 @@ class ISALA(Dataset2):
     
     def plot_embedding(self, hue=None, palette='viridis', data='TSNE',
                        sample_meta=None, meta=None, meta_match='participant',
-                       legend=False, title=None, d1='D1', d2='D2', *pargs, **kwargs):
+                       legend=False, title=None, d1='D1', d2='D2', ax=None, *pargs, **kwargs):
         """
         plot_embedding
-        
+
         parameters:
         -----------
         hue : string|list|None
@@ -244,22 +264,25 @@ class ISALA(Dataset2):
             The names of the first and second components of the embedding to use
         *pargs, **kwargs : dicts
             additional arguments for seaborn.scatterplot
-        
+            INCLUDES ax!
+
         """
-        
+
+        from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+
         if sample_meta is None:
             sample_meta = self.HQS
         #fi
-        
+
         if meta is None:
             meta = self.Q
         #fi
-        
+
         if isinstance(data, str):
             data = data.lower()
-            data = self.TRAG if data == 'tsne' else self.URAG if data == 'umap' else self.PRAG
+            data = self.TRAG_bc if data == 'tsne' else self.URAG_bc if data == 'umap' else self.PRAG
         #fi
-        
+
         re = data.copy()
         if hue is not None:
             try:
@@ -273,28 +296,48 @@ class ISALA(Dataset2):
                 #etry
             #fi
         #fi
-        ax = sns.scatterplot(x=d1, y=d2, palette=palette, hue=hue, data=re, s=2, *pargs, **kwargs)
+
+        if ax is None:
+            fig, axes = biu.utils.figure.subplots()
+            ax = axes[0]
+        #fi
+
+        ax = sns.scatterplot(x=d1, y=d2, palette=palette, legend=True, hue=hue, data=re, s=2, ax=ax, *pargs, **kwargs)
 
         if legend:
-            if pd.api.types.is_numeric_dtype(re[hue]):
+            if pd.api.types.is_bool_dtype(re[hue]):
+                ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.15), ncol= 2)
+            elif pd.api.types.is_numeric_dtype(re[hue]):
                 norm = plt.Normalize(re[hue].min(), re[hue].max())
                 sm = plt.cm.ScalarMappable(cmap=palette, norm=norm)
                 if ax.get_legend() is not None:
                     ax.get_legend().remove()
                 #fi
-                ax.figure.colorbar(sm)
+
+                axins = inset_axes(ax,
+                       width="5%",  # width = 5% of parent_bbox width
+                       height="100%",  # height : 50%
+                       loc='lower left',
+                       bbox_to_anchor=(1.05, 0., 1, 1),
+                       bbox_transform=ax.transAxes,
+                       borderpad=0,
+                       )
+                ax.figure.colorbar(sm, cax=axins)
             else:
                 ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.15), ncol= 2)
             #fi
         elif hue is not None:
-            ax.get_legend().remove()
+            if ax.get_legend() is not None:
+                ax.get_legend().remove()
+            #fi
         #fi
 
         if title:
             ax.set_title(title)
         #fi
+
+        return ax
     #edef
-    
 #eclass
 
 ###############################################################################

@@ -233,7 +233,7 @@ def associate_pair(X, Y):
 
 ##############################################################################################
 
-def associate(covariates, data=None, nc=6, plot=False, ax=None, method='fdr', **kwargs):
+def associate(covariates, data=None, pca=True, nc=6, plot=False, ax=None, method='fdr', **kwargs):
     """
     Correlate a matrix of covariates with itself, or with the first nc PCs of a data matrix
     Inputs:
@@ -241,6 +241,7 @@ def associate(covariates, data=None, nc=6, plot=False, ax=None, method='fdr', **
       data: A dataframe of data (rows are datapoints, columns are measurements)
             If data is None, then each covariate will be associated with the other covariates
       effect: Report the effect size instead of the pvalue
+      pca: Boolean. If true, perform PCA on data first. If False, do not.
       nc : The number of components to inspect
       plot: Boolean. Plot a diagram of results if True
       ax: Matplotlib axis. Plot onto this axis, if None, generate own one.
@@ -254,6 +255,9 @@ def associate(covariates, data=None, nc=6, plot=False, ax=None, method='fdr', **
     P = None
     
     covariates = expand_categorical(covariates)
+    if not pca:
+        data = expand_categorical(data)
+    #fi
     
     if data is None:
         emat = np.zeros((len(covariates.columns), len(covariates.columns)))
@@ -270,19 +274,22 @@ def associate(covariates, data=None, nc=6, plot=False, ax=None, method='fdr', **
         P = pd.DataFrame(pmat, index=covariates.columns, columns=covariates.columns)
 
     else:
-        pc_data = ops.dataframe.pca(data, nc=nc)
-        emat = np.zeros((len(covariates.columns), nc))
-        pmat = np.zeros((len(covariates.columns), nc))
+        data_fmt = data
+        if pca:
+            data_fmt = ops.dataframe.pca(data, nc=nc)
+        #fi
+        emat = np.zeros((len(covariates.columns), len(data_fmt.columns)))
+        pmat = np.zeros((len(covariates.columns), len(data_fmt.columns)))
         for i, cov_i in enumerate(covariates.columns):
-            for j, comp_j in enumerate(pc_data.columns):
+            for j, comp_j in enumerate(data_fmt.columns):
                 print('\r%s - %s %s' % (cov_i, comp_j, ''.join([' ']*30)), end='')
-                res = associate_pair(pc_data[comp_j].values, covariates[cov_i].values)
+                res = associate_pair(data_fmt[comp_j].values, covariates[cov_i].values)
                 emat[i,j] = res.statistic
                 pmat[i,j] = res.pvalue
             #efor
         #efor
-        E = pd.DataFrame(emat, index=covariates.columns, columns=pc_data.columns)
-        P = pd.DataFrame(pmat, index=covariates.columns, columns=pc_data.columns)
+        E = pd.DataFrame(emat, index=covariates.columns, columns=data_fmt.columns)
+        P = pd.DataFrame(pmat, index=covariates.columns, columns=data_fmt.columns)
     #fi
 
     if method is not None:
@@ -303,3 +310,101 @@ def associate(covariates, data=None, nc=6, plot=False, ax=None, method='fdr', **
 
 ##############################################################################################
 
+
+def _correlation(X, Y):
+    valid = ~(pd.isna(X) | pd.isna(Y))
+    x = X[valid].astype(float).values
+    y = Y[valid].astype(float).values
+    r = np.corrcoef(x, y)[0,1]
+    p = None
+    if r == 1:
+        p = 0
+    else:
+        n = sum(valid)
+        t = np.abs(r) * np.sqrt(n-2) / np.sqrt(1-r**2)
+        p = sstats.t.cdf(t, n-2)
+    #fi
+    return assoc_result('pearson', r, p)
+#edef
+
+def correlate(covariates, data=None, pca=True, nc=6, plot=False, ax=None, method='fdr', **kwargs):
+    """
+    Correlate a matrix of covariates with itself, or with the first nc PCs of a data matrix
+    Inputs:
+      covariates: A dataframe of covariates (rows are data points, columns are covariates)
+      data: A dataframe of data (rows are datapoints, columns are measurements)
+            If data is None, then each covariate will be associated with the other covariates
+      effect: Report the effect size instead of the pvalue
+      pca: Boolean. If true, perform PCA on data first. If False, do not.
+      nc : The number of components to inspect
+      plot: Boolean. Plot a diagram of results if True
+      ax: Matplotlib axis. Plot onto this axis, if None, generate own one.
+      method: The Multiple Testing Correction method to use (see biu.stats.p_adjust). You can specify None to not correct.
+      **kwargs: Optional arguments for biu.stats.p_adjust
+    Output:
+        E : A dataframe of effects, and
+        P : A dataframe of (corrected) p-values
+    """
+    E = None
+    P = None
+    
+    covariates = expand_categorical(covariates)
+    if not pca:
+        data = expand_categorical(data)
+    #fi
+    
+    if data is None:
+        emat = np.zeros((len(covariates.columns), len(covariates.columns)))
+        pmat = np.zeros((len(covariates.columns), len(covariates.columns)))
+        for i, cov_i in enumerate(covariates.columns):
+            for j,cov_j in enumerate(covariates):
+                print('\r%s - %s %s' % (cov_i, cov_j, ''.join([' ']*30)), end='')
+                x = covariates[cov_j]
+                y = covariates[cov_i]
+                res = _correlation(x, y)
+                emat[i,j] = res.statistic
+                pmat[i,j] = res.pvalue
+            #efor
+        #efor
+        E = pd.DataFrame(emat, index=covariates.columns, columns=covariates.columns)
+        P = pd.DataFrame(pmat, index=covariates.columns, columns=covariates.columns)
+
+    else:
+        data_fmt = data
+        if pca:
+            data_fmt = ops.dataframe.pca(data, nc=nc)
+        #fi
+        emat = np.zeros((len(covariates.columns), len(data_fmt.columns)))
+        pmat = np.zeros((len(covariates.columns), len(data_fmt.columns)))
+        for i, cov_i in enumerate(covariates.columns):
+            for j, comp_j in enumerate(data_fmt.columns):
+                print('\r%s - %s %s' % (cov_i, comp_j, ''.join([' ']*30)), end='')
+                x = data_fmt[comp_j]
+                y = covariates[cov_i]
+                res = _correlation(x, y)
+                
+                emat[i,j] = res.statistic
+                pmat[i,j] = res.pvalue
+            #efor
+        #efor
+        E = pd.DataFrame(emat, index=covariates.columns, columns=data_fmt.columns)
+        P = pd.DataFrame(pmat, index=covariates.columns, columns=data_fmt.columns)
+    #fi
+
+    if method is not None:
+        P = stats.p_adjust(P, method=method, **kwargs)
+    #fi
+
+    if plot:
+        if ax is None:
+            fig, axes = utils.figure.subplots(nrows=1, ncols=1, figsize=np.array(P.shape[::-1])/4)
+            ax = axes[0]
+        #fi
+        sns.heatmap(E, ax=ax, center=0, cmap="PiYG", fmt='',
+                   annot=P.applymap(lambda x: '*' if x < 0.05 else ''))
+    #fi
+
+    return E, P
+#edef
+
+##############################################################################################

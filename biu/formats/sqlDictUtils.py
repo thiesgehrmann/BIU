@@ -66,6 +66,23 @@ class SQLDict:
     #fi
   #edef
 
+  def get(self, key, default=None):
+    """
+    as the get function of a dictionary
+    parameters:
+    ------------
+    key: hashable
+        The key to look up
+    default: Object
+        The element to return if key is not present in the sqldict
+    """
+    v = self.retrieve(key)
+    if v is None:
+        return default
+    #fi
+    return v
+  #edef
+
   def __delete(self, key):
     return self._sqlDict.execute("DELETE FROM data WHERE id IS ?;", [key])
   #edef

@@ -275,6 +275,7 @@ class Acquire2(object):
     Initial file acquisition:
      * local: from local file
      * touch: create local file
+     * code:  create local file from python function
      * curl:  from the web. 
      * wget:  from the web. Note: doesn't work on mac os...
      * ftp:   from the web via FTP
@@ -292,6 +293,9 @@ class Acquire2(object):
      * bgzip
      * gzip
      * bzip
+     
+     * cmd : Run an arbitrary command line script on the file
+     * func : Run an arbitrary python command on the file
      
     Combine pipelines:
      * merge (cat|zcat)
@@ -470,6 +474,23 @@ class Acquire2(object):
         """
         step = AcquireStep("Touch", [], AcquireFile(dirname=None, basename=file), lambda i,o: fs.touchFile(o))
         return self.add_step(step)
+    #edef
+    
+    def code(self, func):
+        """
+        Generate the contents of a file from a function.
+        The function should take the form of:
+        def myfunc(outfile):
+            with open(outfile, 'w') as ofd:
+                ofd.write('haha')
+            #ewith
+            return biu.utils.Acquire2.STATUS_SUCCESS
+        #edef
+        """
+        import hashlib
+        fname = hashlib.md5(str(py.source(func)).encode()).hexdigest()
+        touch = self.touch(fname)
+        return touch.func(lambda i,o: func(o))
     #edef
     
     def finalize(self, finalpath, ln=False):

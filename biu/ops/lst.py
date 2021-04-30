@@ -18,6 +18,29 @@ def freq(lst):
   return F
 #edef
 
+def qerf(lst):
+    """
+    Return the frequency of objects in a lst, indexed by their frequency, rather than by the item itself.
+    parameters:
+    -----------
+    lst: list[obj]
+        List of hashable objects
+        
+    example:
+    qerf([1,2,3,3,4,4,4])
+     { 1: [1,2],
+       2: [3],
+       3: [4]
+       }
+    """
+    f = freq(lst)
+    q = { }
+    for (i,c) in f.items():
+        q[c] = q.get(c,[]) + [i]
+    #efor
+    return q
+#edef
+
 def group(lst, key=lambda x: x[0], value=lambda x: x):
   """
     Group items based on a certain key.
@@ -164,4 +187,21 @@ def chunks(l, m=None, n=None):
     for i in range(0, len(l), step):
         yield l[i:i + step]
     #efor
+#edef
+
+def argrank(r, p=0):
+    """
+    argrank: Return the index of the first,second,nth value in a ranked list.
+    
+    parameters:
+    -----------
+    r: list[sortable value]
+        A list of sortable values (numeric, strings, object)
+    p: which position to take. Default is 0, meaning the highest value.
+       1 would be the second highest value.
+    """
+    if isinstance(r, dict):
+        return sorted(r.keys(), key=lambda x: r[x])[-1-p]
+    #fi
+    return sorted(enumerate(r), key=lambda x: x[1])[-1-p][0]
 #edef

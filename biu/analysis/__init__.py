@@ -14,3 +14,4 @@ from . import covariates
 from . import trajectory
 from . import metabolomics
 from .trajectory import Trajectory
+from . import microbiome
