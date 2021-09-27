@@ -2,6 +2,7 @@ from .. import utils
 from . import matrix
 
 from . import series
+from . import str as biustr
 
 skd = utils.py.loadExternalModule('sklearn.decomposition')
 skm = utils.py.loadExternalModule('sklearn.manifold')
@@ -361,4 +362,33 @@ def corrcoef_between(dataframe1, dataframe2, axis=0, method='pearson'):
     p = pd.DataFrame(p, columns=col, index=idx)
     
     return r, p
+#edef
+
+####################################################################
+
+def standardize_numerical_expl(D):
+    D = D.copy()
+    for c in D.columns:
+        if D[c].dtype.name in ['str', 'object', 'bool', 'category']:
+            continue
+        #fi
+        if D[c].dtype.name in ['float64', 'int']:
+            D[c] = (D[c] - D[c].mean()) / D[c].std()
+        #fi
+    #efor
+    return D
+#edef
+
+####################################################################
+
+def safe(df):
+    """
+    safe: make the column names valid idetifiers
+    
+    parameters:
+    -----------
+        df: pandas.DataFrame
+    """    
+    N = df.rename(columns={c: biustr.safe(c) for c in df.columns})
+    return N
 #edef

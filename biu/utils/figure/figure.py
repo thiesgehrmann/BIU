@@ -29,6 +29,7 @@ def subplots(flatten=True, ncols=1, nrows=1, dpi=300, **kwargs):
     """
 
     fig, axes = plt.subplots(ncols=ncols, nrows=nrows, dpi=dpi, **kwargs)
+    plt.rcParams['svg.fonttype'] = 'none'
     if hasattr(axes, '__len__') and flatten:
         axes = axes.flatten()
     elif not hasattr(axes, '__len__'):

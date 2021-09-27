@@ -9,9 +9,9 @@ class XLSX(object):
   _xlBook = None
   _data = None
 
-  def __init__(self, fileName, *pargs, **kwargs):
+  def __init__(self, fileName, data_only=True, *pargs, **kwargs):
     self._fileName = fileName
-    self._xlBook = xl.load_workbook(fileName, *pargs, **kwargs)
+    self._xlBook = xl.load_workbook(fileName, data_only=data_only, *pargs, **kwargs)
     self._data = {}
   #edef
 

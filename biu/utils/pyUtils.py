@@ -60,6 +60,12 @@ def loadExternalModule(module, attr=None):
         __getitem__ = __re__
         __call__    = __re__
     #eclass
+    
+    #if module == 'rpy2':
+    #    print('loading rpy2')
+    #    import inspect
+    #    print(inspect.stack()[1])
+    ##fi
 
     lmod = None
     try:

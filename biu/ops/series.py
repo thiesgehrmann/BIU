@@ -93,7 +93,16 @@ def is_categorical(series):
     """
     if (series.dtype.name == 'category'):
         return True
-    elif hasattr(series, 'str') or (series.dtype.name == 'object'):
+    elif (series.dtype.name in ['object', 'bool']):
+        not_na = series[~pd.isna(series)]
+        if all([isinstance(x, bool) for x in not_na]):
+            return True
+        elif all([isinstance(x,str) for x in not_na]):
+            return True
+        else:
+            return False
+        #fi
+    elif hasattr(series, 'str'):
         not_na = series.str.isnumeric()[~pd.isna(series)]
         if all(not_na):
             return False

@@ -47,11 +47,15 @@ def detect_categorical(df, ret_types=False):
 
 ##############################################################################################
 
-def expand_categorical(cov):
+def expand_categorical(cov, sep='_', as_bool=False):
     """
     Expand categorical covariates into 
     Input:
       cov: Pandas DataFrame. covariates are annotated as categorical (with cov.col.astype('category') )
+      sep: String. In the new column names, separate the column name and the value with this charachter.
+              e.g. column name "happy" with values [ yes, no, maybe] and sep '_' will produce
+              happy_yes, happy_no, happy_maybe
+      with_bool: Make dummy variables with True/False instead of yes.no
     Output:
       Pandas DataFrame, with categorical covariates removed, and new numerical covariates to replace it.
       e.g. original column: c [ A,A,B,C ]:
@@ -69,8 +73,11 @@ def expand_categorical(cov):
         values = sorted(E[col].cat.remove_unused_categories().cat.categories.values)
         for value in values:
             arr = np.zeros(len(E[col]))
+            arr[E[col].isna()] = None
             arr[np.where(E[col].values == value)] = 1
-            E['%s_%s' % (col, str(value))] = arr
+            arr = [ True if v == 1 else False if v == 0 else None for v in arr ] if as_bool else arr
+            E['%s%s%s' % (col, sep, str(value))] = arr
+            E['%s%s%s' % (col, sep, str(value))] = E['%s%s%s' % (col, sep, str(value))].astype('category')
         #efor
         E = E.drop(columns=[col])
     #efor
@@ -126,11 +133,13 @@ def dummy(categorical_var):
                     [ 0,0,1 ]]
       
     """
+    cv_orig = categorical_var
     if not all([isinstance(cv, int) for cv in categorical_var ]):
         categorical_var = order_categories(categorical_var)
     d = np.zeros((len(categorical_var), max(categorical_var)+1))
-    d[list(zip(*enumerate(categorical_var)))] = 1
-    return d
+    d[tuple(zip(*enumerate(categorical_var)))] = True
+    d[pd.isna(cv_orig),:] = None
+    return d[:,sorted(set(categorical_var))]
 #edef
 
 ##############################################################################################
@@ -254,9 +263,9 @@ def associate(covariates, data=None, pca=True, nc=6, plot=False, ax=None, method
     E = None
     P = None
     
-    covariates = expand_categorical(covariates)
+    covariates = expand_categorical(covariates, as_bool=True)
     if not pca:
-        data = expand_categorical(data)
+        data = expand_categorical(data, as_bool=True)
     #fi
     
     if data is None:
@@ -264,10 +273,14 @@ def associate(covariates, data=None, pca=True, nc=6, plot=False, ax=None, method
         pmat = np.zeros((len(covariates.columns), len(covariates.columns)))
         for i, cov_i in enumerate(covariates.columns):
             for j,cov_j in enumerate(covariates):
-                print('\r%s - %s %s' % (cov_i, cov_j, ''.join([' ']*30)), end='')
-                res = associate_pair(covariates[cov_i].values, covariates[cov_j].values)
-                emat[i,j] = res.statistic
-                pmat[i,j] = res.pvalue
+                print('\r%s - %s %s' % (cov_i.replace('\n',' '), cov_j.replace('\n',' '), ''.join([' ']*30)), end='')
+                try:
+                    res = associate_pair(covariates[cov_i].values, covariates[cov_j].values)
+                    emat[i,j] = res.statistic
+                    pmat[i,j] = res.pvalue
+                except ValueError:
+                    emat[i,j] = 0
+                    pmat[i,j] = 1
             #efor
         #efor
         E = pd.DataFrame(emat, index=covariates.columns, columns=covariates.columns)

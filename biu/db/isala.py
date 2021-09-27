@@ -101,7 +101,10 @@ def _load_all_q(excel):
         'Q0.Leeftijd',
         'A.day_of_cycle',
         'Q1.Q50.Number_of_pregnancies',
-        'Q1.Q6.Number_Of_Biological_Children'
+        'Q1.Q6.Number_Of_Biological_Children',
+        'Q2.Q20.Increase in stress or feeling down',
+        'A.time_to_arrival',
+        'Q2.Q30.n_vaginal_complaints',
     ]     
 
     bool_cols = [
@@ -129,12 +132,78 @@ def _load_all_q(excel):
         'A.Intercourse_unknown',
         'Q1.Q50.Was_pregnant',
         'Q1.Q6.Has_children',
-         'Q2.Q8_1.Intake_Probio_Dairy_24h',
-         'Q2.Q8_4.Intake_Probio_Yoghurt_24h',
-         'Q2.Q8_5.Intake_Probio_Capsules_24h',
-         'Q2.Q8_6.No_Intake_Probio',
-         'Q2.Q13.Intake_probiotics',
-         'Q2.Delta_BMI',
+        'Q2.Q8_1.Intake_Probio_Dairy_24h',
+        'Q2.Q8_4.Intake_Probio_Yoghurt_24h',
+        'Q2.Q8_5.Intake_Probio_Capsules_24h',
+        'Q2.Q8_6.No_Intake_Probio',
+        'Q2.Q13.Intake_probiotics',
+        'Q2.Delta_BMI',
+        'Q2.30.Redness', 
+        'Q2.30.Swelling', 
+        'Q2.30.General_pain', 
+        'Q2.30.Iching', 
+        'Q2.30.Burning_feeling', 
+        'Q2.30.Increased_vaginal_discharge', 
+        'Q2.30.Change_vaginal_discharge_color_smell', 
+        'Q2.30.Pain_during_sex', 
+        'Q2.30.Urinary_infection', 
+        'Q2.30.Other',
+        'Q2.30.Any',
+        'Q1.Q21.Current_smoker',
+        'Q1.Q21.Current_druguser',
+        'Q1.Q49.Attempted_pregnancy',
+        'Q1.Q50.2_1.Microbial infection during pregnancy',
+        'Q2.Q24.Breastfeeding',
+        'Q1.Q52.peri_or_menopause',
+        'A.high_endogenous_estrogen',
+        'A.high_exogenous_estrogen',
+        'A.high_endogenous_progestogen',
+        'A.high_exogenous_progestogen',
+        'Q1.Q14.Urbanized_past',
+        'Q1.Q15.Urbanized_present',
+        'Q1.Q16.Nature_contact',
+        'Q1.Q70.Vaginal_douching',
+        'Q1.Q69.Pubic_shaving',
+        'Q1.Q8.Belgian_born',
+        'Q1.Q40.Antibiotic_use_last_3_months',
+        'Q1.Q41.Ever_antibiotic_treatment',
+        'Q1.Q48.2.Vaginal_sex_during_period_last_3months',
+        'Q2.Q29.Recent_new_medication',
+        'Q2.32.Took_a_bath',
+        'Q2.32.Took_a_shower',
+        'Q2.32.Only_washed_vagina',
+        'Q2.32.Wet_wipes',
+        'Q2.32.Slept_with_underwear',
+        'Q2.Q29_48h_Tampon',
+        'Q2.Q29_48h_Maandverband',
+        'Q2.Q29_48h_Menstruatiecup',
+        'Q2.Q29_48h_Inlegkruisje',
+        'Q1.Q52.8_period_hygeine_Tampon',
+        'Q1.Q52.8_period_hygeine_Maandverband',
+        'Q1.Q52.8_period_hygeine_Menstruatiecup',
+        'Q1.Q52.8_period_hygeine_Inlegkruisje',
+        'Q1.Q42.ppi_use',
+        'A.pregnant',
+        'Q1.Q13_1.Other_cultural_identity',
+        'Q2.Q30.has_vaginal_complaints',
+        'Q2.Q25.hormonal_contraception',
+        'A.has_cycle.phase.luteal',
+        'A.has_cycle.phase.ovulation',
+        'A.has_cycle.phase.follicular',
+        'Q1.Q4.has_partner.Man',
+        'Q1.Q4.has_partner.Vrouw',
+        'Q1.Q50.preterm_birth',
+        'Q1.Q50.miscarriage',
+        'Q1.Q50.abortion',
+
+        
+    ]
+    
+    cat_cols = [
+        'Q1.Q25_1.[Hours_Sleep_week]',
+        'Q1.Q25_2.[Hours_Sleep_weekend]',
+        'Q2.Q33.Wipe_direction',
+        'Q2.Q36.Change_underwear_frequency',
     ]
 
     for col in Q.columns:
@@ -144,6 +213,8 @@ def _load_all_q(excel):
             Q[col] = Q[col].apply(try_cast_int)
         elif col in bool_cols:
             Q[col] = Q[col].apply(try_cast_bool).astype('category')
+        elif col in cat_cols:
+            Q[col] = Q[col].astype('category')
         #fi
     #efor
 
@@ -152,6 +223,7 @@ def _load_all_q(excel):
     Q['Q1.Q6.Has_children']  = Q['Q1.Q6.Number_Of_Biological_Children'].apply(lambda x: True if x > 0 else False)
     Q['A.Critical_period']   = Q['A.day_of_cycle'].apply(lambda x: True if ((x >=14) & (x <= 18)) else False)
 
+    Q = Q.rename(columns={'Q1.Q34.[Hoe beoordeel je je algemene\ngezondheidstoestand?]' : 'Q1.Q34.[Hoe beoordeel je je algemene gezondheidstoestand?]'})
     return Q
 #edef
 
@@ -163,23 +235,13 @@ class ISALA(Dataset2):
     
     Typical usage:
     --------------
-    goto = biu.db.GOTO2()
+    I = biu.db.ISALA()
     
-    # RNA-Seq expression data
-    goto.expr   # Expression counts
-    goto.blood  # Covariates for blood samples
-    goto.muscle # Covariates for muscle samples
     
-    # Genetic variation
-    goto.filter(15, 50001000, 50005000)
-    goto.filter_regions([(15, 50001000, 50005000),(13, 50001000, 50005000)])
-    
-    # Metabolomics data
-    goto.metabolomics # Metabolyte measurements
-    goto.metabolomics_cov # Covariates for metabolyte data
     """
 
-    data_locations = {
+    def data_locations(self):
+        return {
         'Q'     : (_load_all_q,      utils.fs.most_recent_file('/home/thies/repos/UA_isala/processed/cleaned_surveys/flow1_all_questionnaires', 'xlsx')),
         'HQRA'  : (pd.read_pickle,   utils.fs.most_recent_file('/home/thies/repos/UA_isala/processed/hq_relative_abundances', 'pkl')),
         'HQRAG' : (pd.read_pickle,   utils.fs.most_recent_file('/home/thies/repos/UA_isala/processed/hq_relative_abundances_genus', 'pkl')),
@@ -203,14 +265,15 @@ class ISALA(Dataset2):
         
         'rds_D'  : (None, '/home/thies/repos/UA_isala/data/16S/isala_cross_amplicon_20210225.rds'),
         'rds_DG' : (None, '/home/thies/repos/UA_isala/data/16S/isala_cross_amplicon_20210225_genus.rds'),
-    }
+        }
+    #edef
     
     def __init__(self, *pargs, **kwargs):
 
         super(ISALA, self).__init__("ISALA/", *pargs, **kwargs)
-        
-        for d in self.data_locations:
-            load_func, uri = self.data_locations[d]
+        dl = self.data_locations()
+        for d in dl:
+            load_func, uri = dl[d]
             self._obj.add_file(d, utils.Acquire2(uri), finalize=False)
             if load_func is not None:
                 self._obj.register(d, [d], lambda x, f=load_func, d=d: f(x[d]))
@@ -230,7 +293,7 @@ class ISALA(Dataset2):
     #edef
     
     def plot_embedding(self, hue=None, palette='viridis', data='TSNE',
-                       sample_meta=None, meta=None, meta_match='participant',
+                       sample_meta=None, meta=None, meta_match='participant', samples=None,
                        legend=False, title=None, d1='D1', d2='D2', ax=None, *pargs, **kwargs):
         """
         plot_embedding
@@ -298,9 +361,15 @@ class ISALA(Dataset2):
         #fi
 
         if ax is None:
-            fig, axes = biu.utils.figure.subplots()
+            fig, axes = utils.figure.subplots()
             ax = axes[0]
         #fi
+        
+        if samples is None:
+            samples = re.index
+        #fi
+        
+        re = re.loc[samples]
 
         ax = sns.scatterplot(x=d1, y=d2, palette=palette, legend=True, hue=hue, data=re, s=2, ax=ax, *pargs, **kwargs)
 

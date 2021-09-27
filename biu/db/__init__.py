@@ -18,7 +18,6 @@ from .uniprotUtils import UniProt as UniProt
 
 ### Dataset2 databases
 
-from .bbmri2 import BBMRI2 as BBMRI2 # A re-implementation of BBMRI
 from .cadd2 import CADD2 as CADD2
 from .cosmic import Cosmic as Cosmic
 from .genage import GenAge as GenAge
@@ -26,17 +25,26 @@ from .dbsnp2 import DBSNP2 as DBSNP2 # a re-implementation of DBSNP
 from .disgenet import DisGeNet as DisGeNet
 from .gnomad2 import Gnomad2 as Gnomad2
 from .go2 import GO2 as GO2
-from .goto2 import GOTO2 as GOTO2
 from .gwas_catalog import GWAS_Catalog
 from .hgnc import HGNC
 from .iris import Iris
-from .isala import ISALA
-from .lls2 import LLS2 as LLS2 # A re-implementation of LLS
 from .ncbi_taxonomy import NCBITaxonomy as NCBITaxonomy
 from .reactome import Reactome as Reactome
 from .stringdb import StringDB as StringDB
 from .tfcat import TFCAT as TFCAT
 from .wormbase import WormBase as WormBase
+from .valencia import Valencia as Valencia
+
+
+## Local LUMC datasets
+from .bbmri2 import BBMRI2 as BBMRI2 # A re-implementation of BBMRI
+from .goto2 import GOTO2 as GOTO2
+from .lls2 import LLS2 as LLS2 # A re-implementation of LLS
+
+
+### Local UA datasets
+from .isala import ISALA
+from .micel import MICEL
 
 
 

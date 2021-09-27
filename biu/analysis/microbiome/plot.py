@@ -41,7 +41,7 @@ def stacks(D, ax=None, cmap='tab20', reorder=True, legend=True, plot_min_value=F
         D = ops.dataframe.reorder(D, distance='braycurtis', method='complete')
     #fi
     
-    mv = D.min().min()
+    mv = D.min(axis=1).max()
     
     for i, (index, row) in enumerate(D.iterrows()):
         print('\r%d/%d' %(i+1, len(D)), end='')
