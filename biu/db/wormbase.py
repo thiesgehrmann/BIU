@@ -2,8 +2,7 @@ from ..structures import Dataset2
 from .. import formats
 from .. import utils
 
-
-import requests
+requests = utils.py.loadExternalModule("requests")
 
 class WormBase(Dataset2):
     def __init__(self, *pargs, **kwargs):

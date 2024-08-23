@@ -5,26 +5,31 @@ from .. import utils
 
 np = utils.py.loadExternalModule("numpy")
 
-def freq(lst):
+def freq(lst, key=lambda x: x):
   """
     Count the number of occurances in a list.
-    Input: an iterable list
+    Input:
+        lst: an iterable list
+        key: a callable function that is called upon the value, the return value of which is counted
+    
     Output: Dictionary with count of each item
   """
   F = {}
   for item in lst:
-    F[item] = F.get(item, 0) + 1
+    F[key(item)] = F.get(key(item), 0) + 1
   #efor
   return F
 #edef
 
-def qerf(lst):
+def qerf(lst, key=lambda x: x):
     """
-    Return the frequency of objects in a lst, indexed by their frequency, rather than by the item itself.
+    Return the frequency of objects in a list, indexed by their frequency, rather than by the item itself.
     parameters:
     -----------
     lst: list[obj]
         List of hashable objects
+    key: callable(obj)
+        A function which will be called upon the objects in the list
         
     example:
     qerf([1,2,3,3,4,4,4])
@@ -33,7 +38,7 @@ def qerf(lst):
        3: [4]
        }
     """
-    f = freq(lst)
+    f = freq(lst, key)
     q = { }
     for (i,c) in f.items():
         q[c] = q.get(c,[]) + [i]

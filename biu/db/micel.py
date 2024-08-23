@@ -395,45 +395,137 @@ class MICEL(Dataset2):
     #edef
     
     def selection_strategy(self, cov=True, fam=False):
-        DA = self.DA.copy()
-        D1 = self.D1.copy()
+            DA = self.DA.copy()
+            D1 = self.D1.copy()
 
-        print("Total COVID participants:", len(D1.Participant_number.unique()))
+            total = sorted(set([ p for p in D1.Participant_number if 'COV' in str(p) ] + [ p for p in DA.Participant_number if 'COV' in str(p) ]))
+            print("Total COVID participants:", len(total), total)
 
-        non_dropouts = DA[DA.Day_questionaire.isin(['D21','D20','D19'])].Participant_number.unique()
+            dropouts = [
+                'COV002',
+                'COV007', 
+                'COV014', 
+                'COV018', 
+                'COV019', 
+                'COV022', 
+                'COV044', 
+                'COV050', 
+                'COV051', 
+                'COV055', 
+                'COV061', 
+                'COV062', 
+                'COV063', 
+                'COV071',
+                'COV044',
+                'COV050',
+            ]
+            #non_dropouts = DA[DA.Day_questionaire.isin(['D21','D20','D19'])].Participant_number.unique()
 
-        DA = DA[DA.Participant_number.isin(non_dropouts)]
-        D1 = D1[D1.Participant_number.isin(non_dropouts)]
-        #D  = D[D.Participant_number.isin(D.Participant_number[~D.Dropout])]
+            DA = DA[~DA.Participant_number.isin(dropouts)]
+            D1 = D1[~D1.Participant_number.isin(dropouts)]
+            #D  = D[D.Participant_number.isin(D.Participant_number[~D.Dropout])]
+            total = sorted(set([ p for p in D1.Participant_number if 'COV' in str(p) ] + [ p for p in DA.Participant_number if 'COV' in str(p) ]))
 
-        print("After removing Dropouts:", len(DA.Participant_number.unique()))
 
-        # Remove people that took more than 6 days to start the study
-        DA = DA[(DA.days_to_start_from_test < 4) | (DA.days_to_start < 7)]
-        D1 = D1[D1['Participant_number'].isin(DA.Participant_number)]
+            print("After removing Dropouts:", len(DA.Participant_number.unique()), sorted(dropouts))
 
-        # Remove that one bastard with more than 100 days:
-        DA = DA[~DA.Participant_number.isin(['COV003'])]
-        D1 = D1[~D1.Participant_number.isin(['COV003'])]
+            # Remove people that took more than 6 days to start the study
+            DA = DA[(DA.days_to_start_from_test < 4) | (DA.days_to_start < 7)]
+            D1 = D1[D1['Participant_number'].isin(DA.Participant_number)]
 
-        print("After removing those (>=4 days between test and start) and (>=7 days between first symptom and start):", len(DA.Participant_number.unique()))
+            # Remove that one bastard with more than 100 days:
+            DA = DA[~DA.Participant_number.isin(['COV003'])]
+            D1 = D1[~D1.Participant_number.isin(['COV003'])]
+            print("After removing those (>=4 days between test and start) and (>=7 days between first symptom and start):", len(DA.Participant_number.unique()), sorted(set(total) - set(DA.Participant_number.unique())))
+            total = sorted(set([ p for p in D1.Participant_number if 'COV' in str(p) ] + [ p for p in DA.Participant_number if 'COV' in str(p) ]))
 
-        # Remove people with a high fever
-        DA = DA[~DA.Participant_number.isin(
-                 DA[(DA['Day_questionaire'] == 'D1') & (DA['Q2_1.Score_Koorts_orig'] >= 2)].Participant_number.unique())]
-        D1 = D1[D1['Participant_number'].isin(DA.Participant_number)]
 
-        print("After removing those with high fever:", len(DA.Participant_number.unique()))
+            # Remove people with a high fever
+            DA = DA[~DA.Participant_number.isin(
+                     DA[(DA['Day_questionaire'] == 'D1') & (DA['Q2_1.Score_Koorts_orig'] >= 2)].Participant_number.unique())]
+            D1 = D1[D1['Participant_number'].isin(DA.Participant_number)]
 
-        # Remove people with a too high score at any point (>=40)
-        DA = DA[~DA.Participant_number.isin(DA[DA.TotalScore > 40].Participant_number)]
-        D1 = D1[D1['Participant_number'].isin(DA.Participant_number)]
+            print("After removing those with high fever:", len(DA.Participant_number.unique()), sorted(set(total) - set(DA.Participant_number.unique())))
+            total = sorted(set([ p for p in D1.Participant_number if 'COV' in str(p) ] + [ p for p in DA.Participant_number if 'COV' in str(p) ]))
 
-        print("After removing those with too high score:", len(DA.Participant_number.unique()))
 
-        participants = list(DA.Participant_number.unique())
-        participants = [ p for p in participants if (cov and 'COV' in p) or (fam and 'FAM' in p)]
-        return participants
+            # Remove people with a too high score at any point (>=40)
+            DA = DA[~DA.Participant_number.isin(DA[DA.TotalScore > 40].Participant_number)]
+            D1 = D1[D1['Participant_number'].isin(DA.Participant_number)]
+
+            print("After removing those with too high score:", len(DA.Participant_number.unique()), sorted(set(total) - set(DA.Participant_number.unique())))
+
+            participants = list(DA.Participant_number.unique())
+            participants = [ p for p in participants if (cov and 'COV' in p) or (fam and 'FAM' in p)]
+
+            final_list = [
+                'COV001',
+                'COV003',
+                'COV004',
+                'COV005',
+                'COV006',
+                'COV008',
+                'COV009',
+                'COV010',
+                'COV011',
+                'COV012',
+                'COV013',
+                'COV015',
+                'COV016',
+                'COV017',
+                'COV020',
+                'COV021',
+                'COV023',
+                'COV024',
+                'COV025',
+                'COV026',
+                'COV027',
+                'COV028',
+                'COV029',
+                'COV030',
+                'COV031',
+                'COV032',
+                'COV033',
+                'COV035',
+                'COV036',
+                'COV037',
+                'COV038',
+                'COV039',
+                'COV040',
+                'COV041',
+                'COV042',
+                'COV043',
+                'COV045',
+                'COV046',
+                'COV047',
+                'COV048',
+                'COV049',
+                'COV052',
+                'COV053',
+                'COV054',
+                'COV056',
+                'COV057',
+                'COV058',
+                'COV059',
+                'COV060',
+                'COV064',
+                'COV065',
+                'COV066',
+                'COV067',
+                'COV068',
+                'COV069',
+                'COV070',
+                'COV072',
+                'COV073',
+                'COV074',
+                'COV075',
+                'COV076',
+                'COV077',
+                'COV078',
+                'COV079',
+            ]
+
+            return final_list
     #edef
 #eclass
 

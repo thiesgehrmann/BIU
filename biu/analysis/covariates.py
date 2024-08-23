@@ -47,7 +47,7 @@ def detect_categorical(df, ret_types=False):
 
 ##############################################################################################
 
-def expand_categorical(cov, sep='_', as_bool=False):
+def expand_categorical(cov, sep='_', as_bool=False, exclude=[]):
     """
     Expand categorical covariates into 
     Input:
@@ -55,7 +55,8 @@ def expand_categorical(cov, sep='_', as_bool=False):
       sep: String. In the new column names, separate the column name and the value with this charachter.
               e.g. column name "happy" with values [ yes, no, maybe] and sep '_' will produce
               happy_yes, happy_no, happy_maybe
-      with_bool: Make dummy variables with True/False instead of yes.no
+      as_bool: Make dummy variables with True/False instead of 1/0
+      exclude: List. Exclude these columns from the transformation.
     Output:
       Pandas DataFrame, with categorical covariates removed, and new numerical covariates to replace it.
       e.g. original column: c [ A,A,B,C ]:
@@ -66,6 +67,8 @@ def expand_categorical(cov, sep='_', as_bool=False):
     E = cov.copy()
     for col in E.columns:
         if E[col].dtype.name != 'category':
+            continue
+        elif col in exclude:
             continue
         elif all([ isinstance(x, bool) for x in E[col] if not pd.isna(x) ]):
             continue

@@ -8,7 +8,7 @@ skd = utils.py.loadExternalModule('sklearn.decomposition')
 skm = utils.py.loadExternalModule('sklearn.manifold')
 pd  = utils.py.loadExternalModule('pandas')
 np  = utils.py.loadExternalModule('numpy')
-umap = utils.py.loadExternalModule('numpy')
+umap = utils.py.loadExternalModule('umap')
 
 #########################################################################
 

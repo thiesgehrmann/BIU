@@ -279,14 +279,14 @@ class ISALA(Dataset2):
                 self._obj.register(d, [d], lambda x, f=load_func, d=d: f(x[d]))
             #fi
         #efor
-        biur = R.R()
+        #biur = R.R()
         for objname, file, value in [ ('rds_S',  'rds_D', 'samples'),
                              ('rds_A',  'rds_D', 'abundances'),
                              ('rds_T',  'rds_D', 'taxa'),
                              ('rds_AG', 'rds_DG', 'abundances'),
                              ('rds_TG', 'rds_DG', 'taxa') ]:
             self._obj.register(objname, [file], 
-                               lambda x, f=file, v=value : biur("""
+                               lambda x, f=file, v=value : R.R()("""
                                    D <- readRDS('{file:s}')
                                    isala_r_get <- D${value:s}
             """.format(file=x[f], value=v)))

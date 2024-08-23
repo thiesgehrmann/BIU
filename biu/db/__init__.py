@@ -44,6 +44,7 @@ from .lls2 import LLS2 as LLS2 # A re-implementation of LLS
 
 ### Local UA datasets
 from .isala import ISALA
+from .isala2 import ISALA2
 from .micel import MICEL
 
 

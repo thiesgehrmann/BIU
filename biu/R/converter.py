@@ -27,7 +27,10 @@ def ri2dict(D):
     Note, that this conversion is not the inverse of dict2ri, as R values are always lists...
     Thus, ri2dict(dict2ri({'a': 1})) -> { 'a': [1]}
     """
-    
+
+    if isinstance(D.names, rpy2.rinterface_lib.sexp.NULLType):
+        return map(list, list(D))
+    #fi
     return dict(zip(D.names, map(list, list(D))))
 #edef
 

@@ -9,7 +9,7 @@ from .common import *
 
 #################################################################################
 
-def rin(D, axis=0):
+def rin(D, axis=0, c=3/8):
     """
     Perform a Rank Inverse Normal normalization on a dataframe, skipping the NA values.
     
@@ -20,6 +20,7 @@ def rin(D, axis=0):
 
         * 0 or 'index': apply function to each column.
         * 1 or 'columns': apply function to each row.
+    C: Constand parameter (Bloms constant)
         
     returns:
     Pandas DataFrame
@@ -28,7 +29,7 @@ def rin(D, axis=0):
         y = x.copy()
         nas = pd.isna(x)
         r = sstats.rankdata(x[~nas])
-        r = (r-0.5) / len(x)
+        r = (r - c) / (len(r) - 2*c + 1)
         r = q_(r)
         y[~nas] = r
         return y
