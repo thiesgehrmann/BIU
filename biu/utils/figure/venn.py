@@ -4,7 +4,7 @@ from .. import pyUtils as py
 
 # coding: utf-8
 from itertools import chain
-from collections import Iterable
+from collections.abc import Iterable
 import math
 
 __all__ = [ 'venn2', 'venn3', 'venn4', 'venn5', 'venn6', 'venn6' ]

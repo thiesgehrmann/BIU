@@ -13,7 +13,7 @@ import re
 __version__ = "0.9.3.dev0"
 
 RESERVED_PUNCTUATION = ':;,()'
-COMMENT = re.compile('\[[^\]]*\]')
+COMMENT = re.compile(r'\[[^\]]*\]')
 
 
 def length_parser(x):

@@ -1,14 +1,12 @@
 
 # Python modules
 import os
-import imp
+#import imp
 from pathlib import Path
 
 # Internal module
 from .. import utils as utils
 from ..config import settings as settings
-
-imp.reload(utils)
 
 #############################################################################
 
